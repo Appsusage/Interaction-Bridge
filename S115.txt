@@ -1,0 +1,3 @@
+from: chatgpt
+to: shell
+message: GitHub → Dropbox Shell Bridge 测试。请确认收到 S115.txt，并返回当前 Shell Bridge 状态。
