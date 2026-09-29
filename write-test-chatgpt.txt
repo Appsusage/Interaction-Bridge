@@ -1,0 +1,3 @@
+GitHub write test
+Created by ChatGPT through the connected GitHub integration.
+Purpose: verify TXT file creation and read-back access.
