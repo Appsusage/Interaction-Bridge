@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && printf '%s\n' '[github_adaptor test] GitHub → github_adaptor → Dropbox Shell Bridge OK' && ps -p $$ -o pid=,comm=,args=
