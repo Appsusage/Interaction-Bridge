@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && printf '%s\n' '[auto-wait test] GitHub → github_adaptor → Dropbox → Shell OK' && date -Iseconds
