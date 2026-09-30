@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && printf '%s\n' '[github_adaptor self-test] GitHub → github_adaptor → Dropbox Shell Bridge → Shell OK' && printf '%s\n' '=== TIME ===' && date -Iseconds && printf '%s\n' '=== PID ===' && printf '%s\n' "$$"
