@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent && \
+printf '%s\n' \
+'=== PROJECT STRUCTURE ===' \
+&& find backend -maxdepth 3 -type f | sort \
+&& printf '%s\n' \
+'=== PACKAGE ===' \
+&& cat package.json \
+&& printf '%s\n' \
+'=== BACKEND SERVER FILES ===' \
+&& for f in backend/server.js backend/*.js; do [ -f "$f" ] && { echo "===== $f ====="; sed -n '1,260p' "$f"; }; done \
+&& printf '%s\n' \
+'=== PROCESS MANAGERS / SUPERVISORS ===' \
+&& find . -maxdepth 4 -type f \( -name 'run.sh' -o -name '*supervisor*' -o -name '*watchdog*' -o -name 'Procfile' -o -name '.replit' \) -print -exec sh -c 'echo "===== $1 ====="; sed -n "1,240p" "$1"' _ {} \; \
+&& printf '%s\n' \
+'=== CURRENT NODE PROCESSES ===' \
+&& ps -eo pid,ppid,stat,lstart,args | grep '[n]ode' \
+&& printf '%s\n' \
+'=== HEARTBEAT EXISTING ===' \
+&& find backend -maxdepth 2 -type f \( -iname '*heartbeat*' -o -iname '*pid*' \) -print
