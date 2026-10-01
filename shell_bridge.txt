@@ -1,0 +1,20 @@
+cd /home/runner/workspace/ai-agent && BACKUP_DIR="/tmp/heartbeat-backup-$(date +%Y%m%d-%H%M%S)" && mkdir -p "$BACKUP_DIR" && cp -f backend/heartbeat.js "$BACKUP_DIR/" && node --input-type=module <<'__NODE_EOF__'
+import fs from 'node:fs';
+const p = 'backend/heartbeat.js';
+let s = fs.readFileSync(p, 'utf8');
+if (!s.includes('function commandMatches(')) {
+  const helper = `function commandMatches(actual, expected) {
+  if (actual === expected) return true;
+  return typeof actual === 'string' && typeof expected === 'string' && actual.endsWith('/' + expected);
+}
+
+`;
+  s = s.replace(
+    'const sameArgs = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);\n',
+    'const sameArgs = (a, b) => a.length === b.length && a.every((v, i) => commandMatches(v, b[i]));\n\n' + helper
+  );
+}
+s = s.replace(/p\.args\[0\] !== spec\.command/g, '!commandMatches(p.args[0], spec.command)');
+fs.writeFileSync(p, s);
+__NODE_EOF__
+node --check backend/heartbeat.js && OLD="$(cat backend/heartbeat.pid 2>/dev/null || true)" && if [ -n "$OLD" ] && [ -r "/proc/$OLD/cmdline" ] && tr '\0' ' ' < "/proc/$OLD/cmdline" | grep -q 'backend/heartbeat.js'; then kill -TERM "$OLD"; echo 'HEARTBEAT_RESTART=TARGETED'; else echo 'HEARTBEAT_RESTART=NO_TARGET'; fi && sleep 8 && printf '%s\n' '=== HEARTBEAT PID ===' && cat backend/heartbeat.pid && printf '%s\n' '=== PID REGISTRY ===' && cat backend/pid.json && printf '%s\n' '=== ID CHECK ===' && if grep -q '"id"' backend/pid.json; then echo 'FAIL'; else echo 'PASS'; fi && printf '%s\n' "BACKUP_DIR=$BACKUP_DIR"
