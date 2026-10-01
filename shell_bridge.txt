@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -i "s/detached:true,{stdio/detached:true,stdio/" backend/heartbeat-supervisor.js && node --check backend/heartbeat-supervisor.js && printf '%s\n' 'SUPERVISOR_FIX_OK'
