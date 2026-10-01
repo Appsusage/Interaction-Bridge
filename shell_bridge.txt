@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent && \
+old_hb=$(cat backend/heartbeat.pid) && \
+printf 'OLD_HEARTBEAT_PID=%s\n' "$old_hb" && \
+kill 890 && \
+sleep 5 && \
+new_hb=$(cat backend/heartbeat.pid) && \
+printf 'NEW_HEARTBEAT_PID=%s\n' "$new_hb" && \
+if [ "$new_hb" != "$old_hb" ] && [ -d "/proc/$new_hb" ]; then echo 'SUPERVISOR_RESTARTED_HEARTBEAT=YES'; else echo 'SUPERVISOR_RESTARTED_HEARTBEAT=NO'; exit 1; fi && \
+printf '%s\n' '=== SUPERVISOR LOG ===' && tail -n 12 backend/heartbeat-supervisor.log
