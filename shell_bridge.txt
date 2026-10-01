@@ -1,0 +1,14 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== HEARTBEAT SOURCE CHECK ==='
+node --check backend/heartbeat.js
+printf '%s\n' '=== PID REGISTRY ==='
+cat backend/pid.json 2>/dev/null || true
+printf '%s\n' '=== HEARTBEAT PROCESSES ==='
+ps -eo pid,ppid,args | grep -E 'heartbeat(-supervisor)?\.js|heartbeat-supervisor\.sh' | grep -v grep || true
+printf '%s\n' '=== FEEDBACK REPO STATE ==='
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  curl -fsS -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/Appsusage/Interaction-Bridge/git/trees/main?recursive=1 | node --input-type=module -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s); for(const x of (j.tree||[]).filter(x=>x.path.startsWith("feedback/"))) console.log(x.path);})'
+else
+  printf '%s\n' 'NO_GITHUB_TOKEN'
+fi
+printf '%s\n' 'HEARTBEAT_STATUS_CHECK_DONE'
