@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '--- heartbeat.js feedback logic ---'
+grep -nE 'feedback|upload|restart|recover|setInterval|CHECK_MS|SCAN_MS' backend/heartbeat.js || true
+printf '%s\n' '--- relevant source ---'
+sed -n '1,280p' backend/heartbeat.js
