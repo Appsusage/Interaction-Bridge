@@ -1,0 +1,4 @@
+cd /home/runner/workspace/ai-agent && \
+sed -i '/log "SUPERVISOR_STARTED pid=$$"/i if [ -s backend/heartbeat-supervisor.pid ]; then existing=$(cat backend/heartbeat-supervisor.pid 2>/dev/null || true); if [ -n "$existing" ] && [ -d "/proc/$existing" ] && [ "$existing" != "$$" ]; then exit 0; fi; fi' backend/heartbeat-supervisor.sh && \
+bash -n backend/heartbeat-supervisor.sh && \
+printf '%s\n' 'SUPERVISOR_SINGLE_INSTANCE_GUARD_OK'
