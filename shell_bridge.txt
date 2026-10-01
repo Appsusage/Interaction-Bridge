@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-rm -f backend/heartbeat-supervisor.js.broken-20261001-035044 backend/heartbeat-supervisor.launcher.pid && \
-printf '%s\n' '=== FINAL FILES ===' && ls -l backend/heartbeat.js backend/pid.js backend/heartbeat-supervisor.sh backend/pid.json backend/heartbeat.pid backend/heartbeat-supervisor.pid && \
-printf '%s\n' '=== FINAL PROCESSES ===' && ps -eo pid,ppid,stat,args | grep -E '[h]eartbeat-supervisor.sh|[h]eartbeat.js' && \
-printf '%s\n' '=== FINAL REGISTRY ===' && cat backend/pid.json && \
-printf '%s\n' '=== FINAL HEARTBEAT LOG ===' && tail -n 12 backend/heartbeat.log && \
-printf '%s\n' '=== FINAL SUPERVISOR LOG ===' && tail -n 8 backend/heartbeat-supervisor.log
