@@ -1,0 +1,36 @@
+cd /home/runner/workspace/ai-agent && BACKUP_DIR="/tmp/heartbeat-backup-$(date +%Y%m%d-%H%M%S)" && mkdir -p "$BACKUP_DIR" && cp -f backend/heartbeat.js "$BACKUP_DIR/" && node --input-type=module <<'__NODE_EOF__'
+import fs from 'node:fs';
+const p = 'backend/heartbeat.js';
+let s = fs.readFileSync(p, 'utf8');
+const start = s.indexOf('function readProcess(pid) {');
+const end = s.indexOf('\nfunction alive(', start);
+const replacement = `function readProcess(pid, needCwd = false) {
+  try {
+    const args = fs.readFileSync(\`/proc/\${pid}/cmdline\`, 'utf8').split('\\0').filter(Boolean);
+    const cwd = needCwd ? fs.realpathSync(\`/proc/\${pid}/cwd\`) : null;
+    return { pid: Number(pid), args, cwd, pidStartTime: procStartTime(pid) };
+  } catch { return null; }
+}
+
+`;
+if (start >= 0 && end > start) s = s.slice(0, start) + replacement + s.slice(end + 1);
+const start2 = s.indexOf('function findRunning(spec) {');
+const end2 = s.indexOf('\nfunction specForProcess(', start2);
+const replacement2 = `function findRunning(spec) {
+  let entries;
+  try { entries = fs.readdirSync('/proc').filter(x => /^\\d+$/.test(x)); } catch { return null; }
+  for (const pid of entries) {
+    const p = readProcess(pid, false);
+    if (!p || p.pid === process.pid) continue;
+    if (p.args[0] !== spec.command || !sameArgs(p.args.slice(1), spec.args)) continue;
+    p.cwd = readProcess(pid, true)?.cwd ?? null;
+    if (p.cwd === spec.cwd) return p;
+  }
+  return null;
+}
+
+`;
+if (start2 >= 0 && end2 > start2) s = s.slice(0, start2) + replacement2 + s.slice(end2 + 1);
+fs.writeFileSync(p, s);
+__NODE_EOF__
+node --check backend/heartbeat.js && printf '%s\n' "BACKUP_DIR=$BACKUP_DIR" && printf '%s\n' 'HEARTBEAT_CHECK=PASS'
