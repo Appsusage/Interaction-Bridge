@@ -1,16 +1,16 @@
 === github_adaptor raw log ===
-time: 2026-10-01T11:03:38.925Z
+time: 2026-10-01T11:05:59.248Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: dc95d86bf9619d999052911c93e2a10458abacf0
+sha: 3cc142511097305d254ac366f6eb103b8f7ac04c
 
 === shell_bridge.txt content ===
-cd /home/runner/workspace/ai-agent && printf '%s\n' '=== HEARTBEAT SOURCE FEEDBACK SECTION ===' && grep -n -B 12 -A 45 -E 'feedback|upload.*GitHub|GITHUB_TOKEN|GH_TOKEN|raw_log|restart' backend/heartbeat.js && printf '%s\n' '=== PROCESS ===' && ps -eo pid,etimes,args | grep -E 'backend/heartbeat.js|heartbeat-supervisor.sh' | grep -v grep && printf '%s\n' '=== PID REGISTRY ===' && cat backend/pid.json
+cd /home/runner/workspace/ai-agent && printf '%s\n' '--- heartbeat.js ---' && sed -n '1,320p' backend/heartbeat.js && printf '%s\n' '--- supervisor ---' && sed -n '1,220p' backend/heartbeat-supervisor.sh && printf '%s\n' '--- pid.json ---' && cat backend/pid.json 2>/dev/null || true && printf '%s\n' '--- running ---' && ps -eo pid,lstart,args --no-headers | grep -E 'backend/heartbeat.js|heartbeat-supervisor.sh|bridge/shell/server.js|github_adaptor.js|backend/server.js' | grep -v grep
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: dc95d86bf9619d999052911c93e2a10458abacf0
+[github_adaptor] GitHub SHA: 3cc142511097305d254ac366f6eb103b8f7ac04c
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
 [github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{".tag":"expired_access_token"},"error_summary":"expired_access_token/"}
     at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:65:11)
