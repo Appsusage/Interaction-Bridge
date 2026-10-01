@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-printf '%s\n' '=== HEARTBEAT TASK: INSPECT PROJECT ===' && \
-printf '%s\n' '=== BACKEND STRUCTURE ===' && find backend -maxdepth 3 -type f | sort && \
-printf '%s\n' '=== PACKAGE ===' && cat package.json && \
-printf '%s\n' '=== EXISTING PROCESS/SUPERVISOR FILES ===' && find backend -maxdepth 4 -type f \( -iname '*pid*' -o -iname '*heartbeat*' -o -iname '*watchdog*' -o -iname '*supervisor*' -o -iname '*server*' -o -iname '*run*' \) -print | sort && \
-printf '%s\n' '=== RUNNING NODE/BACKEND PROCESSES ===' && ps -eo pid,ppid,stat,lstart,args --sort=pid | grep -E '[n]ode|[b]ackend' || true && \
-printf '%s\n' '=== GIT STATUS ===' && git -C /home/runner/workspace/ai-agent status --short
