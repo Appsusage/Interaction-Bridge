@@ -1,0 +1,8 @@
+cd /home/runner/workspace/ai-agent && \
+touch /tmp/heartbeat-heal-fail && \
+node --input-type=module -e "import * as p from './backend/pid.js'; p.update('heartbeat-test',{pid:null,pidStartTime:null,command:'bash',args:['-c','test ! -e /tmp/heartbeat-heal-fail && exec sleep 100000 || exit 1'],status:'dead'});" && \
+sleep 12 && \
+printf '%s\n' '=== HEAL FAILURE STATE ===' && node --input-type=module -e "import * as p from './backend/pid.js'; console.log(JSON.stringify(p.getById('heartbeat-test'),null,2))" && \
+printf '%s\n' '=== HEAL EVENTS ===' && grep -E 'HEAL_FAILURE|RECOVER_ATTEMPT|DETECT' backend/heartbeat.log | tail -n 12 && \
+rm -f /tmp/heartbeat-heal-fail && \
+printf '%s\n' 'FAILURE FLAG REMOVED; NEXT HEAL RETRY CAN RECOVER'
