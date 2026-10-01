@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-kill 1617 && \
-sleep 1 && \
-node --input-type=module -e "import * as p from './backend/pid.js'; p.remove('heartbeat-test'); console.log('REGISTRY_REMOVED=',p.getById('heartbeat-test'))"
