@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-printf '%s\n' '=== HEARTBEAT/SUPERVISOR ===' && ps -eo pid,ppid,stat,args | grep -E '[h]eartbeat-supervisor.sh|[h]eartbeat.js' && \
-printf '%s\n' '=== TEST PID ===' && if [ -d /proc/1617 ]; then echo 'TEST_PID_STILL_EXISTS'; else echo 'TEST_PID_GONE'; fi && \
-printf '%s\n' '=== PID REGISTRY ===' && cat backend/pid.json
