@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-node --input-type=module -e "import * as p from './backend/pid.js'; p.update('heartbeat-test',{args:['2'],status:'running'}); console.log(JSON.stringify(p.getById('heartbeat-test'),null,2))" && \
-sleep 27 && \
-printf '%s\n' '=== REPEATED RECOVERY RECORD ===' && node --input-type=module -e "import * as p from './backend/pid.js'; console.log(JSON.stringify(p.getById('heartbeat-test'),null,2))" && \
-printf '%s\n' '=== RECOVERY EVENTS ===' && grep -E 'DETECT|RECOVER_SUCCESS|HEAL_FAILURE' backend/heartbeat.log | tail -n 20
