@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-old_pid=$(node --input-type=module -e "import * as p from './backend/pid.js'; console.log(p.getById('heartbeat-test')?.pid ?? '')") && \
-printf 'OLD_PID=%s\n' "$old_pid" && \
-if [ -n "$old_pid" ] && [ -d "/proc/$old_pid" ]; then kill "$old_pid"; echo 'TEST_PID_STOPPED=YES'; else echo 'TEST_PID_ALREADY_DEAD=YES'; fi && \
-printf '%s\n' 'WAITING_13_SECONDS_FOR_DETECT_AND_RECOVERY' && \
-sleep 13 && \
-printf '%s\n' '=== PID RECORD ===' && node --input-type=module -e "import * as p from './backend/pid.js'; console.log(JSON.stringify(p.getById('heartbeat-test'),null,2))" && \
-printf '%s\n' '=== HEARTBEAT EVENTS ===' && tail -n 40 backend/heartbeat.log
