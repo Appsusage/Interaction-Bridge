@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && printf '%s\n' '=== CURRENT PROJECT NODE PROCESSES ===' && ps -eo pid=,ppid=,args= | grep -E 'node .*ai-agent/(backend/server.js|bridge/shell/server.js|bridge/shell/github_adaptor.js|backend/heartbeat.js)' | grep -v grep || true && printf '%s\n' '=== PID REGISTRY ===' && cat backend/pid.json
