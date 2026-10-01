@@ -1,0 +1,16 @@
+=== HeartBeat restart failure ===
+time: 2026-10-01T11:21:04.811Z
+process: shell_bridge
+pid: 
+command: node bridge/shell/server.js
+cwd: /home/runner/workspace/ai-agent
+reason: required process is missing; The argument 'stdio' is invalid. Received WriteStream {
+  fd: null,
+  path: '/tmp/heartbeat-restart-shell_bridge-1790853664808.raw_log.txt',
+  flags: 'w',
+  mode: 384,
+  ...
+
+=== raw_log.txt ===
+(empty)
+=== END ===
