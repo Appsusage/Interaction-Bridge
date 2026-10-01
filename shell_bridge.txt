@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && echo 'aW1wb3J0IGZzIGZyb20gJ25vZGU6ZnMnOwoaW1wb3J0IHBhdGggZnJvbSAnbm9kZTpwYXRoJzsK' | base64 -d >/dev/null
