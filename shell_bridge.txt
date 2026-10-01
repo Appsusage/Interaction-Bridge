@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-sed -i '/log "SUPERVISOR_STARTED pid=$$"/i printf "%s\\n" "$$" > backend/heartbeat-supervisor.pid' backend/heartbeat-supervisor.sh && \
-setsid nohup bash backend/heartbeat-supervisor.sh >> backend/heartbeat-supervisor.log 2>&1 < /dev/null & \
-sleep 3 && \
-printf '%s\n' '=== PROCESS CHECK ===' && ps -eo pid,ppid,stat,args | grep -E '[h]eartbeat-supervisor|[h]eartbeat.js' && \
-printf '%s\n' '=== PID FILES ===' && cat backend/heartbeat-supervisor.pid && cat backend/heartbeat.pid && \
-printf '%s\n' '=== LOG ===' && tail -n 10 backend/heartbeat-supervisor.log && tail -n 10 backend/heartbeat.log
