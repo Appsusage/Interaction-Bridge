@@ -1,29 +1,23 @@
 === github_adaptor raw log ===
-time: 2026-10-01T03:39:43.374Z
+time: 2026-10-01T10:44:07.824Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: ea0873804953c9b7489e3fe708220bd8db3bb14d
+sha: 8b137891791fe96927ad78e64b0aad7bded08bdc
 
 === shell_bridge.txt content ===
-cd /home/runner/workspace/ai-agent && \
-printf '%s\n' '=== BRIDGE PROCESSES ===' \
-&& pgrep -af '[g]ithub_adaptor.js' || true \
-&& pgrep -af '[s]erver.js' || true \
-&& printf '%s\n' '=== RECENT BRIDGE LOGS ===' \
-&& for f in /tmp/ai-bridge.log /tmp/*shell*bridge*.log /tmp/*bridge*.log; do [ -f "$f" ] && { echo "===== $f ====="; tail -n 120 "$f"; }; done \
-&& printf '%s\n' '=== SHELL BRIDGE FILES ===' \
-&& find bridge/shell -maxdepth 2 -type f -print -exec sh -c 'echo "===== $1 ====="; sed -n "1,260p" "$1"' _ {} \;
+
+
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: ea0873804953c9b7489e3fe708220bd8db3bb14d
+[github_adaptor] GitHub SHA: 8b137891791fe96927ad78e64b0aad7bded08bdc
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
 [github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{".tag":"expired_access_token"},"error_summary":"expired_access_token/"}
-    at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:64:11)
+    at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:65:11)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async listAllDropboxFiles (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:101:16)
-    at async processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:256:19)
-    at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:428:9)
+    at async listAllDropboxFiles (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:102:16)
+    at async processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:257:19)
+    at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:445:9)
 
 === END RAW LOG ===
