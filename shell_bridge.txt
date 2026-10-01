@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-mkdir -p backend/heartbeat-backup && \
-ts=$(date +%Y%m%d-%H%M%S) && \
-for f in backend/heartbeat.js backend/pid.js backend/heartbeat-supervisor.js backend/heartbeat_test_service.js backend/start-heartbeat.sh; do if [ -f "$f" ]; then cp -p "$f" "backend/heartbeat-backup/$(basename "$f").$ts.bak"; fi; done && \
-printf '%s\n' 'BACKUP_COMPLETE' && \
-find backend/heartbeat-backup -maxdepth 1 -type f -printf '%f\n' | sort
