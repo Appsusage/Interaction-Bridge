@@ -1,0 +1,16 @@
+=== HeartBeat restart failure ===
+time: 2026-10-01T11:06:04.473Z
+process: github_adaptor
+pid: 2243
+command: node bridge/shell/github_adaptor.js
+cwd: /home/runner/workspace/ai-agent
+reason: confirmed_process_failure; The argument 'stdio' is invalid. Received WriteStream {
+  fd: null,
+  path: '/tmp/heartbeat-restart-github_adaptor-1790852764472.raw_log.txt',
+  flags: 'w',
+  mode: 384,
+...
+
+=== raw_log.txt ===
+(empty)
+=== END ===
