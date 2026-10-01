@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-sleep 100000 & \
-test_pid=$! && \
-TEST_PID=$test_pid node --input-type=module -e "import * as p from './backend/pid.js'; import fs from 'node:fs'; const n=Number(process.env.TEST_PID); const stat=fs.readFileSync('/proc/'+n+'/stat','utf8'); const i=stat.lastIndexOf(')'); const start=stat.slice(i+2).trim().split(/\\s+/)[19]; p.upsert({id:'heartbeat-test',name:'heartbeat-test',pid:n,pidStartTime:start,command:'sleep',cwd:process.cwd(),args:['100000'],status:'running'}); console.log(JSON.stringify(p.getById('heartbeat-test')));"
