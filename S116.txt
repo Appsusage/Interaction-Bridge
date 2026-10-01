@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent && \
+echo '=== pid.js ===' && sed -n '1,260p' backend/pid.js && \
+echo '=== heartbeat.js ===' && sed -n '1,360p' backend/heartbeat.js && \
+echo '=== supervisor ===' && if [ -f backend/heartbeat-supervisor.sh ]; then sed -n '1,240p' backend/heartbeat-supervisor.sh; else echo MISSING; fi && \
+echo '=== pid.json ===' && cat backend/pid.json 2>/dev/null || true && \
+echo '=== github_adaptor startup ===' && grep -n -C 5 'heartbeat-supervisor\|startHeartbeatSupervisor' bridge/shell/github_adaptor.js 2>/dev/null || true
