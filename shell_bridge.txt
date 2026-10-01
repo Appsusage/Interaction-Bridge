@@ -1,0 +1,8 @@
+cd /home/runner/workspace/ai-agent && \
+printf '%s\n' '=== BRIDGE PROCESSES ===' \
+&& pgrep -af '[g]ithub_adaptor.js' || true \
+&& pgrep -af '[s]erver.js' || true \
+&& printf '%s\n' '=== RECENT BRIDGE LOGS ===' \
+&& for f in /tmp/ai-bridge.log /tmp/*shell*bridge*.log /tmp/*bridge*.log; do [ -f "$f" ] && { echo "===== $f ====="; tail -n 120 "$f"; }; done \
+&& printf '%s\n' '=== SHELL BRIDGE FILES ===' \
+&& find bridge/shell -maxdepth 2 -type f -print -exec sh -c 'echo "===== $1 ====="; sed -n "1,260p" "$1"' _ {} \;
