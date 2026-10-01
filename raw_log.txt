@@ -1,0 +1,22 @@
+=== github_adaptor raw log ===
+time: 2026-10-01T11:03:38.925Z
+repository: Appsusage/Interaction-Bridge
+file: shell_bridge.txt
+sha: dc95d86bf9619d999052911c93e2a10458abacf0
+
+=== shell_bridge.txt content ===
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== HEARTBEAT SOURCE FEEDBACK SECTION ===' && grep -n -B 12 -A 45 -E 'feedback|upload.*GitHub|GITHUB_TOKEN|GH_TOKEN|raw_log|restart' backend/heartbeat.js && printf '%s\n' '=== PROCESS ===' && ps -eo pid,etimes,args | grep -E 'backend/heartbeat.js|heartbeat-supervisor.sh' | grep -v grep && printf '%s\n' '=== PID REGISTRY ===' && cat backend/pid.json
+
+=== adaptor log ===
+[github_adaptor] 检测到 shell_bridge.txt
+[github_adaptor] 5 秒监听已停止
+[github_adaptor] GitHub SHA: dc95d86bf9619d999052911c93e2a10458abacf0
+[github_adaptor] 查询 Dropbox Shell Bridge 记录
+[github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{".tag":"expired_access_token"},"error_summary":"expired_access_token/"}
+    at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:65:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async listAllDropboxFiles (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:102:16)
+    at async processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:257:19)
+    at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:445:9)
+
+=== END RAW LOG ===
