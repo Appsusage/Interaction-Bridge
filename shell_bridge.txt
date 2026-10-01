@@ -1,0 +1,33 @@
+cd /home/runner/workspace/ai-agent && BACKUP_DIR="/tmp/heartbeat-backup-$(date +%Y%m%d-%H%M%S)" && mkdir -p "$BACKUP_DIR" && cp -f bridge/shell/github_adaptor.js "$BACKUP_DIR/" && python3 - <<'PY'
+from pathlib import Path
+p = Path("bridge/shell/github_adaptor.js")
+s = p.read_text()
+if "from 'node:child_process'" not in s:
+    s = "import { spawn } from 'node:child_process';\n" + s
+marker = "async function mainLoop() {"
+if "function startHeartbeatSupervisor()" not in s:
+    insert = """function startHeartbeatSupervisor() {
+  const child = spawn(
+    "bash",
+    ["backend/heartbeat-supervisor.sh"],
+    {
+      cwd: "/home/runner/workspace/ai-agent",
+      detached: true,
+      stdio: "ignore",
+      env: process.env
+    }
+  );
+  child.unref();
+  console.log("[github_adaptor] HeartBeat external supervisor started");
+}
+
+"""
+    s = s.replace(marker, insert + marker)
+if "startHeartbeatSupervisor();\n\n  console.log("[github_adaptor] Started");" not in s:
+    s = s.replace(
+        'async function mainLoop() {\n  console.log("[github_adaptor] Started");',
+        'async function mainLoop() {\n  startHeartbeatSupervisor();\n  console.log("[github_adaptor] Started");'
+    )
+p.write_text(s)
+PY
+node --check bridge/shell/github_adaptor.js && rm -f backend/heartbeat.log backend/heartbeat-supervisor.log && printf '%s\n' "BACKUP_DIR=$BACKUP_DIR" && printf '%s\n' 'GITHUB_ADAPTOR_CHECK=PASS'
