@@ -1,1 +1,157 @@
-cd /home/runner/workspace/ai-agent && printf '%s\n' '--- heartbeat.js ---' && sed -n '1,320p' backend/heartbeat.js && printf '%s\n' '--- supervisor ---' && sed -n '1,220p' backend/heartbeat-supervisor.sh && printf '%s\n' '--- pid.json ---' && cat backend/pid.json 2>/dev/null || true && printf '%s\n' '--- running ---' && ps -eo pid,lstart,args --no-headers | grep -E 'backend/heartbeat.js|heartbeat-supervisor.sh|bridge/shell/server.js|github_adaptor.js|backend/server.js' | grep -v grep
+cd /home/runner/workspace/ai-agent
+cat > backend/heartbeat.js <<'HEARTBEAT_EOF'
+import fs from "node:fs";
+import path from "node:path";
+import { spawn } from "node:child_process";
+import https from "node:https";
+
+const ROOT = path.resolve(process.cwd());
+const PID_FILE = path.join(ROOT, "backend", "pid.json");
+const RECOVERY_MS = 3000;
+const DISCOVERY_MS = 5000;
+const RESTART_GRACE_MS = 1500;
+const FEEDBACK_REPO = "Appsusage/Interaction-Bridge";
+
+function readRegistry() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(PID_FILE, "utf8"));
+    if (!raw || !Array.isArray(raw.processes)) return { processes: [] };
+    return { processes: raw.processes
+      .filter(p => p && typeof p === "object" && p.name && Number.isInteger(Number(p.pid)))
+      .map(({ id, ...p }) => p) };
+  } catch { return { processes: [] }; }
+}
+function writeRegistry(registry) {
+  const clean = { processes: registry.processes.map(({ id, ...p }) => p) };
+  const tmp = PID_FILE + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(clean, null, 2) + "\n");
+  fs.renameSync(tmp, PID_FILE);
+}
+function procStartTime(pid) {
+  try {
+    const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+    const close = stat.lastIndexOf(")");
+    if (close < 0) return null;
+    return stat.slice(close + 2).trim().split(/\s+/)[19] || null;
+  } catch { return null; }
+}
+function procCommand(pid) {
+  try {
+    const args = fs.readFileSync(`/proc/${pid}/cmdline`, "utf8").split("\0").filter(Boolean);
+    return args.length ? args : null;
+  } catch { return null; }
+}
+function procCwd(pid) {
+  try { return fs.readlinkSync(`/proc/${pid}/cwd`); } catch { return null; }
+}
+function isExactProcess(entry) {
+  return !!entry && !!entry.pid && !!entry.pidStartTime &&
+    procStartTime(entry.pid) === String(entry.pidStartTime);
+}
+function processName(args, pid, registry) {
+  const base = path.basename(args[0] || "process").replace(/[^A-Za-z0-9._-]+/g, "_") || "process";
+  return registry.processes.some(p => p.name === base) ? `${base}_${pid}` : base;
+}
+function discover() {
+  const registry = readRegistry();
+  const registeredPids = new Set(registry.processes.map(p => Number(p.pid)));
+  let entries;
+  try {
+    entries = fs.readdirSync("/proc", {withFileTypes:true})
+      .filter(e => e.isDirectory() && /^\d+$/.test(e.name)).map(e => Number(e.name));
+  } catch { return; }
+  let changed = false;
+  for (const pid of entries) {
+    if (registeredPids.has(pid)) continue;
+    const args = procCommand(pid), start = procStartTime(pid), cwd = procCwd(pid);
+    if (!args || !start) continue;
+    const name = processName(args, pid, registry);
+    registry.processes.push({
+      name, pid, pidStartTime:start, command:args[0], cwd:cwd || ROOT, args:args.slice(1),
+      required:false, protected:false, status:"running"
+    });
+    registeredPids.add(pid);
+    changed = true;
+  }
+  if (changed) writeRegistry(registry);
+}
+function captureStream(stream, chunks) {
+  stream.setEncoding("utf8");
+  stream.on("data", chunk => chunks.push(chunk));
+}
+function startProcess(entry) {
+  return new Promise(resolve => {
+    const chunks = [];
+    const command = entry.command;
+    const args = Array.isArray(entry.args) ? entry.args : [];
+    const cwd = entry.cwd && fs.existsSync(entry.cwd) ? entry.cwd : ROOT;
+    if (!command) return resolve({ok:false, rawLog:"restart failed: missing command\n"});
+    let child;
+    try {
+      child = spawn(command,args,{cwd,detached:true,stdio:["ignore","pipe","pipe"]});
+    } catch (error) {
+      return resolve({ok:false,rawLog:`restart spawn error: ${error.stack || error}\n`});
+    }
+    captureStream(child.stdout,chunks); captureStream(child.stderr,chunks);
+    let settled=false;
+    const finish = result => { if (!settled) { settled=true; resolve(result); } };
+    child.once("error",error=>finish({ok:false,rawLog:`restart error: ${error.stack || error}\n${chunks.join("")}`}));
+    child.once("exit",(code,signal)=>finish({ok:false,rawLog:`${chunks.join("")}\nrestart process exited: code=${code} signal=${signal}\n`}));
+    setTimeout(() => {
+      if (settled) return;
+      const newStart = procStartTime(child.pid);
+      if (!newStart) return finish({ok:false,rawLog:chunks.join("") || "restart process disappeared before verification\n"});
+      child.unref();
+      finish({ok:true,pid:child.pid,pidStartTime:newStart});
+    },RESTART_GRACE_MS);
+  });
+}
+function githubPut(filePath, content) {
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (!token) return Promise.resolve(false);
+  const encoded = Buffer.from(content,"utf8").toString("base64");
+  const body = JSON.stringify({message:`HeartBeat failed restart: ${filePath}`,content:encoded});
+  return new Promise(resolve => {
+    const req=https.request({
+      hostname:"api.github.com",path:`/repos/${FEEDBACK_REPO}/contents/${filePath}`,method:"PUT",
+      headers:{"User-Agent":"ai-agent-heartbeat","Authorization":`Bearer ${token}`,"Accept":"application/vnd.github+json","Content-Type":"application/json","Content-Length":Buffer.byteLength(body)},
+      timeout:10000
+    },res=>{res.resume();resolve(res.statusCode>=200&&res.statusCode<300);});
+    req.on("error",()=>resolve(false)); req.on("timeout",()=>{req.destroy();resolve(false);});
+    req.write(body);req.end();
+  });
+}
+async function sendFailedRestartFeedback(entry, rawLog) {
+  const ts=new Date().toISOString().replace(/[:.]/g,"-");
+  const safe=String(entry.name).replace(/[^A-Za-z0-9._-]+/g,"_");
+  await githubPut(`feedback/restart-failure/${safe}/${ts}/raw_log.txt`,rawLog || "restart failed with empty raw log\n");
+}
+async function recover() {
+  const registry=readRegistry();
+  for (const entry of [...registry.processes]) {
+    if (Number(entry.pid)===process.pid) continue;
+    if (isExactProcess(entry)) continue;
+    const result=await startProcess(entry);
+    const latest=readRegistry();
+    const index=latest.processes.findIndex(p=>p.name===entry.name);
+    if (result.ok) {
+      const updated={...entry,pid:result.pid,pidStartTime:result.pidStartTime,status:"running"};
+      if(index>=0) latest.processes[index]=updated; else latest.processes.push(updated);
+      writeRegistry(latest);
+    } else {
+      if(index>=0) latest.processes.splice(index,1);
+      writeRegistry(latest);
+      await sendFailedRestartFeedback(entry,result.rawLog);
+    }
+  }
+}
+function startLoops() {
+  setInterval(()=>{recover().catch(()=>{});},RECOVERY_MS).unref();
+  setInterval(()=>{try{discover();}catch{}},DISCOVERY_MS).unref();
+  discover();
+}
+startLoops();
+
+HEARTBEAT_EOF
+node --check backend/heartbeat.js
+printf '%s\n' 'HEARTBEAT_PATCH_OK'
