@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -i 's/p.args\[0\] === spec.command/commandMatches(p.args[0], spec.command)/' backend/heartbeat.js
-node --check backend/heartbeat.js
-grep -nE 'CHECK_MS|SCAN_MS|commandMatches|specForProcess|pid.json|feedback' backend/heartbeat.js
-printf '\n--- running ---\n'
-ps -eo pid,args | grep -E 'backend/(heartbeat\.js|server\.js)|bridge/shell/(server|github_adaptor)\.js' | grep -v grep || true
-printf '\n--- pid registry ---\n'
-cat backend/pid.json
