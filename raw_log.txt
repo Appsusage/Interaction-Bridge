@@ -1,0 +1,103 @@
+=== github_adaptor raw log ===
+time: 2026-10-01T03:35:50.907Z
+repository: Appsusage/Interaction-Bridge
+file: shell_bridge.txt
+sha: a9462d545a50724ece911d4ec97e590e668fbbf6
+
+=== shell_bridge.txt content ===
+方式：AI Interaction Bridge
+
+项目路径：
+/home/runner/workspace/ai-agent
+
+任务：实际检查当前项目结构后，在 backend/ 实现 HeartBeat 保活系统，并完整测试。不要使用 Replit Agent。
+
+要求：
+1. 核心文件：
+- backend/heartbeat.js
+- backend/pid.js
+- 如 HeartBeat 自身需要独立 Supervisor/Watchdog，可新增 backend/heartbeat_supervisor.js、启动脚本或其它必要文件，但必须与 heartbeat.js 分离。
+2. 先检查当前项目结构、package.json、现有 server/supervisor/启动方式，以及 backend/ 中已有进程管理代码。
+3. 修改任何现有文件前先做可恢复备份，至少备份将被修改的文件到项目内明确的 backup 目录，并在日志中记录备份位置。
+4. pid.js 作为统一受管 PID 状态存储器，提供：
+- 注册、读取、更新、删除
+- 按唯一名称/服务名精确查找
+- 按 PID 精确查找
+- 保存 pid、name/serviceName、command、cwd、args、status、startedAt、lastCheckAt、restartCount、failureCount 等必要信息
+- PID 重启后必须更新为新 PID
+- 不得只依赖旧 PID 判断状态
+- 所有 kill/操作只能针对 pid.js 明确登记的目标，禁止模糊进程名匹配、禁止 pkill -f
+5. heartbeat.js：
+- 启动读取 pid.js 中全部受管进程
+- 持续检测实际进程状态
+- 一次检测异常不得立即误判死亡；采用合理的确认机制
+- 确认死亡后标记异常，记录原因，开始 10 秒倒计时
+- 10 秒后按原 command/cwd/args 恢复
+- 获取新 PID，更新 pid.js，继续监控
+- 启动失败进入 Heal 流程，不退出 HeartBeat
+- 同一服务同时只能有一个恢复任务，禁止重复启动
+- 单个服务异常不得导致 HeartBeat 整体退出
+- 完整记录 detect/recover/heal 日志：服务、原 PID、检测时间、10 秒倒计时、启动命令、新 PID、重启次数、失败次数、最终结果
+6. Heal 至少包含：
+- 检查 command、cwd、依赖/文件存在性和当前状态
+- 必要时重新初始化运行环境
+- 再次尝试启动
+- 连续失败计数
+- 失败退避，避免高速无限重启；但必须持续自愈
+7. HeartBeat 自身：
+- heartbeat.js 不得自己监控自己
+- 使用独立 Supervisor/Watchdog 进程负责 heartbeat.js 的崩溃/被杀后的重新启动
+- Supervisor 与 heartbeat.js 生命周期分离
+- 结合当前项目已有运行环境，选择实际可工作的启动方式；不要只写概念代码
+- 如果当前环境无法保证 Supervisor 在整个宿主机被 kill 后仍存活，要明确记录这个边界，并使用当前环境可用的最可靠方案
+8. 生命周期必须分离：
+- 杀业务 PID 不得停止 HeartBeat
+- Shell 单命令完成不得关闭 Shell Bridge
+- 单服务异常不得关闭整个系统
+9. 日志和状态应可追踪，避免并发写坏状态文件；必要时使用原子写入/临时文件。
+10. 不要改变现有 AI Interaction Bridge / Shell Bridge 的既有行为，除非为了接入 HeartBeat 必须且有充分理由。
+
+必须进行实际测试：
+A. 检查项目结构和当前状态。
+B. 启动 HeartBeat/Supervisor。
+C. 注册一个专门的测试受管进程。
+D. 验证 pid.js 可以精确定位它。
+E. 手动只杀这个受管测试 PID，确认 HeartBeat 检测异常。
+F. 确认等待约 10 秒后自动恢复，并且 pid.js 更新为新 PID。
+G. 再杀一次新 PID，确认再次恢复。
+H. 模拟启动失败，确认进入 Heal、记录失败并持续重试/退避。
+I. 启动一个普通非受管测试进程，确认 HeartBeat 不操作它。
+J. 杀掉 heartbeat.js 本身，确认独立 Supervisor 能重新启动 heartbeat.js。
+K. 检查整个系统没有因为单个测试服务失败而退出。
+L. 最终清理测试进程/临时登记，避免留下无关后台进程。
+
+最终 outbox 必须返回：
+- 新增/修改文件
+- HeartBeat 如何运行
+- PID 如何定位
+- 10 秒恢复机制
+- Heal 机制
+- HeartBeat 自身保活机制
+- 每项实际测试命令、关键结果、PID变化和时间
+- 已知环境限制（如有）
+- 当前运行中的 HeartBeat/Supervisor PID
+- 当前 pid.js 中登记的服务
+
+执行时严格使用：
+GitHub shell_bridge.txt → github_adaptor.js → Dropbox → Shell Bridge。
+不要让我手动驱动下一步；完成一个阶段后自动继续下一阶段，直到任务完成或遇到明确阻塞。
+
+
+=== adaptor log ===
+[github_adaptor] 检测到 shell_bridge.txt
+[github_adaptor] 5 秒监听已停止
+[github_adaptor] GitHub SHA: a9462d545a50724ece911d4ec97e590e668fbbf6
+[github_adaptor] 查询 Dropbox Shell Bridge 记录
+[github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{".tag":"expired_access_token"},"error_summary":"expired_access_token/"}
+    at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:64:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async listAllDropboxFiles (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:101:16)
+    at async processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:256:19)
+    at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:428:9)
+
+=== END RAW LOG ===
