@@ -1,0 +1,27 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== HEARTBEAT RECURSION FIX: INSPECT ==='
+printf '%s\n' '--- heartbeat.js ---'
+sed -n '1,260p' backend/heartbeat.js
+printf '%s\n' '--- supervisor ---'
+sed -n '1,220p' backend/heartbeat-supervisor.sh
+printf '%s\n' '--- pid.js ---'
+sed -n '1,260p' backend/pid.js
+printf '%s\n' '=== PATCH ==='
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+const path='backend/heartbeat.js';
+let s=fs.readFileSync(path,'utf8');
+const old=s;
+s=s.replace(/const REQUIRED_PROCESSES\s*=\s*\[[\s\S]*?\];/m, `const REQUIRED_PROCESSES = [
+  { name:'ai_server', command:'node', args:['backend/server.js'] },
+  { name:'shell_bridge', command:'node', args:['bridge/shell/server.js'] },
+  { name:'github_adaptor', command:'node', args:['bridge/shell/github_adaptor.js'] }
+];`);
+s=s.replace(/\{\s*name:\s*['"]heartbeat['"][\s\S]*?\},?\n?/m,'');
+if (s===old) throw new Error('PATCH_PATTERN_NOT_FOUND');
+fs.writeFileSync(path,s);
+NODE
+node --check backend/heartbeat.js
+printf '%s\n' '--- verify required list ---'
+grep -n -A8 -B2 'REQUIRED_PROCESSES' backend/heartbeat.js || true
+printf '%s\n' '=== PATCH DONE ==='
