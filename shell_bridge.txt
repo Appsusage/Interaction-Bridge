@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-kill 998 2>/dev/null || true && \
-sleep 1 && \
-if [ -d /proc/998 ]; then echo 'STOP_FAILED'; exit 1; fi && \
-printf '%s\n' 'DUPLICATE_SUPERVISOR_STOPPED'
