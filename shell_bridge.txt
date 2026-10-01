@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-sleep 5 & unmanaged_pid=$! && \
-sleep 2 && \
-printf 'UNMANAGED_PID=%s\n' "$unmanaged_pid" && \
-if [ -d "/proc/$unmanaged_pid" ]; then echo 'UNMANAGED_STILL_RUNNING=YES'; else echo 'UNMANAGED_STILL_RUNNING=NO'; fi && \
-node --input-type=module -e "import * as p from './backend/pid.js'; console.log('REGISTERED_UNMANAGED=',p.getByPid(Number(process.env.UNMANAGED_PID||0)))"
