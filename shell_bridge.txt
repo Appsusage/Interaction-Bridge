@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sleep 5 && printf '%s\n' '=== PID REGISTRY AFTER 5s ===' && cat backend/pid.json && printf '%s\n' '=== HEARTBEAT PROCESS ===' && pgrep -af 'node backend/heartbeat.js' || true && printf '%s\n' '=== PID.JSON ID CHECK ===' && if grep -q '"id"' backend/pid.json; then echo 'FAIL: id field exists'; else echo 'PASS: no id field'; fi
