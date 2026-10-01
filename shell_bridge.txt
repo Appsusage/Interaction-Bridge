@@ -1,0 +1,222 @@
+cd /home/runner/workspace/ai-agent && cat > backend/heartbeat.js <<'EOF'
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import * as pidStore from './pid.js';
+
+const dir = path.dirname(fileURLToPath(import.meta.url));
+const logFile = path.join(dir, 'heartbeat.log');
+const CHECK_MS = 3000;
+const RECOVERY_MS = 10000;
+const CONFIRM_MS = 500;
+const MAX_BACKOFF_MS = 120000;
+const recovering = new Set();
+let stopping = false;
+
+function log(event, data = {}) {
+  const line = JSON.stringify({ time: new Date().toISOString(), event, ...data });
+  fs.appendFileSync(logFile, line + '\n');
+  console.log(line);
+}
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function procStartTime(pid) {
+  try {
+    const raw = fs.readFileSync('/proc/' + pid + '/stat', 'utf8');
+    const close = raw.lastIndexOf(')');
+    return raw.slice(close + 2).trim().split(/\s+/)[19] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function alive(pid, expectedStartTime = null) {
+  const n = Number(pid);
+  if (!Number.isInteger(n) || n <= 0) return false;
+  if (!fs.existsSync('/proc/' + n)) return false;
+  if (expectedStartTime != null) {
+    const actual = procStartTime(n);
+    if (actual != null && String(actual) !== String(expectedStartTime)) return false;
+  }
+  return true;
+}
+
+async function confirmedDead(record) {
+  if (alive(record.pid, record.pidStartTime)) return false;
+  await sleep(CONFIRM_MS);
+  return !alive(record.pid, record.pidStartTime);
+}
+
+async function launch(record) {
+  if (!record.command) throw new Error('missing startup command');
+  if (!fs.existsSync(record.cwd)) throw new Error('working directory missing: ' + record.cwd);
+  const child = spawn(record.command, record.args ?? [], {
+    cwd: record.cwd,
+    detached: true,
+    stdio: ['ignore', 'ignore', 'ignore'],
+    env: process.env
+  });
+  const error = await new Promise(resolve => {
+    let done = false;
+    child.once('error', err => { if (!done) { done = true; resolve(err); } });
+    child.once('spawn', () => { if (!done) { done = true; resolve(null); } });
+  });
+  if (error) throw error;
+  child.unref();
+  await sleep(CONFIRM_MS);
+  if (!alive(child.pid)) throw new Error('process exited immediately; pid=' + child.pid);
+  return { pid: child.pid, pidStartTime: procStartTime(child.pid) };
+}
+
+async function recover(record, reason) {
+  if (recovering.has(record.id)) return;
+  recovering.add(record.id);
+  try {
+    const current = pidStore.getById(record.id);
+    if (!current) return;
+
+    pidStore.update(record.id, {
+      status: 'recovering',
+      lastFailureTime: new Date().toISOString(),
+      lastFailureReason: reason,
+      nextRecoveryTime: new Date(Date.now() + RECOVERY_MS).toISOString()
+    });
+
+    log('RECOVER_SCHEDULED', {
+      id: record.id, name: record.name, oldPid: record.pid,
+      reason, delayMs: RECOVERY_MS
+    });
+
+    for (let seconds = 10; seconds > 0; seconds--) {
+      log('RECOVER_COUNTDOWN', {
+        id: record.id, oldPid: record.pid, remainingSeconds: seconds
+      });
+      await sleep(1000);
+    }
+
+    const latest = pidStore.getById(record.id);
+    if (!latest) return;
+    if (alive(latest.pid, latest.pidStartTime)) {
+      pidStore.update(latest.id, { status: 'running', nextRecoveryTime: null });
+      log('RECOVER_CANCELLED_ALIVE', { id: latest.id, pid: latest.pid });
+      return;
+    }
+
+    let failures = latest.consecutiveFailures;
+    while (!stopping) {
+      log('RECOVER_ATTEMPT', {
+        id: latest.id, oldPid: latest.pid,
+        command: latest.command, cwd: latest.cwd, args: latest.args,
+        restartCount: latest.restartCount + 1
+      });
+
+      try {
+        const started = await launch(latest);
+        const updated = pidStore.update(latest.id, {
+          pid: started.pid,
+          pidStartTime: started.pidStartTime,
+          status: 'running',
+          lastStartTime: new Date().toISOString(),
+          lastCheckTime: new Date().toISOString(),
+          restartCount: latest.restartCount + 1,
+          consecutiveFailures: 0,
+          nextRecoveryTime: null,
+          lastFailureReason: null
+        });
+        log('RECOVER_SUCCESS', {
+          id: updated.id, oldPid: latest.pid, newPid: updated.pid,
+          restartCount: updated.restartCount
+        });
+        break;
+      } catch (error) {
+        failures++;
+        const backoff = Math.min(
+          MAX_BACKOFF_MS,
+          RECOVERY_MS * Math.pow(2, Math.min(failures - 1, 4))
+        );
+        pidStore.update(latest.id, {
+          status: 'healing',
+          consecutiveFailures: failures,
+          lastFailureTime: new Date().toISOString(),
+          lastFailureReason: error.message,
+          nextRecoveryTime: new Date(Date.now() + backoff).toISOString()
+        });
+        log('HEAL_FAILURE', {
+          id: latest.id, oldPid: latest.pid,
+          error: error.message, consecutiveFailures: failures,
+          retryInMs: backoff,
+          checks: ['startup command', 'working directory', 'process exit state']
+        });
+        await sleep(backoff);
+      }
+    }
+  } catch (error) {
+    log('RECOVER_ERROR', { id: record.id, error: error.stack || error.message });
+  } finally {
+    recovering.delete(record.id);
+  }
+}
+
+async function check(record) {
+  const current = pidStore.getById(record.id);
+  if (!current) return;
+
+  pidStore.update(current.id, { lastCheckTime: new Date().toISOString() });
+
+  if (alive(current.pid, current.pidStartTime)) {
+    if (current.status !== 'running') {
+      pidStore.update(current.id, { status: 'running' });
+    }
+    return;
+  }
+
+  if (recovering.has(current.id)) return;
+  if (!(await confirmedDead(current))) return;
+
+  pidStore.update(current.id, {
+    status: 'dead',
+    lastFailureTime: new Date().toISOString(),
+    lastFailureReason: 'process not alive or PID identity changed'
+  });
+
+  log('DETECT', {
+    id: current.id, name: current.name, oldPid: current.pid,
+    reason: 'confirmed_process_failure'
+  });
+
+  recover(current, 'confirmed_process_failure');
+}
+
+async function main() {
+  log('HEARTBEAT_STARTED', {
+    pid: process.pid, checkMs: CHECK_MS, recoveryDelayMs: RECOVERY_MS
+  });
+
+  process.on('SIGTERM', () => {
+    stopping = true;
+    log('HEARTBEAT_STOPPING', { signal: 'SIGTERM' });
+  });
+  process.on('SIGINT', () => {
+    stopping = true;
+    log('HEARTBEAT_STOPPING', { signal: 'SIGINT' });
+  });
+
+  while (!stopping) {
+    try {
+      await Promise.allSettled(pidStore.list().map(check));
+    } catch (error) {
+      log('LOOP_ERROR', { error: error.stack || error.message });
+    }
+    await sleep(CHECK_MS);
+  }
+
+  log('HEARTBEAT_EXITED');
+}
+
+main().catch(error => {
+  log('HEARTBEAT_FATAL', { error: error.stack || error.message });
+  process.exitCode = 1;
+});
+EOF
+node --check backend/heartbeat.js && printf '%s\n' 'HEARTBEAT_JS_OK'
