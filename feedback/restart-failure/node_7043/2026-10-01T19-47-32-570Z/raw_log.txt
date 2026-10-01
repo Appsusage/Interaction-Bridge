@@ -1,0 +1,16 @@
+
+  #  /nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node[7404]: std::unique_ptr<long unsigned int> node::WorkerThreadsTaskRunner::DelayedTaskScheduler::Start() at ../../src/node_platform.cc:109
+  #  Assertion failed: (0) == (uv_thread_create(t.get(), start_thread, this))
+
+----- Native stack trace -----
+
+ 1: 0x564c546da373 node::Assert(node::AssertionInfo const&) [/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node]
+ 2: 0x564c5478bd22 node::WorkerThreadsTaskRunner::WorkerThreadsTaskRunner(int, node::PlatformDebugLogLevel) [/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node]
+ 3: 0x564c5478d211 node::NodePlatform::NodePlatform(int, v8::TracingController*, v8::PageAllocator*) [/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node]
+ 4: 0x564c54673510  [/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node]
+ 5: 0x564c54675b2c node::Start(int, char**) [/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node]
+ 6: 0x7f0763f6a285  [/nix/store/wb6rhpznjfczwlwx23zmdrrw74bayxw4-glibc-2.42-47/lib/libc.so.6]
+ 7: 0x7f0763f6a338 __libc_start_main [/nix/store/wb6rhpznjfczwlwx23zmdrrw74bayxw4-glibc-2.42-47/lib/libc.so.6]
+ 8: 0x564c54582fa5 _start [/nix/store/9cyx2v23dip6p9q98384k9v06c96qskb-nodejs-24.13.0/bin/node]
+
+restart process exited: code=null signal=SIGABRT
