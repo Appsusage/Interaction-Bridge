@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-test_pid=$(node --input-type=module -e "import * as p from './backend/pid.js'; console.log(p.getById('heartbeat-test')?.pid ?? '')") && \
-node --input-type=module -e "process.kill(Number(process.env.TEST_PID), 'SIGTERM')"
