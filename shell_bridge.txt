@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent && \
-nohup bash backend/heartbeat-supervisor.sh >> backend/heartbeat-supervisor.log 2>&1 & \
-echo $! > backend/heartbeat-supervisor.launcher.pid && \
-sleep 3 && \
-printf '%s\n' '=== SUPERVISOR PID ===' && cat backend/heartbeat-supervisor.pid && \
-printf '%s\n' '=== HEARTBEAT PID ===' && cat backend/heartbeat.pid && \
-printf '%s\n' '=== HEARTBEAT LOG ===' && tail -n 5 backend/heartbeat.log && \
-printf '%s\n' '=== SUPERVISOR LOG ===' && tail -n 5 backend/heartbeat-supervisor.log
