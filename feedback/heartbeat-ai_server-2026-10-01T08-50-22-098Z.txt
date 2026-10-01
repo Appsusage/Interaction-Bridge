@@ -1,0 +1,16 @@
+=== HeartBeat restart failure ===
+time: 2026-10-01T08:50:22.098Z
+process: ai_server
+pid: 
+command: node backend/server.js
+cwd: /home/runner/workspace/ai-agent
+reason: required process is missing; The argument 'stdio' is invalid. Received WriteStream {
+  fd: null,
+  path: '/tmp/heartbeat-restart-ai_server-1790844622097.raw_log.txt',
+  flags: 'w',
+  mode: 384,
+  flu...
+
+=== raw_log.txt ===
+(empty)
+=== END ===
