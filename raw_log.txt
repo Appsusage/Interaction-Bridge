@@ -1,74 +1,19 @@
 === github_adaptor raw log ===
-time: 2026-10-01T19:46:07.640Z
+time: 2026-10-02T05:28:48.047Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: 30316e7a07c98e15ffc3d1f0a941e01e9e046d2a
+sha: f46045c282cb98a06dc7a7c1ceea724f4b9feb9e
 
 === shell_bridge.txt content ===
-cd /home/runner/workspace/ai-agent
-printf '%s\n' '=== HEARTBEAT CLEAN RESTART ==='
-
-# Kill every existing HeartBeat node instance, but do not kill this task shell.
-for d in /proc/[0-9]*; do
-  p=${d##*/}
-  [ "$p" = "$$" ] && continue
-  [ -r "$d/cmdline" ] || continue
-  first=''
-  IFS= read -r -d '' first < "$d/cmdline" 2>/dev/null || true
-  case "$first" in
-    */node)
-      if grep -aq 'backend/heartbeat.js' "$d/cmdline" 2>/dev/null; then
-        kill -KILL "$p" 2>/dev/null || true
-      fi
-      ;;
-  esac
-done
-
-# Stop old Supervisor so it cannot race the cleanup.
-if [ -s backend/heartbeat-supervisor.pid ]; then
-  spid=$(cat backend/heartbeat-supervisor.pid 2>/dev/null || true)
-  case "$spid" in ''|*[!0-9]*) ;; *) kill -KILL "$spid" 2>/dev/null || true ;; esac
-fi
-rm -f backend/heartbeat-supervisor.pid backend/heartbeat.pid
-
-sleep 2
-
-# Apply the recursion fix before restarting HeartBeat.
-node --input-type=module <<'NODE'
-import fs from 'node:fs';
-const path='backend/heartbeat.js';
-let s=fs.readFileSync(path,'utf8');
-const old=s;
-s=s.replace(/const REQUIRED_PROCESSES\s*=\s*\[[\s\S]*?\];/m, `const REQUIRED_PROCESSES = [
-  { name:'ai_server', command:'node', args:['backend/server.js'] },
-  { name:'shell_bridge', command:'node', args:['bridge/shell/server.js'] },
-  { name:'github_adaptor', command:'node', args:['bridge/shell/github_adaptor.js'] }
-];`);
-if (s===old) throw new Error('REQUIRED_PROCESSES_PATCH_NOT_APPLIED');
-fs.writeFileSync(path,s);
-NODE
-node --check backend/heartbeat.js
-
-# Start exactly one external Supervisor; Supervisor starts one HeartBeat.
-nohup bash backend/heartbeat-supervisor.sh >/dev/null 2>&1 &
-
-sleep 4
-
-printf '%s\n' '--- VERIFY HEARTBEAT ---'
-ps -eo pid,ppid,args | grep 'backend/heartbeat.js' | grep -v grep || true
-printf '%s\n' '--- VERIFY SUPERVISOR ---'
-ps -eo pid,ppid,args | grep 'heartbeat-supervisor.sh' | grep -v grep || true
-printf '%s\n' '--- VERIFY REQUIRED LIST ---'
-grep -n -A6 'REQUIRED_PROCESSES' backend/heartbeat.js || true
-printf '%s\n' '=== HEARTBEAT CLEAN RESTART DONE ==='
+cd /home/runner/workspace/ai-agent && pkill -KILL -f 'backend/heartbeat.js' || true; pkill -KILL -f 'heartbeat-supervisor.sh' || true; sleep 1; grep -nE 'restart|feedback|raw_log|unregister|REQUIRED_PROCESSES|setInterval' backend/heartbeat.js; printf '\n--- restart-related block ---\n'; grep -n -B20 -A45 -E 'restart.*fail|restart.*error|raw_log|feedback' backend/heartbeat.js
 
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: 30316e7a07c98e15ffc3d1f0a941e01e9e046d2a
+[github_adaptor] GitHub SHA: f46045c282cb98a06dc7a7c1ceea724f4b9feb9e
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
-[github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{".tag":"expired_access_token"},"error_summary":"expired_access_token/"}
+[github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{"reason":{".tag":"too_many_requests"},"retry_after":300},"error_summary":""}
     at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:65:11)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async listAllDropboxFiles (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:102:16)
