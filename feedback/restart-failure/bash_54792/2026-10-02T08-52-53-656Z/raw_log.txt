@@ -1,2 +1,0 @@
-
-restart process exited: code=0 signal=null
