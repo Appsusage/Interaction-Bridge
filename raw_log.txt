@@ -1,17 +1,56 @@
 === github_adaptor raw log ===
-time: 2026-10-02T05:28:48.047Z
+time: 2026-10-02T08:11:42.103Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: f46045c282cb98a06dc7a7c1ceea724f4b9feb9e
+sha: 8fddec4966d595c7d10403ba8a276b9bfb02106b
 
 === shell_bridge.txt content ===
-cd /home/runner/workspace/ai-agent && pkill -KILL -f 'backend/heartbeat.js' || true; pkill -KILL -f 'heartbeat-supervisor.sh' || true; sleep 1; grep -nE 'restart|feedback|raw_log|unregister|REQUIRED_PROCESSES|setInterval' backend/heartbeat.js; printf '\n--- restart-related block ---\n'; grep -n -B20 -A45 -E 'restart.*fail|restart.*error|raw_log|feedback' backend/heartbeat.js
+cd /home/runner/workspace/ai-agent && node <<'NODE'
+const fs = require("fs");
+const path = "backend/heartbeat.js";
+let s = fs.readFileSync(path, "utf8");
+
+const oldBlock = `async function sendFailedRestartFeedback(entry, rawLog) {
+  const ts=new Date().toISOString().replace(/[:.]/g,"-");
+  const safe=String(entry.name).replace(/[^A-Za-z0-9._-]+/g,"_");
+  await githubPut(`feedback/restart-failure/${safe}/${ts}/raw_log.txt`,rawLog || "restart failed with empty raw log\\n");
+}`;
+
+const newBlock = `async function sendFailedRestartFeedback(entry, rawLog) {
+  const feedbackDir = path.join(ROOT, "bridge", "feedback");
+  fs.mkdirSync(feedbackDir, { recursive: true });
+
+  let filePath = path.join(feedbackDir, "raw_log.txt");
+  if (fs.existsSync(filePath)) {
+    let index = 1;
+    while (fs.existsSync(path.join(feedbackDir, \`raw_log${index}.txt\`))) index++;
+    filePath = path.join(feedbackDir, \`raw_log${index}.txt\`);
+  }
+
+  fs.writeFileSync(
+    filePath,
+    rawLog || "restart failed with empty raw log\\n",
+    "utf8"
+  );
+}`;
+
+if (!s.includes(oldBlock)) {
+  console.error("TARGET_BLOCK_NOT_FOUND");
+  process.exit(2);
+}
+
+s = s.replace(oldBlock, newBlock);
+fs.writeFileSync(path, s, "utf8");
+NODE
+node --check backend/heartbeat.js
+printf '\n--- changed block ---\n'
+sed -n '/async function sendFailedRestartFeedback/,/async function recover/p' backend/heartbeat.js
 
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: f46045c282cb98a06dc7a7c1ceea724f4b9feb9e
+[github_adaptor] GitHub SHA: 8fddec4966d595c7d10403ba8a276b9bfb02106b
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
 [github_adaptor] ERROR: Error: Dropbox files/list_folder: {"error":{"reason":{".tag":"too_many_requests"},"retry_after":300},"error_summary":""}
     at dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:65:11)
