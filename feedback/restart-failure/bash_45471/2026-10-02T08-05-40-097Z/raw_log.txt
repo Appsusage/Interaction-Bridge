@@ -1,3 +1,0 @@
-backend/heartbeat-supervisor.sh: fork: retry: Resource temporarily unavailable
-
-restart process exited: code=0 signal=null

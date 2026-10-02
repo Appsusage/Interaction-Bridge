@@ -1,7 +1,0 @@
-[github_adaptor] HeartBeat external supervisor started
-[github_adaptor] Started
-[github_adaptor] Poll interval: 5 seconds
-[github_adaptor] Watching Appsusage/Interaction-Bridge/shell_bridge.txt
-Warning: Failed to load CA certificates off thread: resource temporarily unavailable
-
-restart process exited: code=null signal=SIGABRT
