@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && node --check backend/heartbeat.js && printf 'HEARTBEAT_SYNTAX_OK\n'
