@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && pkill -KILL -f 'backend/heartbeat.js' || true; pkill -KILL -f 'heartbeat-supervisor.sh' || true; sleep 1; grep -nE 'restart|feedback|raw_log|unregister|REQUIRED_PROCESSES|setInterval' backend/heartbeat.js; printf '\n--- restart-related block ---\n'; grep -n -B20 -A45 -E 'restart.*fail|restart.*error|raw_log|feedback' backend/heartbeat.js
