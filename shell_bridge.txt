@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n '1,320p' backend/heartbeat.js && printf '\n---PID---\n' && sed -n '1,260p' backend/pid.js
