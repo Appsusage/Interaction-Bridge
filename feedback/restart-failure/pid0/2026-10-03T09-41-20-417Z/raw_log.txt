@@ -1,0 +1,4 @@
+restart error: Error: spawn /nix/store/200r82g6scv5a9dlpba7ksn69n6a2fd5-pid1-0.0.1/bin/pid0 ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:286:19)
+    at onErrorNT (node:internal/child_process:484:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
