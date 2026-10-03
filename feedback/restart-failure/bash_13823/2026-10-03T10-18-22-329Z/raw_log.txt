@@ -1,0 +1,6 @@
+restart error: Error: spawn /nix/store/bp3vb652rrh4jnxpnzy33pgwhv6ihr7i-bash-interactive-5.3p9/bin/bash EAGAIN
+    at ChildProcess._handle.onexit (node:internal/child_process:286:19)
+    at onErrorNT (node:internal/child_process:484:16)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+    at runNextTicks (node:internal/process/task_queues:68:3)
+    at process.processTimers (node:internal/timers:538:9)
