@@ -1,0 +1,100 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+
+p = Path("backend/heartbeat.js.")
+text = p.read_text()
+
+start = text.index("async function recover() {")
+end = text.index("function startLoops() {", start)
+
+new_block = r'''let recovering = false;
+
+async function recover() {
+  if (recovering) {
+    return;
+  }
+
+  recovering = true;
+
+  try {
+    const registry = readRegistry();
+
+    for (const entry of [
+      ...registry.processes
+    ]) {
+      if (
+        Number(entry.pid) === process.pid
+      ) {
+        continue;
+      }
+
+      if (isExactProcess(entry)) {
+        continue;
+      }
+
+      const result =
+        await startProcess(entry);
+
+      const latest = readRegistry();
+
+      const index =
+        latest.processes.findIndex(
+          p =>
+            Number(p.pid) ===
+            Number(entry.pid)
+        );
+
+      if (result.ok) {
+        const updated = {
+          ...entry,
+          pid: result.pid,
+          pidStartTime:
+            result.pidStartTime,
+          status: "running"
+        };
+
+        if (index >= 0) {
+          latest.processes[index] =
+            updated;
+        } else {
+          latest.processes.push(
+            updated
+          );
+        }
+
+        writeRegistry(latest);
+      } else {
+        /*
+         * 失败处理：
+         *
+         * 1. 立即 unregister 当前失效 PID
+         * 2. 写入 pid.json
+         * 3. 保存这一次启动失败的完整 raw log
+         * 4. 不再继续恢复这个 entry
+         */
+        if (index >= 0) {
+          latest.processes.splice(
+            index,
+            1
+          );
+        }
+
+        writeRegistry(latest);
+
+        await sendFailedRestartFeedback(
+          entry,
+          result.rawLog
+        );
+      }
+    }
+  } finally {
+    recovering = false;
+  }
+}
+
+'''
+
+p.write_text(text[:start] + new_block + text[end:])
+PY
+node --check backend/heartbeat.js.
+printf '%s\n' 'HEARTBEAT_JS_DOT_PATCH_OK'
