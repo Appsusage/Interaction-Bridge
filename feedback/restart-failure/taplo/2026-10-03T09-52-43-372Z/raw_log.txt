@@ -1,4 +1,0 @@
-restart error: Error: spawn /nix/store/qq4mijbp008lc0r1h42jy3fhwakqz6nf-taplo-0.patched/bin/taplo EAGAIN
-    at ChildProcess._handle.onexit (node:internal/child_process:286:19)
-    at onErrorNT (node:internal/child_process:484:16)
-    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)

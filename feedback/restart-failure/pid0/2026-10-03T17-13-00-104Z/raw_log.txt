@@ -1,3 +1,0 @@
-{"error":"move pid0 to pid0.scope: open /sys/fs/cgroup/system.slice/pid0.scope/cgroup.procs: permission denied","file":"github.com/replit/goval/cmd/pid0/main.go:112","func":"main.main","level":"fatal","msg":"failed to move pid0 to cgroup scope","time":"2026-10-03T17:13:00Z"}
-
-restart process exited: code=1 signal=null

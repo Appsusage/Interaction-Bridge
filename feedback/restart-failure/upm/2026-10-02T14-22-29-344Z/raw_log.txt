@@ -1,4 +1,0 @@
-restart error: Error: spawn /nix/store/2mpy2a5x1psx3i2za4i0hk97dpyw5g52-replit-runtime-path/bin/upm EAGAIN
-    at ChildProcess._handle.onexit (node:internal/child_process:286:19)
-    at onErrorNT (node:internal/child_process:484:16)
-    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
