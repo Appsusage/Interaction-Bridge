@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && mv backend/heartbeat.js. backend/heartbeat.js && nohup node backend/heartbeat.js >/dev/null 2>&1 & HB_PID=$!; echo "HEARTBEAT_STARTED_PID=$HB_PID"; sleep 1; if kill -0 "$HB_PID" 2>/dev/null; then echo "HEARTBEAT_RUNNING"; else echo "HEARTBEAT_START_FAILED"; exit 1; fi
