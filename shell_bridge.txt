@@ -1,0 +1,31 @@
+cd /home/runner/workspace/ai-agent && \
+BACKUP_DIR="/tmp/github-adaptor-pre-supervisor-clean-$(date +%Y%m%d-%H%M%S)" && \
+mkdir -p "$BACKUP_DIR" && \
+cp -f bridge/shell/github_adaptor.js "$BACKUP_DIR/github_adaptor.js" && \
+echo "=== BEFORE: Supervisor references ===" && \
+grep -RIn --exclude-dir=.git --exclude-dir=node_modules --exclude='shell_bridge.txt' -E 'heartbeat-supervisor|startHeartbeatSupervisor|HeartBeat external supervisor' backend bridge package.json .replit replit.nix 2>/dev/null || true && \
+python3 - <<'PY'
+from pathlib import Path
+p = Path("bridge/shell/github_adaptor.js")
+s = p.read_text()
+old_import = "import { spawn } from 'node:child_process';\n"
+if old_import in s:
+    s = s.replace(old_import, "", 1)
+start = s.find("function startHeartbeatSupervisor() {")
+if start >= 0:
+    end = s.find("\nasync function mainLoop()", start)
+    if end >= 0:
+        s = s[:start] + s[end + 1:]
+s = s.replace("  startHeartbeatSupervisor();\n", "")
+p.write_text(s)
+PY
+rm -f backend/heartbeat-supervisor.sh backend/heartbeat-supervisor.pid backend/heartbeat-supervisor.log backend/heartbeat-supervisor.err 2>/dev/null || true
+echo "=== AFTER: Supervisor references ==="
+grep -RIn --exclude-dir=.git --exclude-dir=node_modules --exclude='shell_bridge.txt' -E 'heartbeat-supervisor|startHeartbeatSupervisor|HeartBeat external supervisor' backend bridge package.json .replit replit.nix 2>/dev/null || true
+echo "=== GITHUB_ADAPTOR CHECK ==="
+node --check bridge/shell/github_adaptor.js
+echo "GITHUB_ADAPTOR_SUPERVISOR_REMOVAL=PASS"
+echo "BACKUP_DIR=$BACKUP_DIR"
+echo "=== HEARTBEAT FILES (unchanged) ==="
+ls -l backend/heartbeat.js backend/heartbeat.js. 2>/dev/null || true
+echo "=== END ==="
