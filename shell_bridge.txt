@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && if [ -f 'bridge/shell/run.sh（暂停）' ]; then rm -f 'bridge/shell/run.sh（暂停）'; echo 'RUN_SH_DELETE=PASS'; else echo 'RUN_SH_DELETE=NOT_FOUND'; fi && echo '=== VERIFY ===' && find bridge/shell -maxdepth 1 -type f -name 'run.sh*' -print 2>/dev/null || true
