@@ -1,1 +1,0 @@
-cd ~/workspace/ai-agent && printf '%s\n' '=== BACKEND ADAPTOR STATUS/HISTORY ===' && git status --short -- backend/bridge/shell/github_adaptor.js && git log --oneline --decorate -20 -- backend/bridge/shell/github_adaptor.js; printf '%s\n' '=== BACKEND ADAPTOR FULL CONTENT ==='; cat backend/bridge/shell/github_adaptor.js
