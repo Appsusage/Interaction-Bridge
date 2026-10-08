@@ -1,1 +1,0 @@
-cd ~/workspace/ai-agent && rm -f backend/bridge/shell/github_adaptor.js && if [ ! -e backend/bridge/shell/github_adaptor.js ]; then echo 'RESTORE SUCCESS: backend/bridge/shell/github_adaptor.js removed'; else echo 'RESTORE FAILED'; exit 1; fi && printf '%s\n' '=== TARGET STILL PRESENT ===' && test -f bridge/shell/github_adaptor.js && echo 'bridge/shell/github_adaptor.js present'
