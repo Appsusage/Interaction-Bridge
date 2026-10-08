@@ -1,83 +1,43 @@
 === github_adaptor raw log ===
-time: 2026-10-04T07:43:52.042Z
+time: 2026-10-08T18:11:41.540Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: b3eef5346562991e6e484ada2365ce7ac1cf15a8
+sha: 33f653092051f43c19a7a8034381a1cf8f188c1b
 
 === shell_bridge.txt content ===
 cd /home/runner/workspace/ai-agent && python3 - <<'PY'
 from pathlib import Path
-import subprocess, os, json, re
+import re
 
-print("=== HEARTBEAT EAGAIN DIAGNOSTIC ===")
-print("time:", subprocess.run(["date","-Is"], capture_output=True, text=True).stdout.strip())
-
-for cmd in [
-    ["bash","-lc","printf 'ulimit_nproc: '; ulimit -u"],
-    ["bash","-lc","printf 'process_count: '; ps -e --no-headers | wc -l"],
-    ["bash","-lc","printf 'node_count: '; ps -eo comm= | grep -E '^(node|nodejs)$' | wc -l"],
-    ["bash","-lc","printf 'bash_count: '; ps -eo comm= | grep -E '^bash$' | wc -l"],
-    ["bash","-lc","ps -eo pid,ppid,stat,etime,comm,args --sort=pid | grep -E 'heartbeat|Heartbeat|heartbeat-supervisor|node|bash' | head -n 200"],
-]:
-    r = subprocess.run(cmd, capture_output=True, text=True)
-    print("\n$ " + " ".join(cmd))
-    print(r.stdout, end="")
-    if r.stderr:
-        print("STDERR:", r.stderr, end="")
-
-print("\n--- heartbeat-supervisor.sh ---")
-p = Path("backend/heartbeat-supervisor.sh")
-if p.exists():
-    print(p.read_text(errors="replace"))
-else:
-    print("NOT FOUND")
-
-print("\n--- heartbeat files ---")
-for p in sorted(Path("backend").glob("heartbeat.js*")):
-    print(p, "size=", p.stat().st_size, "mtime=", p.stat().st_mtime)
-
-print("\n--- pid.json ---")
-try:
-    print(Path("backend/pid.json").read_text(errors="replace"))
-except Exception as e:
-    print("ERROR:", repr(e))
-
-print("\n--- recent feedback raw logs ---")
-fb = Path("bridge/feedback")
-logs = sorted(fb.glob("raw_log*.txt"), key=lambda p:p.stat().st_mtime) if fb.exists() else []
-for p in logs[-15:]:
-    try:
-        s=p.read_text(errors="replace")
-        print(f"### {p.name} mtime={p.stat().st_mtime}")
-        print(s)
-    except Exception as e:
-        print(p, repr(e))
-
-print("\n--- process/resource limits ---")
-for f in ["/proc/self/limits"]:
-    try:
-        print(Path(f).read_text(errors="replace"))
-    except Exception as e:
-        print("ERROR:", repr(e))
-
-print("=== END ===")
+for name in ["bridge/shell/server.js", "bridge/shell/github_adaptor.js"]:
+    p = Path(name)
+    print("\n===== " + name + " =====")
+    if not p.exists():
+        print("NOT FOUND")
+        continue
+    s = p.read_text(errors="replace")
+    lines = s.splitlines()
+    for i,line in enumerate(lines,1):
+        if re.search(r"dropbox|DROPBOX|access.?token|refresh.?token|app.?key|app.?secret|oauth2/token", line, re.I):
+            a=max(1,i-5); b=min(len(lines),i+8)
+            print(f"--- lines {a}-{b} ---")
+            for n in range(a,b+1):
+                print(f"{n}: {lines[n-1]}")
+print("\n=== CHECK END ===")
 PY
-
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: b3eef5346562991e6e484ada2365ce7ac1cf15a8
+[github_adaptor] GitHub SHA: 33f653092051f43c19a7a8034381a1cf8f188c1b
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
-[github_adaptor] 准备创建 /inbox/S289.txt
-[github_adaptor] Dropbox 文件创建成功
-[github_adaptor] Dropbox 文件验证成功
-[github_adaptor] 开始删除 GitHub shell_bridge.txt
-[github_adaptor] ERROR: Error: GitHub 404: {"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/contents#delete-a-file","status":"404"}
-    at github (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:41:19)
+[github_adaptor] ERROR: Error: Dropbox OAuth failed: {"error":"invalid_grant","error_description":"refresh token is malformed"}
+    at getDropboxAccessToken (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:44:11)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async deleteGitHubFile (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:185:10)
-    at async processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:303:5)
-    at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:445:9)
+    at async getDropboxToken (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:50:49)
+    at async dropbox (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:81:15)
+    at async listAllDropboxFiles (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:150:16)
+    at async processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:327:19)
+    at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:499:9)
 
 === END RAW LOG ===
