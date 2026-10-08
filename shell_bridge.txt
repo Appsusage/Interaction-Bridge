@@ -1,0 +1,1 @@
+cd ~/workspace/ai-agent && printf '%s\n' '=== BACKEND FILE DIFF HEAD^..HEAD ===' && git diff HEAD^ HEAD -- backend/bridge/shell/github_adaptor.js; printf '%s\n' '=== BACKEND FILE AT HEAD^ ===' && git show HEAD^:backend/bridge/shell/github_adaptor.js 2>&1 | sed -n '1,260p'
