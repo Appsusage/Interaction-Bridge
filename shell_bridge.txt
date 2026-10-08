@@ -1,1 +1,0 @@
-cd ~/workspace/ai-agent && printf '%s\n' '=== TARGET FULL CONTENT BEFORE RESTORE ===' && cat bridge/shell/github_adaptor.js && printf '%s\n' '=== TARGET GIT HISTORY ===' && git log --oneline --decorate -30 -- bridge/shell/github_adaptor.js && printf '%s\n' '=== TARGET STATUS ===' && git status --short -- bridge/shell/github_adaptor.js
