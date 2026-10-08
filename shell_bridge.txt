@@ -1,0 +1,1 @@
+cd ~/workspace/ai-agent && printf '%s\n' '--- github_adaptor.js path ---' && find . -type f -name 'github_adaptor.js' -print && printf '%s\n' '--- Dropbox token references ---' && grep -RniE 'DROPBOX|dropbox|access.?token|refresh.?token|api.dropboxapi.com' --include='*.js' bridge backend 2>/dev/null | head -n 200
