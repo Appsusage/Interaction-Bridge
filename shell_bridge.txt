@@ -1,0 +1,44 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node <<'NODE'
+const fs = require("fs");
+const routerPath = "backend/heartbeat/supervisor-router.js";
+let router = fs.readFileSync(routerPath, "utf8");
+router = router.replace(
+  'const STATE_FILE = path.join(HERE, "supervisor-state.json");',
+  'const STATE_FILE = path.join(HERE, "supervisor-state.json");\nconst FAILED_MARKER = path.join(HERE, "feedback", "supervisor-launch-failed.marker");'
+);
+router = router.replace(
+  'if (startingSupervisor || supervisorIsRunning() || !fs.existsSync(SCRIPT_FILE)) return;',
+  'if (startingSupervisor || fs.existsSync(FAILED_MARKER) || supervisorIsRunning() || !fs.existsSync(SCRIPT_FILE)) return;'
+);
+router = router.replace(
+  'child.once("error", error => appendFailure(error.stack || error, "Supervisor script launch failed"));',
+  'child.once("error", error => { appendFailure(error.stack || error, "Supervisor script launch failed"); try { fs.writeFileSync(FAILED_MARKER, new Date().toISOString() + "\\n"); } catch {} });'
+);
+fs.writeFileSync(routerPath, router);
+
+const heartbeatPath = "backend/heartbeat/heartbeat.js";
+let heartbeat = fs.readFileSync(heartbeatPath, "utf8");
+heartbeat = heartbeat.replace(
+  'const FAILURE_FILE = path.join(HERE, "feedback", "failure1.txt");',
+  'const FAILURE_FILE = path.join(HERE, "feedback", "failure1.txt");\nconst ROUTER_FAILED_MARKER = path.join(HERE, "feedback", "router-launch-failed.marker");'
+);
+heartbeat = heartbeat.replace(
+  'if (routerStarting || !fs.existsSync(ROUTER_FILE) || routerIsRunning()) return;',
+  'if (routerStarting || fs.existsSync(ROUTER_FAILED_MARKER) || !fs.existsSync(ROUTER_FILE) || routerIsRunning()) return;'
+);
+heartbeat = heartbeat.replace(
+  'child.once("error", error => appendFailure(error.stack || error, "Supervisor router launch failed"));',
+  'child.once("error", error => { appendFailure(error.stack || error, "Supervisor router launch failed"); try { fs.writeFileSync(ROUTER_FAILED_MARKER, new Date().toISOString() + "\\n"); } catch {} });'
+);
+heartbeat = heartbeat.replace(
+  'appendFailure(error.stack || error, "Supervisor router launch exception");',
+  'appendFailure(error.stack || error, "Supervisor router launch exception");\n    try { fs.writeFileSync(ROUTER_FAILED_MARKER, new Date().toISOString() + "\\n"); } catch {}'
+);
+fs.writeFileSync(heartbeatPath, heartbeat);
+
+const shPath = "backend/heartbeat/heartbeat-supervisor.sh";
+let sh = fs.readFileSync(shPath, "utf8");
+sh = sh.replace("trap cleanup EXIT INT TERM", "trap cleanup EXIT\ntrap 'exit 0' INT TERM");
+fs.writeFileSync(shPath, sh);
+NODE
