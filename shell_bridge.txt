@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -nE 'RECOVERY_MS|DISCOVERY_MS|setInterval|startLoops|console\.|failure|restart|pid.json|heartbeat' backend/heartbeat.js*
