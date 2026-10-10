@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== ADAPTOR TOP ==='
-sed -n '1,75p' bridge/shell/github_adaptor.js
-printf '%s\n' '=== ADAPTOR UPLOAD ==='
-sed -n '135,180p' bridge/shell/github_adaptor.js
-printf '%s\n' '=== SERVER TOP ==='
-sed -n '1,115p' bridge/shell/server.js
-printf '%s\n' '=== SERVER UPLOAD ==='
-sed -n '195,245p' bridge/shell/server.js
