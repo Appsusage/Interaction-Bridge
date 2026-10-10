@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== STATUS ==='
+git status --short -- bridge/shell/github_adaptor.js bridge/shell/server.js bridge/shell/dropbox_token.js
+printf '%s\n' '=== ADAPTOR ==='
+grep -n -B8 -A24 -E 'DROPBOX_ACCESS_TOKEN|Authorization:|dropboxapi.com|dropboxFetch' bridge/shell/github_adaptor.js || true
+printf '%s\n' '=== SERVER ==='
+grep -n -B8 -A24 -E 'DROPBOX_ACCESS_TOKEN|Authorization:|dropboxapi.com|dropboxFetch' bridge/shell/server.js || true
+printf '%s\n' '=== MANAGER ==='
+if test -f bridge/shell/dropbox_token.js; then sed -n '1,220p' bridge/shell/dropbox_token.js; else echo NOT_PRESENT; fi
