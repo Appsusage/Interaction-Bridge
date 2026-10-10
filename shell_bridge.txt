@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -RInE --exclude-dir=node_modules --exclude-dir=.git --exclude='pid.js' --exclude='pid.json' 'backend/heartbeat.js|backend/pid.js|heartbeat-supervisor|supervisor-router|backend/heartbeat/' backend bridge package.json
