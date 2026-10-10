@@ -1,0 +1,8 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== Read-only adaptor failure/retry/listener audit ==='
+printf '%s\n' '--- github_adaptor.js lines 340-520 ---'
+nl -ba bridge/shell/github_adaptor.js | sed -n '340,520p'
+printf '%s\n' '--- All listener, timer, task, delete, raw-log, retry references ---'
+grep -n -i -B3 -A5 -E 'setInterval|setTimeout|clearInterval|clearTimeout|while\s*\(|processTask|readGitHubTask|deleteGitHubFile|verifyGitHubDeleted|writeGitHubRawLog|retry|listen|poll|running|heartbeat|supervisor' bridge/shell/github_adaptor.js || true
+printf '%s\n' '--- Final syntax checks ---'
+node --check bridge/shell/dropbox_token.js && node --check bridge/shell/github_adaptor.js
