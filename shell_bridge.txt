@@ -1,0 +1,67 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== github_adaptor integration preflight (read-only; adaptor will not be started) ==='
+node --input-type=module <<'NODE'
+import fs from "node:fs/promises";
+import { dropboxFetch } from "./bridge/shell/dropbox_token.js";
+try {
+  const source = await fs.readFile("./bridge/shell/github_adaptor.js", "utf8");
+  console.log("ADAPTOR_FILE_EXISTS=true");
+  console.log("IMPORTS_DROPBOX_FETCH=" + /import\s*\{\s*dropboxFetch\s*\}\s*from\s*["']\.\/dropbox_token\.js["']/.test(source));
+  console.log("DROPBOX_FETCH_CALL_COUNT=" + (source.match(/dropboxFetch\s*\(/g) || []).length);
+  console.log("DIRECT_FETCH_CALL_COUNT=" + (source.match(/(?<!dropbox)\bfetch\s*\(/g) || []).length);
+  console.log("GITHUB_TOKEN_PRESENT=" + Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN));
+  const response = await dropboxFetch("https://api.dropboxapi.com/2/files/list_folder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: "/", recursive: true, include_deleted: false })
+  });
+  console.log("DROPBOX_LIST_HTTP_STATUS=" + response.status);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.log("DROPBOX_LIST_OK=false");
+    console.log("DROPBOX_ERROR=" + (body.error_summary || body.error || "unavailable"));
+    process.exitCode = 1;
+  } else {
+    let count = Array.isArray(body.entries) ? body.entries.length : 0;
+    let cursor = body.cursor;
+    let pages = 1;
+    while (body.has_more && cursor) {
+      const next = await dropboxFetch("https://api.dropboxapi.com/2/files/list_folder/continue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cursor })
+      });
+      const nextBody = await next.json().catch(() => ({}));
+      if (!next.ok) {
+        console.log("DROPBOX_CONTINUE_HTTP_STATUS=" + next.status);
+        console.log("DROPBOX_LIST_OK=false");
+        console.log("DROPBOX_ERROR=" + (nextBody.error_summary || nextBody.error || "unavailable"));
+        process.exitCode = 1;
+        break;
+      }
+      count += Array.isArray(nextBody.entries) ? nextBody.entries.length : 0;
+      cursor = nextBody.cursor;
+      body.has_more = Boolean(nextBody.has_more);
+      pages++;
+      if (pages > 100) {
+        console.log("PAGINATION_ABORTED=true");
+        process.exitCode = 1;
+        break;
+      }
+    }
+    if (!process.exitCode) {
+      console.log("DROPBOX_LIST_OK=true");
+      console.log("DROPBOX_ENTRY_COUNT=" + count);
+      console.log("DROPBOX_PAGES=" + pages);
+    }
+  }
+} catch (error) {
+  console.log("INTEGRATION_PREFLIGHT=FAILED");
+  console.log("ERROR=" + String(error?.message || error).replace(/(Bearer\s+)\S+/gi, "$1[REDACTED]"));
+  process.exitCode = 1;
+}
+NODE
+printf '%s\n' '=== Syntax checks ==='
+node --check bridge/shell/dropbox_token.js && node --check bridge/shell/github_adaptor.js
+printf '%s\n' '=== Git status (target files only; read-only) ==='
+git status --short -- bridge/shell/github_adaptor.js bridge/shell/dropbox_token.js
