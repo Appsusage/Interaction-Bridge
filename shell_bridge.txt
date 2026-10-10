@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && ps -eo pid,args | grep -E '[s]upervisor-router.js|[h]eartbeat-supervisor.sh|[b]ackend/heartbeat/heartbeat.js' && printf '\nPID REGISTRY\n' && cat backend/heartbeat/pid.json && printf '\nFAILURE FILE STATUS\n' && ls -l backend/heartbeat/feedback 2>/dev/null
