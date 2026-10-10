@@ -1,0 +1,79 @@
+cd /home/runner/workspace/ai-agent || exit 1
+cat > backend/heartbeat/heartbeat-supervisor.sh <<'EOF'
+#!/usr/bin/env bash
+set -u
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/../.." && pwd)"
+HEARTBEAT_JS="$HERE/heartbeat.js"
+PID_FILE="$HERE/supervisor.pid"
+FAILURE_FILE="$HERE/feedback/failure1.txt"
+FAILED_MARKER="$HERE/feedback/heartbeat-start-failed.marker"
+
+mkdir -p "$HERE/feedback"
+printf '%s\n' "$$" > "$PID_FILE"
+
+cleanup() {
+  if [ -f "$PID_FILE" ] && [ "$(cat "$PID_FILE" 2>/dev/null)" = "$$" ]; then
+    rm -f "$PID_FILE"
+  fi
+}
+trap cleanup EXIT INT TERM
+
+append_failure() {
+  {
+    printf '\n[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$1"
+    if [ -n "${2:-}" ] && [ -f "$2" ]; then
+      cat "$2"
+    fi
+    printf '\n'
+  } >> "$FAILURE_FILE" 2>/dev/null || true
+}
+
+heartbeat_running() {
+  local proc cmdline
+  for proc in /proc/[0-9]*; do
+    [ -r "$proc/cmdline" ] || continue
+    [ "${proc##*/}" = "$$" ] && continue
+    cmdline="$(tr '\0' ' ' < "$proc/cmdline" 2>/dev/null || true)"
+    case "$cmdline" in
+      *"$HEARTBEAT_JS"*) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+while true; do
+  if ! heartbeat_running; then
+    if [ -f "$FAILED_MARKER" ]; then
+      sleep 180
+      continue
+    fi
+
+    NODE_BIN="$(command -v node 2>/dev/null || true)"
+    if [ -z "$NODE_BIN" ]; then
+      append_failure "Supervisor could not start HeartBeat: node executable not found."
+      : > "$FAILED_MARKER"
+      sleep 180
+      continue
+    fi
+
+    RAW_TMP="$(mktemp "$HERE/feedback/start-failure.XXXXXX" 2>/dev/null || true)"
+    if [ -z "$RAW_TMP" ]; then
+      RAW_TMP="$HERE/feedback/start-failure.tmp"
+    fi
+    nohup "$NODE_BIN" "$HEARTBEAT_JS" > "$RAW_TMP" 2>&1 &
+    sleep 3
+
+    if heartbeat_running; then
+      rm -f "$RAW_TMP"
+    else
+      append_failure "Supervisor HeartBeat startup failed; automatic retries blocked for this target." "$RAW_TMP"
+      : > "$FAILED_MARKER"
+      rm -f "$RAW_TMP"
+    fi
+  fi
+  sleep 180
+done
+EOF
+chmod 700 backend/heartbeat/heartbeat-supervisor.sh
