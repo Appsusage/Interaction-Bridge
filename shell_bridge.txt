@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -i 's/ || !process.kill(pid, 0)//' backend/heartbeat/supervisor-router.js
