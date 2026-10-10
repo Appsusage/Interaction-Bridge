@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && wc -l -c backend/heartbeat.js. 'backend/heartbeat.js（保留）' 'backend/heartbeat.js（还是保留）'
