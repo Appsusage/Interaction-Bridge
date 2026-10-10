@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && for f in schedule.json sandbox_clone/system_upgrade/syartur_works/schedule.json; do if [ -f "$f" ]; then echo FILE:$f; cat "$f"; else echo MISSING:$f; fi; done
