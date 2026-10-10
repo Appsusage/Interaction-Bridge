@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && node --check backend/heartbeat/pid.js && node --check backend/heartbeat/heartbeat.js && node --check backend/heartbeat/supervisor-router.js && bash -n backend/heartbeat/heartbeat-supervisor.sh
