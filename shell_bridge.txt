@@ -1,0 +1,8 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== Read-only raw-log audit ==='
+nl -ba bridge/shell/github_adaptor.js | sed -n '190,235p'
+nl -ba bridge/shell/github_adaptor.js | sed -n '234,400p'
+printf '%s\n' '--- Feedback files ---'
+ls -la bridge/feedback 2>&1
+printf '%s\n' '--- Syntax ---'
+node --check bridge/shell/dropbox_token.js && node --check bridge/shell/github_adaptor.js
