@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && ps -p 122 -o pid=,args=
