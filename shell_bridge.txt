@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && cat package.json
