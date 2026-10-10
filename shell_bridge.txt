@@ -1,0 +1,44 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== Dropbox Token runtime check (no credentials printed) ==='
+node --input-type=module <<'NODE'
+import fs from "node:fs/promises";
+import { getDropboxAccessToken, dropboxFetch } from "./bridge/shell/dropbox_token.js";
+try {
+  const token = await getDropboxAccessToken();
+  console.log("ACCESS_TOKEN_ACQUIRED=" + Boolean(token));
+  console.log("ACCESS_TOKEN_LENGTH=" + (token ? token.length : 0));
+  const response = await dropboxFetch("https://api.dropboxapi.com/2/files/list_folder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: "/", recursive: false, include_deleted: false })
+  });
+  console.log("DROPBOX_API_HTTP_STATUS=" + response.status);
+  const body = await response.json().catch(() => ({}));
+  if (response.ok) {
+    console.log("DROPBOX_API_AUTHENTICATED=true");
+    console.log("ROOT_ENTRY_COUNT=" + (Array.isArray(body.entries) ? body.entries.length : "unknown"));
+    console.log("HAS_MORE=" + Boolean(body.has_more));
+  } else {
+    console.log("DROPBOX_API_AUTHENTICATED=false");
+    console.log("ERROR_TAG=" + (body.error_summary || body.error || "unavailable"));
+  }
+} catch (error) {
+  console.log("TOKEN_RUNTIME_CHECK=FAILED");
+  console.log("ERROR=" + String(error?.message || error).replace(/(Bearer\s+)\S+/gi, "$1[REDACTED]"));
+  process.exitCode = 1;
+}
+try {
+  const stat = await fs.stat("./bridge/shell/.dropbox_token_cache.json");
+  console.log("CACHE_FILE_EXISTS=true");
+  console.log("CACHE_FILE_MODE=" + (stat.mode & 0o777).toString(8));
+  console.log("CACHE_FILE_SIZE=" + stat.size);
+} catch (error) {
+  console.log("CACHE_FILE_EXISTS=false");
+  if (error.code !== "ENOENT") {
+    console.log("CACHE_STAT_ERROR=" + error.code);
+    process.exitCode = 1;
+  }
+}
+NODE
+printf '%s\n' '=== Syntax check ==='
+node --check bridge/shell/dropbox_token.js && node --check bridge/shell/github_adaptor.js
