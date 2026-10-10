@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -i 's/DISCOVERY_MS).unref()/DISCOVERY_MS)/; s/RECOVERY_MS).unref()/RECOVERY_MS)/; s/ROUTER_CHECK_MS).unref()/ROUTER_CHECK_MS)/' backend/heartbeat/heartbeat.js
