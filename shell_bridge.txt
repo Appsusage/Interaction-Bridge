@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && head -n 80 backend/pid.json
