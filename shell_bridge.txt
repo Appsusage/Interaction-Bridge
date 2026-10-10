@@ -1,0 +1,29 @@
+cd /home/runner/workspace/ai-agent || exit 1
+
+printf '%s\n' '=== 1. TARGET FILE STATUS ==='
+git status --short -- bridge/shell/github_adaptor.js bridge/shell/server.js bridge/shell/dropbox_token.js
+
+printf '%s\n' '=== 2. github_adaptor.js ==='
+cat bridge/shell/github_adaptor.js
+
+printf '%s\n' '=== 3. server.js DROPBOX TOKEN REFERENCES ==='
+grep -n -B12 -A45 -E 'DROPBOX|dropboxAccessToken|getDropboxAccessToken|oauth2/token|api\.dropboxapi\.com' bridge/shell/server.js || true
+
+printf '%s\n' '=== 4. EXISTING TOKEN MANAGER ==='
+if [ -f bridge/shell/dropbox_token.js ]; then
+  cat bridge/shell/dropbox_token.js
+else
+  printf '%s\n' 'dropbox_token.js does not exist'
+fi
+
+printf '%s\n' '=== 5. PACKAGE MODULE TYPE ==='
+node -p "JSON.stringify({type:require('./package.json').type},null,2)"
+
+printf '%s\n' '=== 6. TOKEN ENVIRONMENT METADATA ONLY ==='
+node --input-type=module -e '
+for (const k of ["DROPBOX_APP_KEY","DROPBOX_APP_SECRET","DROPBOX_REFRESH_TOKEN"]) {
+  const v = process.env[k];
+  console.log(k, v ? `present length=${v.length} trimmedLength=${v.trim().length}` : "MISSING");
+}'
+
+printf '%s\n' '=== INSPECTION COMPLETE ==='
