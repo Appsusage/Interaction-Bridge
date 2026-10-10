@@ -1,0 +1,30 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node <<'NODE'
+const fs = require("fs");
+const file = "backend/heartbeat/heartbeat-supervisor.sh";
+let sh = fs.readFileSync(file, "utf8");
+const functionText = `
+target_already_failed() {
+  local node_bin
+  node_bin="$(command -v node 2>/dev/null || true)"
+  [ -n "$node_bin" ] || return 1
+  [ -f "$HERE/pid.json" ] || return 1
+  "$node_bin" --input-type=module -e 'import fs from "node:fs"; const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const target = "file:" + process.argv[2]; process.exit((data.failedTargets || []).some(item => item.targetKey === target) ? 0 : 1)' "$HERE/pid.json" "$HEARTBEAT_JS" >/dev/null 2>&1
+}
+`;
+if (!sh.includes("target_already_failed()")) {
+  sh = sh.replace("heartbeat_running() {", functionText + "\nheartbeat_running() {");
+}
+const old = `  if ! heartbeat_running; then
+    if [ -f "$FAILED_MARKER" ]; then`;
+const replacement = `  if ! heartbeat_running; then
+    if target_already_failed; then
+      : > "$FAILED_MARKER"
+      sleep 180
+      continue
+    fi
+    if [ -f "$FAILED_MARKER" ]; then`;
+sh = sh.replace(old, replacement);
+fs.writeFileSync(file, sh);
+NODE
+bash -n backend/heartbeat/heartbeat-supervisor.sh
