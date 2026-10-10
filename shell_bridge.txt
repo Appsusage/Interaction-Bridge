@@ -1,0 +1,285 @@
+cd /home/runner/workspace/ai-agent || exit 1
+cat > backend/heartbeat/heartbeat.js <<'EOF'
+import fs from "node:fs";
+import path from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { ensureRegistryFile, readRegistry, writeRegistry } from "./pid.js";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, "../..");
+const ROUTER_FILE = path.join(HERE, "supervisor-router.js");
+const FAILURE_FILE = path.join(HERE, "feedback", "failure1.txt");
+const RECOVERY_MS = 3000;
+const DISCOVERY_MS = 60000;
+const ROUTER_CHECK_MS = 360000;
+const CONFIRM_SCANS = 5;
+const RESTART_GRACE_MS = 1800;
+const candidates = new Map();
+let recovering = false;
+let routerStarting = false;
+
+function appendFailure(rawLog, label = "HeartBeat failure") {
+  try {
+    fs.mkdirSync(path.dirname(FAILURE_FILE), { recursive: true });
+    fs.appendFileSync(
+      FAILURE_FILE,
+      "\n[" + new Date().toISOString() + "] " + label + "\n" +
+      String(rawLog || "No raw error output was available.") + "\n",
+      "utf8"
+    );
+  } catch {}
+}
+
+function procStartTime(pid) {
+  try {
+    const stat = fs.readFileSync("/proc/" + pid + "/stat", "utf8");
+    const close = stat.lastIndexOf(")");
+    if (close < 0) return null;
+    return stat.slice(close + 2).trim().split(/\s+/)[19] || null;
+  } catch { return null; }
+}
+
+function procCommand(pid) {
+  try {
+    const args = fs.readFileSync("/proc/" + pid + "/cmdline", "utf8").split("\0").filter(Boolean);
+    return args.length ? args : null;
+  } catch { return null; }
+}
+
+function procCwd(pid) {
+  try { return fs.readlinkSync("/proc/" + pid + "/cwd"); } catch { return null; }
+}
+
+function processEntry(pid, startTime, args, cwd) {
+  const command = args[0];
+  const processArgs = args.slice(1);
+  const nameSeed = path.basename(processArgs[0] || command || "process")
+    .replace(/[^A-Za-z0-9._-]+/g, "_") || "process";
+  const launch = { pid, pidStartTime: String(startTime), command, args: processArgs, cwd: cwd || ROOT };
+  launch.targetKey = targetKey(launch);
+  return { ...launch, name: nameSeed + "_" + pid, required: false, protected: false, status: "running" };
+}
+
+function targetKey(entry) {
+  const cwd = entry.cwd && path.isAbsolute(entry.cwd) ? entry.cwd : ROOT;
+  const args = Array.isArray(entry.args) ? entry.args : [];
+  for (const arg of args) {
+    if (!arg || arg.startsWith("-")) continue;
+    if (/\.(?:m?js|cjs|sh|py|rb|pl|php|jar)$/i.test(arg)) {
+      return "file:" + path.resolve(cwd, arg);
+    }
+  }
+  const command = entry.command ? path.resolve(cwd, entry.command) : "";
+  return "command:" + command + "\0" + args.join("\0");
+}
+
+function sameProcess(entry) {
+  return !!entry && !!entry.pid && !!entry.pidStartTime &&
+    procStartTime(Number(entry.pid)) === String(entry.pidStartTime);
+}
+
+function activeProcesses() {
+  let pids = [];
+  try {
+    pids = fs.readdirSync("/proc", { withFileTypes: true })
+      .filter(item => item.isDirectory() && /^\d+$/.test(item.name))
+      .map(item => Number(item.name));
+  } catch { return []; }
+  const result = [];
+  for (const pid of pids) {
+    const startTime = procStartTime(pid);
+    const args = procCommand(pid);
+    if (!startTime || !args) continue;
+    result.push(processEntry(pid, startTime, args, procCwd(pid)));
+  }
+  return result;
+}
+
+function uniqueName(entry, processes) {
+  if (!processes.some(item => item.name === entry.name)) return entry.name;
+  return path.basename(entry.name) + "_" + entry.pid;
+}
+
+function discover() {
+  const registry = readRegistry();
+  const knownPids = new Set(registry.processes.map(item => Number(item.pid)));
+  const active = activeProcesses();
+  const activeIds = new Set(active.map(item => item.pid));
+
+  for (const pid of [...candidates.keys()]) {
+    if (!activeIds.has(pid) || knownPids.has(pid)) candidates.delete(pid);
+  }
+
+  for (const entry of active) {
+    if (knownPids.has(entry.pid)) continue;
+    const previous = candidates.get(entry.pid);
+    const count = previous && previous.pidStartTime === entry.pidStartTime ? previous.count + 1 : 1;
+    candidates.set(entry.pid, { pidStartTime: entry.pidStartTime, count, entry });
+    if (count < CONFIRM_SCANS) continue;
+
+    const latest = readRegistry();
+    if (latest.processes.some(item => Number(item.pid) === entry.pid)) {
+      candidates.delete(entry.pid);
+      continue;
+    }
+    entry.name = uniqueName(entry, latest.processes);
+    latest.processes.push(entry);
+    writeRegistry(latest);
+    knownPids.add(entry.pid);
+    candidates.delete(entry.pid);
+  }
+}
+
+function findActiveTarget(key) {
+  return activeProcesses().find(item => item.targetKey === key) || null;
+}
+
+function startProcess(entry) {
+  return new Promise(resolve => {
+    const command = entry.command;
+    const args = Array.isArray(entry.args) ? entry.args : [];
+    const cwd = entry.cwd && fs.existsSync(entry.cwd) ? entry.cwd : ROOT;
+    if (!command) return resolve({ ok: false, rawLog: "Restart failed: missing command\n" });
+
+    let child;
+    try {
+      child = spawn(command, args, { cwd, detached: true, stdio: ["ignore", "pipe", "pipe"] });
+    } catch (error) {
+      return resolve({ ok: false, rawLog: "spawn exception: " + (error.stack || error) + "\n" });
+    }
+
+    const chunks = [];
+    let settled = false;
+    const finish = result => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
+    for (const stream of [child.stdout, child.stderr]) {
+      if (!stream) continue;
+      stream.setEncoding("utf8");
+      stream.on("data", chunk => chunks.push(chunk));
+    }
+    child.once("error", error => finish({
+      ok: false,
+      rawLog: "spawn error: " + (error.stack || error) + "\n" + chunks.join("")
+    }));
+    child.once("exit", (code, signal) => finish({
+      ok: false,
+      rawLog: chunks.join("") + "\nprocess exited before verification: code=" + code + " signal=" + signal + "\n"
+    }));
+    setTimeout(() => {
+      if (settled) return;
+      const startTime = procStartTime(child.pid);
+      if (!startTime) {
+        return finish({ ok: false, rawLog: chunks.join("") + "\nprocess disappeared before verification\n" });
+      }
+      child.unref();
+      finish({ ok: true, pid: child.pid, pidStartTime: startTime, rawLog: chunks.join("") });
+    }, RESTART_GRACE_MS);
+  });
+}
+
+async function recover() {
+  if (recovering) return;
+  recovering = true;
+  try {
+    const registry = readRegistry();
+    for (const entry of [...registry.processes]) {
+      if (sameProcess(entry)) continue;
+
+      const key = entry.targetKey || targetKey(entry);
+      const active = findActiveTarget(key);
+      if (active) {
+        const latest = readRegistry();
+        const index = latest.processes.findIndex(item =>
+          item.name === entry.name && Number(item.pid) === Number(entry.pid)
+        );
+        if (index >= 0) {
+          latest.processes[index] = {
+            ...entry, pid: active.pid, pidStartTime: active.pidStartTime,
+            command: active.command, args: active.args, cwd: active.cwd,
+            targetKey: active.targetKey, status: "running"
+          };
+          writeRegistry(latest);
+        }
+        continue;
+      }
+
+      const latest = readRegistry();
+      const currentIndex = latest.processes.findIndex(item =>
+        item.name === entry.name && Number(item.pid) === Number(entry.pid)
+      );
+      if (currentIndex < 0) continue;
+      if (latest.failedTargets.some(item => item.targetKey === key)) {
+        latest.processes.splice(currentIndex, 1);
+        writeRegistry(latest);
+        continue;
+      }
+
+      const result = await startProcess(entry);
+      const after = readRegistry();
+      const index = after.processes.findIndex(item =>
+        item.name === entry.name && Number(item.pid) === Number(entry.pid)
+      );
+      if (result.ok) {
+        const duplicate = findActiveTarget(key);
+        if (duplicate && Number(duplicate.pid) !== Number(result.pid)) {
+          try { process.kill(result.pid, "SIGTERM"); } catch {}
+          if (index >= 0) {
+            after.processes[index] = { ...entry, pid: duplicate.pid, pidStartTime: duplicate.pidStartTime, status: "running" };
+          }
+        } else if (index >= 0) {
+          after.processes[index] = {
+            ...entry, pid: result.pid, pidStartTime: result.pidStartTime,
+            targetKey: key, status: "running"
+          };
+        }
+        writeRegistry(after);
+      } else {
+        if (index >= 0) after.processes.splice(index, 1);
+        if (!after.failedTargets.some(item => item.targetKey === key)) {
+          after.failedTargets.push({ targetKey: key, failedAt: new Date().toISOString(), name: entry.name });
+        }
+        writeRegistry(after);
+        appendFailure(result.rawLog, "PID restart failed; record removed; target blocked: " + key);
+      }
+    }
+  } catch (error) {
+    appendFailure(error && (error.stack || error), "Recovery loop exception");
+  } finally {
+    recovering = false;
+  }
+}
+
+function routerIsRunning() {
+  return activeProcesses().some(entry =>
+    Number(entry.pid) !== process.pid &&
+    entry.targetKey === "file:" + path.resolve(HERE, "supervisor-router.js")
+  );
+}
+
+function ensureRouter() {
+  if (routerStarting || !fs.existsSync(ROUTER_FILE) || routerIsRunning()) return;
+  routerStarting = true;
+  try {
+    const child = spawn(process.execPath, [ROUTER_FILE], {
+      cwd: ROOT, detached: true, stdio: "ignore"
+    });
+    child.once("error", error => appendFailure(error.stack || error, "Supervisor router launch failed"));
+    child.unref();
+  } catch (error) {
+    appendFailure(error.stack || error, "Supervisor router launch exception");
+  } finally {
+    routerStarting = false;
+  }
+}
+
+ensureRegistryFile();
+discover();
+ensureRouter();
+setInterval(() => { discover(); }, DISCOVERY_MS).unref();
+setInterval(() => { recover().catch(error => appendFailure(error.stack || error, "Recovery rejection")); }, RECOVERY_MS).unref();
+setInterval(() => { ensureRouter(); }, ROUTER_CHECK_MS).unref();
+EOF
