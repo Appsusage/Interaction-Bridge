@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+printf '=== SUPERVISOR ROUTER SOURCE ===\n'
+nl -ba backend/heartbeat/supervisor-router.js | sed -n '1,260p'
+printf '\n=== SUPERVISOR SCRIPT SOURCE ===\n'
+nl -ba backend/heartbeat/heartbeat-supervisor.sh | sed -n '1,220p'
+printf '\n=== PACKAGE START SCRIPT ===\n'
+node -e 'console.log(JSON.stringify(require("./package.json").scripts,null,2))'
