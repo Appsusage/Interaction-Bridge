@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== heartbeat.js lines 1-150 ===' && awk 'NR<=150 {printf "%4d %s\n",NR,$0}' backend/heartbeat/heartbeat.js && printf '%s\n' '=== heartbeat.js lines 260-300 ===' && awk 'NR>=260 && NR<=300 {printf "%4d %s\n",NR,$0}' backend/heartbeat/heartbeat.js
