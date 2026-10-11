@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent
+printf '=== FILES ===\n'
+for f in backend/heartbeat/heartbeat.js backend/heartbeat/pid.js backend/heartbeat/pid.json backend/heartbeat/supervisor-router.js backend/heartbeat/heartbeat-supervisor.sh backend/heartbeat/feedback/failure1.txt backend/heartbeat/feedback/router-launch-failed.marker backend/heartbeat/feedback/supervisor-launch-failed.marker; do
+  if [ -e "$f" ]; then ls -l "$f"; else echo "MISSING: $f"; fi
+done
+printf '\n=== PROCESS MATCHES ===\n'
+ps -eo pid,ppid,args | grep -E '[s]upervisor-router.js|[h]eartbeat-supervisor.sh|[b]ackend/heartbeat/heartbeat.js' || true
+printf '\n=== PID JSON ===\n'
+cat backend/heartbeat/pid.json 2>&1 || true
+printf '\n=== FAILURE FILE ===\n'
+cat backend/heartbeat/feedback/failure1.txt 2>&1 || true
+printf '\n=== STARTUP ENV PRESENCE ===\n'
+node -e 'console.log(JSON.stringify({GITHUB_TOKEN:!!process.env.GITHUB_TOKEN,GH_TOKEN:!!process.env.GH_TOKEN,NODE_ENV:process.env.NODE_ENV},null,2))'
+printf '\n=== SYNTAX ===\n'
+node --check backend/heartbeat/pid.js; echo pid_check=$?
+node --check backend/heartbeat/heartbeat.js; echo heartbeat_check=$?
+node --check backend/heartbeat/supervisor-router.js; echo router_check=$?
+bash -n backend/heartbeat/heartbeat-supervisor.sh; echo shell_check=$?
