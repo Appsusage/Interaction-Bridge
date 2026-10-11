@@ -1,0 +1,41 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+import fs from "node:fs";
+import https from "node:https";
+const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+if (!token) { console.log("token_present=false"); process.exit(2); }
+const local = fs.readFileSync("backend/heartbeat/heartbeat-supervisor.sh");
+function get(repo) {
+  return new Promise(resolve => {
+    const req = https.request({
+      hostname: "api.github.com",
+      path: "/repos/" + repo + "/contents/heartbeat-supervisor.sh",
+      method: "GET",
+      headers: { "User-Agent": "ai-agent-supervisor-router-verify", "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" },
+      timeout: 12000
+    }, res => {
+      const chunks = [];
+      res.setEncoding("utf8");
+      res.on("data", chunk => chunks.push(chunk));
+      res.on("end", () => {
+        const raw = chunks.join("");
+        let data = null;
+        try { data = JSON.parse(raw); } catch {}
+        let identical = false;
+        if (res.statusCode >= 200 && res.statusCode < 300 && typeof data?.content === "string") {
+          try { identical = Buffer.from(data.content.replace(/\s/g, ""), "base64").equals(local); } catch {}
+        }
+        resolve({repo, http_status:res.statusCode, file_present:res.statusCode >= 200 && res.statusCode < 300, content_matches_local:identical, sha:data?.sha || null, error:data?.message || null});
+      });
+    });
+    req.on("error", e => resolve({repo, error:e.message}));
+    req.on("timeout", () => req.destroy(new Error("request timed out")));
+    req.end();
+  });
+}
+console.log(JSON.stringify(await Promise.all(["Appsusage/SiriusA","Appsusage/SiriusB"].map(get)), null, 2));
+NODE
+printf '\n=== ACTIVE HEARTBEAT PROCESSES ===\n'
+ps -eo pid,ppid,args | awk '(/node/ && /\/backend\/heartbeat\/heartbeat\.js/) || (/bash/ && /\/backend\/heartbeat\/heartbeat-supervisor\.sh/)' | grep -v 'awk' || true
+printf '\n=== PID REGISTRY ===\n'
+cat backend/heartbeat/pid.json
