@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '=== PROCESS PERSISTENCE CHECK ===\n'
+ps -p 706 -o pid,ppid,args 2>&1 || true
+printf '\n=== TARGET PROCESS IDS ===\n'
+for f in backend/heartbeat/supervisor.pid; do if [ -f "$f" ]; then printf '%s=' "$f"; cat "$f"; else echo "$f=MISSING"; fi; done
+printf '\n=== SUPERVISOR / HEARTBEAT PROCESSES ===\n'
+ps -eo pid,ppid,args | awk '(/node/ && /\/backend\/heartbeat\/(supervisor-router|heartbeat)\.js/) || (/bash/ && /\/backend\/heartbeat\/heartbeat-supervisor\.sh/)' | grep -v 'awk' || true
+printf '\n=== CURRENT PID REGISTRY ===\n'
+cat backend/heartbeat/pid.json
+printf '\n=== ROUTER SYNTAX ===\n'
+node --check backend/heartbeat/supervisor-router.js; echo router_check=$?
