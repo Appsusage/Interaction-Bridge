@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent || exit 1
+nohup node backend/heartbeat/supervisor-router.js >/dev/null 2>&1 </dev/null &
+router_pid=$!
+sleep 2
+printf 'router_launch_pid=%s\n' "$router_pid"
+if kill -0 "$router_pid" 2>/dev/null; then echo 'router_alive=yes'; else echo 'router_alive=no'; fi
+printf '\n=== ROUTER PROCESS ===\n'
+ps -p "$router_pid" -o pid,ppid,args 2>&1 || true
+printf '\n=== SUPERVISOR / HEARTBEAT ===\n'
+ps -eo pid,ppid,args | awk '(/node/ && /\/backend\/heartbeat\/(supervisor-router|heartbeat)\.js/) || (/bash/ && /\/backend\/heartbeat\/heartbeat-supervisor\.sh/)' | grep -v 'awk' || true
+printf '\n=== FAILURE LOG TAIL ===\n'
+tail -n 20 backend/heartbeat/feedback/failure1.txt 2>&1 || true
