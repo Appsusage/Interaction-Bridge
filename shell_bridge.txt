@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== S421 local verification ==='
+server_pid="$(ps -eo pid,args | awk '$0 ~ /node backend\/server\.js/ && $0 !~ /awk/ {print $1; exit}')"
+if [ -n "$server_pid" ] && [ -r "/proc/$server_pid/environ" ]; then
+  tr '\0' '\n' <"/proc/$server_pid/environ" | grep -q '^HEARTBEAT_SUPERVISOR_TOKEN=.' && echo 'server token=SET' || echo 'server token=MISSING'
+  echo "server PID=$server_pid"
+else
+  echo 'server process=NOT_FOUND'
+fi
+curl -sS --max-time 8 -o /tmp/s421-health.json -w 'health HTTP %{http_code}\n' http://127.0.0.1:3000/health || true
+cat /tmp/s421-health.json 2>/dev/null || true
+printf '\n'
+curl -sS --max-time 8 -o /tmp/s421-heartbeat.json -w 'heartbeat HTTP %{http_code}\n' http://127.0.0.1:3000/heartbeat/health || true
+cat /tmp/s421-heartbeat.json 2>/dev/null || true
+printf '\n'
+ps -eo pid,args | grep -E '[n]ode backend/heartbeat/supervisor-router\.js' || true
