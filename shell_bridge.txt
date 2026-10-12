@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && ps -p 786,735,750,815,873,736,827 -o pid,ppid,lstart,args
