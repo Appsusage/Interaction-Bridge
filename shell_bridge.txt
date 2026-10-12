@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== LOCAL HEARTBEAT ENDPOINT ==='
+curl -sS -i --max-time 8 http://127.0.0.1:3000/heartbeat/health || true
+printf '%s\n' '=== LOCAL ROUTE IN SOURCE ==='
+grep -n -A35 -B2 'app.get("/heartbeat/health"' backend/server.js
+printf '%s\n' '=== WORKING TREE / PROCESS CHECK (NO PROCESS CHANGES) ==='
+ps -eo pid,args | grep -E '[n]ode backend/server.js|[n]ode .*backend/heartbeat/heartbeat.js'
