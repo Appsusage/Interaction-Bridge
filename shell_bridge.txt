@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-sed -n '450,515p' backend/server.js
-printf '%s\n' '=== CURRENT ROUTER/HEARTBEAT PROCESS VALIDATION ==='
-ps -eo pid,ppid,stat,lstart,args | grep -E '[n]ode backend/server.js|[n]ode .*backend/heartbeat/(heartbeat|supervisor-router)\.js|[h]eartbeat-supervisor\.sh' || true
-printf '%s\n' '=== CURRENT FAILED MARKERS ==='
-find backend/heartbeat/feedback -maxdepth 1 -type f -name '*.marker' -printf '%f\n' 2>/dev/null | sort
