@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== supervisor-router.js ==='
+cat backend/heartbeat/supervisor-router.js
+printf '%s\n' '=== heartbeat-supervisor.sh ==='
+cat backend/heartbeat/heartbeat-supervisor.sh
+printf '%s\n' '=== heartbeat.js ==='
+cat backend/heartbeat/heartbeat.js
+printf '%s\n' '=== pid.js ==='
+cat backend/heartbeat/pid.js
+printf '%s\n' '=== failure1.txt ==='
+cat backend/heartbeat/feedback/failure1.txt 2>/dev/null || true
