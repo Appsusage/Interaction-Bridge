@@ -1,1 +1,0 @@
-echo 'S427 authenticated HeartBeat start'; TOKEN="$(tr '\0' '\n' </proc/124/environ 2>/dev/null | sed -n 's/^HEARTBEAT_SUPERVISOR_TOKEN=//p' | head -n 1)"; if [ -z "$TOKEN" ]; then echo 'TOKEN_STATUS=MISSING'; else curl -sS --max-time 12 -w '\nHTTP_STATUS:%{http_code}\n' -X POST http://127.0.0.1:3000/heartbeat/start -H "Authorization: Bearer $TOKEN"; unset TOKEN; fi
