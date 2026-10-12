@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n '130,185p' backend/heartbeat/heartbeat.js && printf '\n=== FAILURE LOG ===\n' && if [ -f backend/heartbeat/feedback/failure1.txt ]; then tail -n 100 backend/heartbeat/feedback/failure1.txt; else echo 'failure1.txt does not exist'; fi
