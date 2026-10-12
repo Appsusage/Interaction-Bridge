@@ -1,0 +1,4 @@
+cd /home/runner/workspace/ai-agent || exit 1
+date -u
+grep -nE 'localPort|externalPort|PORT|ports' .replit 2>/dev/null || true
+grep -RInE 'bridge/health|heartbeat.*health|health.*heartbeat|app\.(get|use)|createServer' backend/server.js backend/heartbeat 2>/dev/null | head -100
