@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== NOW ===' && date -Is && printf '%s\n' '=== HEARTBEAT PROCESSES ===' && ps -eo pid,ppid,lstart,args | grep -E '[h]eartbeat/heartbeat.js|[h]eartbeat-supervisor|[s]upervisor-router' || true && printf '%s\n' '=== PID REGISTRY ===' && cat backend/heartbeat/pid.json
