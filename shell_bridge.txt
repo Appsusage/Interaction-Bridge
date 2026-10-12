@@ -1,0 +1,24 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== router process ==='
+ps -eo pid,ppid,lstart,args | grep -E '[n]ode .*backend/heartbeat/supervisor-router\.js' || true
+printf '%s\n' '=== local active repository ==='
+cat backend/heartbeat/supervisor-state.json
+printf '%s\n' '=== recent raw failure log ==='
+tail -n 120 backend/heartbeat/feedback/failure1.txt 2>/dev/null || true
+printf '%s\n' '=== SiriusA external files ==='
+for f in supervisor.js .github/workflows/supervisor.yml supervisor-state.json; do
+  code="$(curl -sS -o /tmp/gh-check-a -w '%{http_code}' -H "Authorization: Bearer ${GITHUB_TOKEN:-${GH_TOKEN:-}}" -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/Appsusage/SiriusA/contents/$f")"
+  echo "$f HTTP $code"
+  if [ "$code" = "200" ]; then node -e 'const x=JSON.parse(require("fs").readFileSync("/tmp/gh-check-a","utf8")); console.log("sha="+x.sha+" size="+x.size)' ; else cat /tmp/gh-check-a; fi
+done
+printf '%s\n' '=== SiriusB external files ==='
+for f in supervisor.js .github/workflows/supervisor.yml supervisor-state.json; do
+  code="$(curl -sS -o /tmp/gh-check-b -w '%{http_code}' -H "Authorization: Bearer ${GITHUB_TOKEN:-${GH_TOKEN:-}}" -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/Appsusage/SiriusB/contents/$f")"
+  echo "$f HTTP $code"
+  if [ "$code" = "200" ]; then node -e 'const x=JSON.parse(require("fs").readFileSync("/tmp/gh-check-b","utf8")); console.log("sha="+x.sha+" size="+x.size)' ; else cat /tmp/gh-check-b; fi
+done
+printf '%s\n' '=== unauthenticated start-route check (no process start) ==='
+code="$(curl -sS -o /tmp/heartbeat-start-check -w '%{http_code}' -X POST http://127.0.0.1:3000/heartbeat/start)"
+echo "HTTP $code"
+cat /tmp/heartbeat-start-check 2>/dev/null || true
+printf '\n'
