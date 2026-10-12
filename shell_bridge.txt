@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== EXTERNAL HEARTBEAT ENDPOINT ==='
+curl -sS -i --max-time 12 'https://c3792481-1e0d-4b77-a94a-cc73b270f100-00-22liqzpphdzqb.pike.replit.dev/heartbeat/health' || true
+printf '%s\n' '=== EXTERNAL EXISTING HEALTH ENDPOINT ==='
+curl -sS -i --max-time 12 'https://c3792481-1e0d-4b77-a94a-cc73b270f100-00-22liqzpphdzqb.pike.replit.dev/health' || true
+printf '%s\n' '=== HEARTBEAT PROCESS CHECK ==='
+ps -eo pid,args | grep -E '[n]ode .*backend/heartbeat/heartbeat.js|[n]ode backend/server.js' || true
