@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== GIT STATUS ===' && git status --short && printf '%s\n' '=== HEARTBEAT FILE ===' && cat backend/heartbeat/heartbeat.js && printf '%s\n' '=== KILL REFERENCES ===' && grep -nE 'process\.kill|child\.kill|exec\([^)]*kill|spawn\([^)]*kill|pkill|killall' backend/heartbeat/heartbeat.js || true
