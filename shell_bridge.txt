@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== PACKAGE START ==='
+node -e "const p=require('./package.json'); console.log(JSON.stringify({type:p.type,scripts:p.scripts},null,2))"
+printf '%s\n' '=== ROUTER SOURCE ==='
+sed -n '1,260p' backend/heartbeat/supervisor-router.js
+printf '%s\n' '=== SUPERVISOR SCRIPT ==='
+sed -n '1,240p' backend/heartbeat/heartbeat-supervisor.sh
+printf '%s\n' '=== SUPERVISOR STATE ==='
+cat backend/heartbeat/supervisor-state.json
+printf '%s\n' '=== SUPERVISOR PID FILE ==='
+cat backend/heartbeat/supervisor.pid
+printf '%s\n' '=== HEARTBEAT MAIN LOOP ==='
+tail -n 120 backend/heartbeat/heartbeat.js
+printf '%s\n' '=== FEEDBACK FILES ==='
+find backend/heartbeat/feedback -maxdepth 1 -type f -printf '%f %s bytes\n' 2>/dev/null | sort
+printf '%s\n' '=== NODE SYNTAX CHECKS ==='
+node --check backend/heartbeat/heartbeat.js; echo heartbeat_check=$?
+node --check backend/heartbeat/supervisor-router.js; echo router_check=$?
