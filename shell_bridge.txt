@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== REFERENCES TO heartbeat-supervisor.sh ==='
+grep -RIn --exclude-dir=node_modules --exclude-dir=.git 'heartbeat-supervisor\.sh\|heartbeat-supervisor' backend package.json .replit 2>/dev/null || true
+printf '%s\n' '=== SUPERVISOR ROUTER ==='
+sed -n '1,280p' backend/heartbeat/supervisor-router.js 2>&1
+printf '%s\n' '=== HEARTBEAT SUPERVISOR SCRIPT METADATA ==='
+ls -la backend/heartbeat/heartbeat-supervisor.sh backend/heartbeat/supervisor.pid backend/heartbeat/supervisor-state.json backend/heartbeat/feedback 2>&1 || true
+printf '%s\n' '=== SUPERVISOR STATE ==='
+for f in backend/heartbeat/supervisor.pid backend/heartbeat/supervisor-state.json backend/heartbeat/feedback/supervisor-launch-failed.marker backend/heartbeat/feedback/router-launch-failed.marker backend/heartbeat/feedback/heartbeat-start-failed.marker backend/heartbeat/feedback/failure1.txt; do
+  if [ -f "$f" ]; then echo "--- $f"; cat "$f"; fi
+done
+printf '%s\n' '=== PACKAGE START ==='
+node -e 'const p=require("./package.json"); console.log(JSON.stringify({scripts:p.scripts},null,2))'
