@@ -1,0 +1,11 @@
+printf '%s\n' '=== S424 GitHub Actions verification ==='
+if command -v gh >/dev/null 2>&1; then
+  for repo in Appsusage/SiriusA Appsusage/SiriusB; do
+    echo "--- $repo Actions secret names ---"
+    gh secret list -R "$repo" 2>&1 || true
+    echo "--- $repo supervisor workflow runs ---"
+    gh run list -R "$repo" -w supervisor.yml -L 3 --json databaseId,status,conclusion,event,createdAt,url 2>&1 || true
+  done
+else
+  echo 'gh CLI unavailable'
+fi
