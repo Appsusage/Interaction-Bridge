@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== HEARTBEAT FAILURE LOG ==='
+if [ -f backend/heartbeat/feedback/failure1.txt ]; then cat backend/heartbeat/feedback/failure1.txt; else echo 'missing'; fi
+printf '%s\n' '=== START FAILURE LOG ==='
+if [ -f backend/heartbeat/feedback/start-failure.OLKpmN ]; then cat backend/heartbeat/feedback/start-failure.OLKpmN; else echo 'missing'; fi
+printf '%s\n' '=== SUPERVISOR SHELL SCRIPT ==='
+if [ -f backend/heartbeat/heartbeat-supervisor.sh ]; then sed -n '1,240p' backend/heartbeat/heartbeat-supervisor.sh; else echo 'missing'; fi
+printf '%s\n' '=== HEARTBEAT SOURCE REMAINDER ==='
+sed -n '240,520p' backend/heartbeat/heartbeat.js
