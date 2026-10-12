@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -nE 'function recover|function restart|spawn\(|process\.kill|entry\.command|entry\.args|entry\.pid|failedTargets' backend/heartbeat/heartbeat.js
