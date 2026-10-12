@@ -1,0 +1,79 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -eu
+python3 - <<'PY'
+import os
+from pathlib import Path
+p = Path("backend/heartbeat/supervisor-workflow.yml")
+s = p.read_text()
+domain = (os.environ.get("REPLIT_DEV_DOMAIN") or "").strip().rstrip("/")
+if domain:
+    base = domain if domain.startswith(("http://", "https://")) else "https://" + domain
+    s = s.replace("HEARTBEAT_BASE_URL: ${{ secrets.HEARTBEAT_BASE_URL }}", "HEARTBEAT_BASE_URL: " + base)
+s = s.replace("""          node -e 'const s = JSON.parse(require("fs").readFileSync("supervisor-state.json", "utf8")); process.exit(s.activeRepo === process.env.GITHUB_REPOSITORY ? 0 : 3)' 
+          status=$?
+          if [ "$status" -eq 3 ]; then
+            echo "This Sirius repository is the standby; no action needed."
+            exit 0
+          fi
+          if [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+          node supervisor.js""", """          if node -e 'const s = JSON.parse(require("fs").readFileSync("supervisor-state.json", "utf8")); process.exit(s.activeRepo === process.env.GITHUB_REPOSITORY ? 0 : 3)'; then
+            node supervisor.js
+          else
+            status=$?
+            if [ "$status" -eq 3 ]; then
+              echo "This Sirius repository is the standby; no action needed."
+              exit 0
+            fi
+            exit "$status"
+          fi""")
+p.write_text(s)
+PY
+printf '%s\n' '=== workflow ==='
+cat backend/heartbeat/supervisor-workflow.yml
+printf '%s\n' '=== safely stop previous router process and start updated router ==='
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+import { spawn } from 'node:child_process';
+const target = "/home/runner/workspace/ai-agent/backend/heartbeat/supervisor-router.js";
+let stopped = [];
+for (const item of fs.readdirSync("/proc", {withFileTypes:true}).filter(x=>x.isDirectory() && /^\d+$/.test(x.name))) {
+  const pid = Number(item.name);
+  if (pid === process.pid) continue;
+  try {
+    const args = fs.readFileSync("/proc/" + pid + "/cmdline", "utf8").split("\0").filter(Boolean);
+    if (args.includes(target)) {
+      const stat = fs.readFileSync("/proc/" + pid + "/stat", "utf8");
+      const close = stat.lastIndexOf(")");
+      const start = close >= 0 ? stat.slice(close + 2).trim().split(/\s+/)[19] : null;
+      if (start) {
+        process.kill(pid, "SIGTERM");
+        stopped.push(pid);
+      }
+    }
+  } catch {}
+}
+await new Promise(r=>setTimeout(r,500));
+const child = spawn(process.execPath, [target], {
+  cwd: "/home/runner/workspace/ai-agent",
+  detached: true,
+  stdio: "ignore"
+});
+child.unref();
+await new Promise(r=>setTimeout(r,1200));
+const cmdline = fs.readFileSync("/proc/" + child.pid + "/cmdline", "utf8").split("\0").filter(Boolean);
+if (!cmdline.includes(target)) {
+  throw new Error("Updated supervisor-router.js process failed immediate verification; PID=" + child.pid);
+}
+console.log(JSON.stringify({stoppedOldRouterPids:stopped,newRouterPid:child.pid,verified:cmdline.includes(target)}));
+JS
+node --check backend/heartbeat/supervisor-router.js
+node --check backend/heartbeat/supervisor.js
+node --check backend/server.js
+printf '%s\n' '=== active router processes ==='
+ps -eo pid,ppid,args | grep -E '[n]ode .*backend/heartbeat/supervisor-router\.js' || true
+printf '%s\n' '=== current local routing state ==='
+cat backend/heartbeat/supervisor-state.json
+printf '%s\n' '=== latest failure log tail ==='
+tail -n 100 backend/heartbeat/feedback/failure1.txt 2>/dev/null || true
