@@ -1,1 +1,0 @@
-echo 'S426 HeartBeat diagnostic'; date -u; pgrep -af 'backend/heartbeat/heartbeat.js|backend/server.js|supervisor-router.js' || true; curl -sS --max-time 8 -i http://127.0.0.1:3000/heartbeat/health || true
