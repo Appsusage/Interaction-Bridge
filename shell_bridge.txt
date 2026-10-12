@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== SUPERVISOR ROUTER SOURCE (FIRST 240 LINES) ==='
+if [ -f backend/heartbeat/supervisor-router.js ]; then sed -n '1,240p' backend/heartbeat/supervisor-router.js; else echo 'missing'; fi
+printf '%s\n' '=== HEARTBEAT SOURCE (FIRST 260 LINES) ==='
+if [ -f backend/heartbeat/heartbeat.js ]; then sed -n '1,260p' backend/heartbeat/heartbeat.js; else echo 'missing'; fi
+printf '%s\n' '=== HEARTBEAT FEEDBACK FILES ==='
+find backend/heartbeat/feedback bridge/feedback -maxdepth 2 -type f 2>/dev/null | sort | head -80
+printf '%s\n' '=== RECENT LOG CANDIDATES ==='
+find . -maxdepth 4 -type f \( -iname '*log*' -o -iname '*failure*' \) -printf '%TY-%Tm-%Td %TH:%TM %p\n' 2>/dev/null | sort -r | head -40
