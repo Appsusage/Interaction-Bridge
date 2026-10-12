@@ -1,0 +1,31 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== current token presence only ==='
+if [ -n "${HEARTBEAT_SUPERVISOR_TOKEN:-}" ]; then echo 'Shell HEARTBEAT_SUPERVISOR_TOKEN=SET'; else echo 'Shell HEARTBEAT_SUPERVISOR_TOKEN=MISSING'; fi
+server_pid="$(ps -eo pid,args | awk '$0 ~ /node backend\/server\.js/ && $0 !~ /awk/ {print $1; exit}')"
+if [ -n "$server_pid" ] && [ -r "/proc/$server_pid/environ" ]; then
+  tr '\0' '\n' <"/proc/$server_pid/environ" | grep -q '^HEARTBEAT_SUPERVISOR_TOKEN=.' && echo 'Server HEARTBEAT_SUPERVISOR_TOKEN=SET' || echo 'Server HEARTBEAT_SUPERVISOR_TOKEN=MISSING'
+else echo 'Server process not found'; fi
+printf '%s\n' '=== ensure local supervisor-router is running ==='
+router_pid="$(ps -eo pid,args | awk '$0 ~ /node backend\/heartbeat\/supervisor-router\.js/ && $0 !~ /awk/ {print $1; exit}')"
+if [ -n "$router_pid" ]; then
+ echo "router already running pid=$router_pid"
+else
+ nohup node backend/heartbeat/supervisor-router.js >/tmp/supervisor-router.log 2>&1 </dev/null &
+ router_pid=$!
+ sleep 2
+ if [ -r "/proc/$router_pid/cmdline" ] && tr '\0' ' ' <"/proc/$router_pid/cmdline" | grep -q 'backend/heartbeat/supervisor-router.js'; then
+  echo "router started pid=$router_pid"
+ else
+  echo "router start failed pid=$router_pid"
+  cat /tmp/supervisor-router.log 2>/dev/null || true
+ fi
+fi
+printf '%s\n' '=== final process state ==='
+ps -eo pid,ppid,stat,args | grep -E '[n]ode .*backend/heartbeat/(supervisor-router|heartbeat)\.js|[n]ode backend/server\.js' || true
+printf '%s\n' '=== health routes ==='
+for route in /health /heartbeat/health; do
+ code="$(curl -sS --max-time 10 -o /tmp/hb-body -w '%{http_code}' "http://127.0.0.1:3000$route" || true)"
+ echo "$route HTTP $code"; cat /tmp/hb-body 2>/dev/null || true; printf '\n'
+done
+printf '%s\n' '=== router log tail ==='
+tail -n 80 /tmp/supervisor-router.log 2>/dev/null || true
