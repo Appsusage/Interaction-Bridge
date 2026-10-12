@@ -1,0 +1,14 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== ACTIVE HEARTBEAT/SUPERVISOR PROCESSES ==='
+ps -eo pid,ppid,lstart,args | grep -E '[h]eartbeat/heartbeat.js|[h]eartbeat-supervisor.sh|[s]upervisor-router.js' || true
+printf '%s\n' '=== REQUIRED GITHUB TOKEN VARIABLE PRESENCE ==='
+if [ -n "${GITHUB_TOKEN:-}" ]; then echo GITHUB_TOKEN=present; else echo GITHUB_TOKEN=missing; fi
+if [ -n "${GH_TOKEN:-}" ]; then echo GH_TOKEN=present; else echo GH_TOKEN=missing; fi
+printf '%s\n' '=== LOCAL/REMOTE SUPERVISOR HASH ==='
+sha256sum backend/heartbeat/heartbeat-supervisor.sh
+printf '%s\n' '=== SUPERVISOR FAILURE LOG ==='
+cat backend/heartbeat/feedback/failure1.txt 2>/dev/null || true
+printf '%s\n' '=== FAILURE MARKERS / TEMP FILES ==='
+find backend/heartbeat/feedback -maxdepth 1 -type f -printf '%f %s bytes\n' 2>/dev/null | sort
+printf '%s\n' '=== RELEVANT WORKTREE DIFF SUMMARY ==='
+git diff --stat -- backend/heartbeat/heartbeat.js backend/heartbeat/supervisor-router.js backend/heartbeat/heartbeat-supervisor.sh backend/heartbeat/pid.js backend/heartbeat/pid.json backend/heartbeat/supervisor-state.json package.json
