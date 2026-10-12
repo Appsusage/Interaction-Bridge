@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n '50,165p' backend/heartbeat/heartbeat.js && sed -n '180,255p' backend/heartbeat/heartbeat.js
