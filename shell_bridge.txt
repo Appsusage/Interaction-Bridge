@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent || exit 1
+nohup node backend/heartbeat/supervisor-router.js >/dev/null 2>&1 &
+echo "router_launch_requested_pid=$!"
