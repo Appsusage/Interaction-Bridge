@@ -1,0 +1,289 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/heartbeat/heartbeat.js")
+s = p.read_text()
+
+old_discover = '''function discover() {
+  const registry = readRegistry();
+  const knownPids = new Set(registry.processes.map(item => Number(item.pid)));
+  const active = activeProcesses();
+  const activeIds = new Set(active.map(item => item.pid));
+
+  for (const pid of [...candidates.keys()]) {
+    if (!activeIds.has(pid) || knownPids.has(pid)) candidates.delete(pid);
+  }
+
+  for (const entry of active) {
+    if (knownPids.has(entry.pid)) continue;
+    const previous = candidates.get(entry.pid);
+    const count = previous && previous.pidStartTime === entry.pidStartTime ? previous.count + 1 : 1;
+    candidates.set(entry.pid, { pidStartTime: entry.pidStartTime, count, entry });
+    if (count < CONFIRM_SCANS) continue;
+
+    const latest = readRegistry();
+    if (latest.processes.some(item => Number(item.pid) === entry.pid)) {
+      candidates.delete(entry.pid);
+      continue;
+    }
+    entry.name = uniqueName(entry, latest.processes);
+    latest.processes.push(entry);
+    writeRegistry(latest);
+    knownPids.add(entry.pid);
+    candidates.delete(entry.pid);
+  }
+}'''
+
+new_discover = '''function sameTargetFile(item, key) {
+  return key.startsWith("file:") && (item.targetKey || targetKey(item)) === key;
+}
+
+function upsertTargetFile(registry, entry) {
+  const key = entry.targetKey || targetKey(entry);
+  if (!key.startsWith("file:")) return false;
+
+  const matches = [];
+  for (let i = 0; i < registry.processes.length; i++) {
+    if (sameTargetFile(registry.processes[i], key)) matches.push(i);
+  }
+
+  if (matches.length === 0) {
+    registry.processes.push(entry);
+    return true;
+  }
+
+  const keepIndex = matches[0];
+  const previous = registry.processes[keepIndex];
+  registry.processes[keepIndex] = {
+    ...entry,
+    ...previous,
+    pid: entry.pid,
+    pidStartTime: entry.pidStartTime,
+    command: entry.command,
+    args: entry.args,
+    cwd: entry.cwd,
+    targetKey: key,
+    status: "running",
+    name: previous.name || entry.name
+  };
+
+  const duplicates = new Set(matches.slice(1));
+  registry.processes = registry.processes.filter((item, index) => !duplicates.has(index));
+  return true;
+}
+
+function discover() {
+  const registry = readRegistry();
+  const knownPids = new Set(registry.processes.map(item => Number(item.pid)));
+  const active = activeProcesses();
+  const activeIds = new Set(active.map(item => item.pid));
+
+  for (const pid of [...candidates.keys()]) {
+    if (!activeIds.has(pid) || knownPids.has(pid)) candidates.delete(pid);
+  }
+
+  for (const entry of active) {
+    if (knownPids.has(entry.pid)) continue;
+    const previous = candidates.get(entry.pid);
+    const count = previous && previous.pidStartTime === entry.pidStartTime ? previous.count + 1 : 1;
+    candidates.set(entry.pid, { pidStartTime: entry.pidStartTime, count, entry });
+    if (count < CONFIRM_SCANS) continue;
+
+    const latest = readRegistry();
+    if (latest.processes.some(item => Number(item.pid) === entry.pid)) {
+      candidates.delete(entry.pid);
+      continue;
+    }
+
+    entry.name = uniqueName(entry, latest.processes);
+    if (!upsertTargetFile(latest, entry)) latest.processes.push(entry);
+    writeRegistry(latest);
+    knownPids.add(entry.pid);
+    candidates.delete(entry.pid);
+  }
+}'''
+
+old_recover = '''async function recover() {
+  if (recovering) return;
+  recovering = true;
+  try {
+    const registry = readRegistry();
+    for (const entry of [...registry.processes]) {
+      if (sameProcess(entry)) continue;
+
+      const key = entry.targetKey || targetKey(entry);
+      const active = findActiveTarget(key);
+      if (active) {
+        const latest = readRegistry();
+        const index = latest.processes.findIndex(item =>
+          item.name === entry.name && Number(item.pid) === Number(entry.pid)
+        );
+        if (index >= 0) {
+          latest.processes[index] = {
+            ...entry, pid: active.pid, pidStartTime: active.pidStartTime,
+            command: active.command, args: active.args, cwd: active.cwd,
+            targetKey: active.targetKey, status: "running"
+          };
+          writeRegistry(latest);
+        }
+        continue;
+      }
+
+      const latest = readRegistry();
+      const currentIndex = latest.processes.findIndex(item =>
+        item.name === entry.name && Number(item.pid) === Number(entry.pid)
+      );
+      if (currentIndex < 0) continue;
+      if (latest.failedTargets.some(item => item.targetKey === key)) {
+        latest.processes.splice(currentIndex, 1);
+        writeRegistry(latest);
+        continue;
+      }
+
+      const result = await startProcess(entry);
+      const after = readRegistry();
+      const index = after.processes.findIndex(item =>
+        item.name === entry.name && Number(item.pid) === Number(entry.pid)
+      );
+      if (result.ok) {
+        const duplicate = findActiveTarget(key);
+        if (duplicate && Number(duplicate.pid) !== Number(result.pid)) {
+          try { process.kill(result.pid, "SIGTERM"); } catch {}
+          if (index >= 0) {
+            after.processes[index] = { ...entry, pid: duplicate.pid, pidStartTime: duplicate.pidStartTime, status: "running" };
+          }
+        } else if (index >= 0) {
+          after.processes[index] = {
+            ...entry, pid: result.pid, pidStartTime: result.pidStartTime,
+            targetKey: key, status: "running"
+          };
+        }
+        writeRegistry(after);
+      } else {
+        if (index >= 0) after.processes.splice(index, 1);
+        if (!after.failedTargets.some(item => item.targetKey === key)) {
+          after.failedTargets.push({ targetKey: key, failedAt: new Date().toISOString(), name: entry.name });
+        }
+        writeRegistry(after);
+        appendFailure(result.rawLog, "PID restart failed; record removed; target blocked: " + key);
+      }
+    }
+  } catch (error) {
+    appendFailure(error && (error.stack || error), "Recovery loop exception");
+  } finally {
+    recovering = false;
+  }
+}'''
+
+new_recover = '''async function recover() {
+  if (recovering) return;
+  recovering = true;
+  try {
+    const registry = readRegistry();
+    for (const entry of [...registry.processes]) {
+      const key = entry.targetKey || targetKey(entry);
+      const fileTarget = key.startsWith("file:");
+
+      if (sameProcess(entry)) {
+        if (fileTarget) {
+          const latest = readRegistry();
+          if (upsertTargetFile(latest, entry)) writeRegistry(latest);
+        }
+        continue;
+      }
+
+      const active = findActiveTarget(key);
+      if (active) {
+        const latest = readRegistry();
+        if (fileTarget) {
+          upsertTargetFile(latest, active);
+          writeRegistry(latest);
+        } else {
+          const index = latest.processes.findIndex(item =>
+            item.name === entry.name && Number(item.pid) === Number(entry.pid)
+          );
+          if (index >= 0) {
+            latest.processes[index] = {
+              ...entry, pid: active.pid, pidStartTime: active.pidStartTime,
+              command: active.command, args: active.args, cwd: active.cwd,
+              targetKey: active.targetKey, status: "running"
+            };
+            writeRegistry(latest);
+          }
+        }
+        continue;
+      }
+
+      const latest = readRegistry();
+      const currentIndex = fileTarget
+        ? latest.processes.findIndex(item => sameTargetFile(item, key))
+        : latest.processes.findIndex(item =>
+            item.name === entry.name && Number(item.pid) === Number(entry.pid)
+          );
+      if (currentIndex < 0) continue;
+
+      if (latest.failedTargets.some(item => item.targetKey === key)) {
+        if (fileTarget) {
+          latest.processes = latest.processes.filter(item => !sameTargetFile(item, key));
+        } else {
+          latest.processes.splice(currentIndex, 1);
+        }
+        writeRegistry(latest);
+        continue;
+      }
+
+      const result = await startProcess(entry);
+      const after = readRegistry();
+      const index = fileTarget
+        ? after.processes.findIndex(item => sameTargetFile(item, key))
+        : after.processes.findIndex(item =>
+            item.name === entry.name && Number(item.pid) === Number(entry.pid)
+          );
+
+      if (result.ok) {
+        const activeAfterStart = findActiveTarget(key);
+        const replacement = activeAfterStart || {
+          ...entry,
+          pid: result.pid,
+          pidStartTime: result.pidStartTime,
+          targetKey: key,
+          status: "running"
+        };
+
+        if (fileTarget) {
+          upsertTargetFile(after, replacement);
+        } else if (index >= 0) {
+          after.processes[index] = {
+            ...entry, pid: replacement.pid, pidStartTime: replacement.pidStartTime,
+            targetKey: key, status: "running"
+          };
+        }
+        writeRegistry(after);
+      } else {
+        if (fileTarget) {
+          after.processes = after.processes.filter(item => !sameTargetFile(item, key));
+        } else if (index >= 0) {
+          after.processes.splice(index, 1);
+        }
+        if (!after.failedTargets.some(item => item.targetKey === key)) {
+          after.failedTargets.push({ targetKey: key, failedAt: new Date().toISOString(), name: entry.name });
+        }
+        writeRegistry(after);
+        appendFailure(result.rawLog, "PID restart failed; record removed; target blocked: " + key);
+      }
+    }
+  } catch (error) {
+    appendFailure(error && (error.stack || error), "Recovery loop exception");
+  } finally {
+    recovering = false;
+  }
+}'''
+
+assert s.count(old_discover) == 1, f"discover block count={s.count(old_discover)}"
+assert s.count(old_recover) == 1, f"recover block count={s.count(old_recover)}"
+s = s.replace(old_discover, new_discover)
+s = s.replace(old_recover, new_recover)
+assert "process.kill(" not in s, "process.kill remains after replacement"
+p.write_text(s)
+print("PATCH_APPLIED")
+PY
+node --check backend/heartbeat/heartbeat.js && git diff -- backend/heartbeat/heartbeat.js && printf '%s\n' '=== KILL REFERENCES ===' && grep -nE 'process\.kill|child\.kill|pkill|killall' backend/heartbeat/heartbeat.js || true
