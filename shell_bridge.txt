@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== SERVER / HEARTBEAT PROCESSES ==='
+ps -eo pid,ppid,stat,lstart,args | grep -E '[n]ode backend/server.js|[n]ode .*backend/heartbeat/heartbeat.js|[n]ode backend/heartbeat/supervisor-router.js' || true
+printf '%s\n' '=== LISTENING TCP PORTS ==='
+cat /proc/net/tcp /proc/net/tcp6 2>/dev/null | head -100
+printf '%s\n' '=== LOCAL ENDPOINT :3000 ==='
+curl -sS -i --max-time 8 http://127.0.0.1:3000/heartbeat/health || true
+printf '%s\n' '=== LOCAL ENDPOINT :3001 ==='
+curl -sS -i --max-time 8 http://127.0.0.1:3001/heartbeat/health || true
+printf '%s\n' '=== EXISTING HEALTH :3000 ==='
+curl -sS -i --max-time 8 http://127.0.0.1:3000/health || true
+printf '%s\n' '=== HEARTBEAT PID REGISTRY ==='
+if [ -f backend/heartbeat/pid.json ]; then cat backend/heartbeat/pid.json; else echo 'backend/heartbeat/pid.json missing'; fi
