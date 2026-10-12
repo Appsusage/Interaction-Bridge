@@ -1,0 +1,2 @@
+echo 'S425 checking local health'
+curl -sS --max-time 8 http://127.0.0.1:3000/heartbeat/health
