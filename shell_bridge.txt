@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== HEARTBEAT REMAINDER ==='
+sed -n '250,520p' backend/heartbeat/heartbeat.js
+printf '%s\n' '=== PID REGISTRY SCHEMA ==='
+cat backend/heartbeat/pid.js
+printf '%s\n' '=== CURRENT PID REGISTRY ==='
+cat backend/heartbeat/pid.json
+printf '%s\n' '=== SERVER IMPORTS AND MIDDLEWARE ==='
+sed -n '1,125p' backend/server.js
+printf '%s\n' '=== SERVER LISTEN CONTEXT ==='
+sed -n '1125,1170p' backend/server.js
+printf '%s\n' '=== ROUTE TESTS ==='
+grep -RInE 'heartbeat/health|/health|pid\.json|heartbeat\.js' test backend/heartbeat 2>/dev/null | head -120
