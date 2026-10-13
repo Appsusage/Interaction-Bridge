@@ -1,4 +1,0 @@
-echo 'Dispatch and inspect latest External HeartBeat Supervisor workflow'
-gh workflow run supervisor.yml -R Appsusage/SiriusA
-sleep 15
-gh run list -R Appsusage/SiriusA --workflow supervisor.yml --limit 3 --json databaseId,status,conclusion,createdAt,event,url
