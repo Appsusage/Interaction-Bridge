@@ -1,22 +1,34 @@
 === github_adaptor raw log ===
-time: 2026-10-12T10:46:04.776Z
+time: 2026-10-13T03:34:49.064Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: 487219036b571c047623d5750d4f4f861aae423c
+sha: 1299ce8cfde111d3180a7fd76c9ef92e9c0a07a3
 
 === shell_bridge.txt content ===
-cd /home/runner/workspace/ai-agent && grep -nE 'function recover|function restart|spawn\(|process\.kill|entry\.command|entry\.args|entry\.pid|failedTargets' backend/heartbeat/heartbeat.js
+echo 'S430 read-only HeartBeat route diagnostics'
+date -u
+for p in /heartbeat /heartbeat/health /health; do
+  echo "=== $p ==="
+  curl -sS --max-time 8 -D - -o /dev/null -w 'HTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n' "http://127.0.0.1:3000$p" || true
+  curl -sS --max-time 8 "http://127.0.0.1:3000$p" | head -c 400
+  echo
+done
+echo '=== server.js route definitions ==='
+grep -n -C 5 -E 'heartbeat/health|heartbeat/start|/heartbeat|/health' backend/server.js
+echo '=== process check ==='
+pgrep -af 'backend/heartbeat/heartbeat.js|backend/server.js|supervisor-router.js' || true
+
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: 487219036b571c047623d5750d4f4f861aae423c
+[github_adaptor] GitHub SHA: 1299ce8cfde111d3180a7fd76c9ef92e9c0a07a3
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
-[github_adaptor] 准备创建 /inbox/S377.txt
+[github_adaptor] 准备创建 /inbox/S431.txt
 [github_adaptor] Dropbox 文件创建成功
 [github_adaptor] Dropbox 文件验证成功
 [github_adaptor] 开始删除 GitHub shell_bridge.txt
-[github_adaptor] ERROR: Error: GitHub 409: {"message":"is at c671968c675683cd2a7a83e2bcd4c6f1dd0f3799 but expected 067edea4cc4d68f7a2782078d80f787c9cf8a4db","documentation_url":"https://docs.github.com/rest/repos/contents#delete-a-file","status":"409"}
+[github_adaptor] ERROR: Error: GitHub 404: {"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/contents#delete-a-file","status":"404"}
     at github (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:36:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async deleteGitHubFile (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:178:10)
