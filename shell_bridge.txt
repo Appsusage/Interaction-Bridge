@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+node --check backend/ai_core.js
+node --check backend/extension/prompt_master/cortex.js
+node --input-type=module -e 'import("./backend/extension/prompt_master/cortex.js").then(m => { if (typeof m.optimizePrompt !== "function") process.exit(2); console.log("Cortex import OK") })'
+npm test
+git diff --check
