@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent; sed -n '70,145p' bridge/shell/github_adaptor.js
