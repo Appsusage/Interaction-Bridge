@@ -1,0 +1,105 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/ai_core.js")
+s = p.read_text()
+old_import = '''import {
+optimizePrompt
+}
+from "./extension/prompt_master/adapter.js";'''
+new_import = '''import {
+    optimizePrompt,
+    executeApprovedShellTask
+}
+from "./extension/prompt_master/adapter.js";'''
+if old_import not in s:
+    raise SystemExit("Prompt Master import block not found; refusing edit")
+s = s.replace(old_import, new_import, 1)
+old_prompt = '''predictionContext
+
+};'''
+new_prompt = '''predictionContext,
+shellCommand: options.shellCommand
+
+};'''
+if old_prompt not in s:
+    raise SystemExit("prompt object tail not found; refusing edit")
+s = s.replace(old_prompt, new_prompt, 1)
+needle = '''await optimizePrompt(
+prompt
+);
+
+
+// Prompt Master 已经完成：'''
+branch = '''await optimizePrompt(
+prompt
+);
+
+if (typeof options.shellCommand === "string" && options.shellCommand.trim()) {
+    let shellExecution;
+    if (options.approveShellExecution !== true) {
+        shellExecution = {
+            dispatched: false,
+            completed: false,
+            reason: "approval_required"
+        };
+    } else {
+        shellExecution = await executeApprovedShellTask(
+            masterResult.masterResult.preparedShellTask,
+            {
+                approved: true,
+                command: options.shellCommand,
+                taskType: masterResult.masterResult.taskType,
+                timeoutMs: options.shellTimeoutMs
+            }
+        );
+    }
+
+    const shellReply = shellExecution.completed
+        ? shellExecution.rawLog
+        : shellExecution.reason === "approval_required"
+            ? "Shell Bridge 任务尚未执行：需要显式设置 approveShellExecution=true。"
+            : shellExecution.reason === "result_timeout"
+                ? "Shell Bridge 任务已投递，但等待执行结果超时。"
+                : JSON.stringify(shellExecution);
+
+    const shellMasterResult = {
+        ...masterResult,
+        masterResult: {
+            ...masterResult.masterResult,
+            shellExecution
+        }
+    };
+
+    saveConversation({
+        memory,
+        message,
+        reply: shellReply,
+        masterResult: shellMasterResult
+    });
+
+    if (mode === "chat") {
+        autoLearn(memory, message, shellMasterResult);
+    }
+
+    saveMemory(memory);
+
+    return {
+        text: shellReply,
+        masterResult: shellMasterResult
+    };
+}
+
+
+// Prompt Master 已经完成：'''
+if needle not in s:
+    raise SystemExit("Prompt Master insertion point not found; refusing edit")
+s = s.replace(needle, branch, 1)
+p.write_text(s)
+print("UPDATED ai_core explicit approved Shell Bridge route")
+PY
+node --check backend/ai_core.js
+node --check backend/extension/prompt_master/adapter.js
+node --input-type=module -e "import('./backend/ai_core.js').then(m => { if(typeof m.askAI!=='function') process.exit(2); console.log('PASS: ai_core imports Prompt Master approved task route'); }).catch(e=>{ console.error(e); process.exit(1); })"
+npm test
+git diff --check
