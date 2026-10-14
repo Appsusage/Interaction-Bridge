@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== PROMPT MASTER TREE ==='
-find backend/extension/prompt_master -maxdepth 3 -type f -print | sort
-printf '%s\n' '=== ADAPTER REFERENCES ==='
-grep -RIn --exclude-dir=node_modules --exclude='adapter.js（保留）' -E 'prompt_master/adapter\.js|from ["'\''"]\./adapter\.js|from ["'\''"].*prompt_master/adapter\.js|optimizePrompt' backend test* 2>/dev/null || true
-printf '%s\n' '=== PACKAGE TEST SCRIPTS ==='
-node -e 'console.log(JSON.stringify(require("./package.json").scripts,null,2))'
-printf '%s\n' '=== END INSPECTION ==='
