@@ -1,0 +1,116 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/extension/prompt_master/executor/executor.js")
+original = p.read_text()
+if 'export async function dispatchShellTask' in original:
+    raise SystemExit("dispatchShellTask already exists; refusing duplicate edit")
+new = '''import { dropboxFetch } from "../../../../bridge/shell/dropbox_token.js";
+import { ingestExecutionEvent } from "../learning/learning_engine.js";
+
+const DROPBOX_CONTENT = "https://content.dropboxapi.com/2";
+const DROPBOX_API = "https://api.dropboxapi.com/2";
+
+function validateFilename(filename) {
+  if (typeof filename !== "string" || !/^[A-Za-z0-9._-]+\\.txt$/.test(filename)) {
+    throw new TypeError("filename must be a plain .txt filename");
+  }
+  return filename;
+}
+
+export function prepareShellTask(command, options = {}) {
+  if (typeof command !== "string" || !command.trim()) {
+    throw new TypeError("command must be a non-empty string");
+  }
+
+  return {
+    filename: options.filename || `PM-${Date.now()}.txt`,
+    target: "Shell Bridge inbox",
+    content: command.trim() + "\\n",
+    requiresApproval: options.requiresApproval !== false,
+    dispatched: false,
+    note: "仅生成任务内容；投递必须显式批准"
+  };
+}
+
+export async function dispatchShellTask(task, options = {}) {
+  if (!task || typeof task.content !== "string" || !task.content.trim()) {
+    throw new TypeError("task must contain non-empty content");
+  }
+  if (options.approved !== true) {
+    return { dispatched: false, reason: "approval_required" };
+  }
+  const filename = validateFilename(task.filename);
+  const response = await dropboxFetch(`${DROPBOX_CONTENT}/files/upload`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Dropbox-API-Arg": JSON.stringify({
+        path: `/inbox/${filename}`,
+        mode: "add",
+        autorename: false,
+        mute: false
+      })
+    },
+    body: Buffer.from(task.content, "utf8")
+  });
+  const body = await response.text();
+  if (!response.ok) throw new Error(`Shell Bridge task upload failed (HTTP ${response.status}): ${body}`);
+  const uploaded = JSON.parse(body);
+  return {
+    dispatched: true,
+    filename,
+    path: uploaded.path_display || uploaded.path || `/inbox/${filename}`,
+    fileId: uploaded.id || null
+  };
+}
+
+export async function collectShellTaskResult(filename, options = {}) {
+  validateFilename(filename);
+  const response = await dropboxFetch(`${DROPBOX_CONTENT}/files/download`, {
+    method: "POST",
+    headers: { "Dropbox-API-Arg": JSON.stringify({ path: `/outbox/${filename}` }) }
+  });
+  if (response.status === 409) {
+    await response.arrayBuffer();
+    return { completed: false, filename, reason: "result_not_ready" };
+  }
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Shell Bridge result download failed (HTTP ${response.status}): ${body}`);
+  }
+
+  const rawLog = await response.text();
+  const match = rawLog.match(/Shell exit code:\\s*(-?\\d+)/i) ||
+    rawLog.match(/code=(-?\\d+)/i);
+  const exitCode = match ? Number(match[1]) : null;
+  if (!Number.isInteger(exitCode)) {
+    return { completed: true, filename, rawLog, learned: { accepted: false, reason: "无法从原始日志确认退出码" } };
+  }
+  const learned = ingestExecutionEvent({
+    source: "shell_raw_log",
+    taskType: options.taskType || "shell_command",
+    command: options.command || null,
+    result: rawLog,
+    exitCode,
+    success: exitCode === 0,
+    outcome: exitCode === 0 ? "success" : "failure",
+    timestamp: new Date().toISOString()
+  });
+  return { completed: true, filename, exitCode, rawLog, learned };
+}
+
+export function createExecutionPlan(analysis, ruleDecision, modelDecision) {
+  return {
+    analysis,
+    decision: ruleDecision,
+    model: modelDecision,
+    executed: false,
+    createdAt: new Date().toISOString()
+  };
+}
+'''
+p.write_text(new)
+print("UPDATED", p, "original_chars=", len(original), "new_chars=", len(new))
+PY
+node --check backend/extension/prompt_master/executor/executor.js
