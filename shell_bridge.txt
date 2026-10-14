@@ -1,0 +1,37 @@
+echo 'S501 GREEN: Chinese-aware experience search'
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/extension/prompt_master/core/experience/experience_store.js')
+s = p.read_text()
+anchor = 'export function findExperiences(query, limit = 5) {\n  const terms = String(query || "").toLowerCase().split(/\\s+/).filter(Boolean);'
+replacement = '''export function tokenizeExperienceQuery(query) {
+  const text = String(query || "").toLowerCase();
+  const chunks = text.match(/[\\p{Script=Han}]+|[a-z0-9]+(?:[._-][a-z0-9]+)*/gu) || [];
+  const terms = [];
+  for (const chunk of chunks) {
+    if (/^\\p{Script=Han}+$/u.test(chunk)) {
+      if (chunk.length === 1) terms.push(chunk);
+      else {
+        for (let i = 0; i < chunk.length - 1; i++) terms.push(chunk.slice(i, i + 2));
+      }
+    } else {
+      terms.push(chunk);
+    }
+  }
+  return [...new Set(terms)];
+}
+
+export function findExperiences(query, limit = 5) {
+  const terms = tokenizeExperienceQuery(query);'''
+if 'export function tokenizeExperienceQuery' not in s:
+    if anchor not in s: raise SystemExit('findExperiences anchor missing; no changes made')
+    s = s.replace(anchor, replacement, 1)
+p.write_text(s)
+PY
+printf '\n===== FOCUSED TESTS =====\n'
+node --test test/prompt-master-local-routing.test.mjs
+printf '\n===== SYNTAX =====\n'
+node --check backend/extension/prompt_master/core/experience/experience_store.js
+printf '\n===== DIFF CHECK =====\n'
+git diff --check
