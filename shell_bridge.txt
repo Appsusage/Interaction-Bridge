@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; grep -n -E 'list_folder|listFolder|inbox|outbox|S[0-9]|path_display|move' bridge/shell/server.js
