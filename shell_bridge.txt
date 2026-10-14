@@ -1,0 +1,33 @@
+echo 'S441 read-only Prompt Master architecture inspection'
+cd /home/runner/workspace/ai-agent || exit 1
+echo '=== project root ==='
+pwd
+echo '=== matching Prompt Master and learning files ==='
+find backend/extension/prompt_master extension/prompt_master backend -maxdepth 4 -type f 2>/dev/null | grep -Ei 'prompt.?master|adapter\.js|intent\.js|learn|experience|memory|router|ai_core' | sort | head -250
+echo '=== adapter candidates ==='
+for f in extension/prompt_master/adapter.js backend/extension/prompt_master/adapter.js; do
+  if [ -f "$f" ]; then
+    echo "--- $f ---"
+    sed -n '1,240p' "$f"
+  else
+    echo "--- MISSING: $f ---"
+  fi
+done
+echo '=== prompt master directory listings ==='
+for d in extension/prompt_master backend/extension/prompt_master; do
+  if [ -d "$d" ]; then
+    echo "--- $d ---"
+    find "$d" -maxdepth 3 -type f -print | sort
+  else
+    echo "--- MISSING DIR: $d ---"
+  fi
+done
+echo '=== ai_core and intent entry points ==='
+for f in backend/ai_core.js backend/intent.js backend/intent_detector.js extension/prompt_master/index.js; do
+  if [ -f "$f" ]; then
+    echo "--- $f ---"
+    sed -n '1,220p' "$f"
+  fi
+done
+echo '=== package scripts ==='
+node -e "const p=require('./package.json'); console.log(JSON.stringify(p.scripts,null,2))" 2>/dev/null || true
