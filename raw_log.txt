@@ -1,34 +1,22 @@
 === github_adaptor raw log ===
-time: 2026-10-13T03:34:49.064Z
+time: 2026-10-14T14:49:06.884Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: 1299ce8cfde111d3180a7fd76c9ef92e9c0a07a3
+sha: fa8497fef52ea2aaad8d1942a3a84c3eb803ba1c
 
 === shell_bridge.txt content ===
-echo 'S430 read-only HeartBeat route diagnostics'
-date -u
-for p in /heartbeat /heartbeat/health /health; do
-  echo "=== $p ==="
-  curl -sS --max-time 8 -D - -o /dev/null -w 'HTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n' "http://127.0.0.1:3000$p" || true
-  curl -sS --max-time 8 "http://127.0.0.1:3000$p" | head -c 400
-  echo
-done
-echo '=== server.js route definitions ==='
-grep -n -C 5 -E 'heartbeat/health|heartbeat/start|/heartbeat|/health' backend/server.js
-echo '=== process check ==='
-pgrep -af 'backend/heartbeat/heartbeat.js|backend/server.js|supervisor-router.js' || true
-
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== ENVIRONMENT ===' && pwd && node --version && npm --version && printf '%s\n' '=== PACKAGE.JSON ===' && cat package.json && printf '%s\n' '=== GIT STATUS ===' && git status --short && printf '%s\n' '=== EXISTING BROWSER REFERENCES ===' && grep -Rni --exclude-dir=node_modules --exclude-dir=.git -E 'playwright|puppeteer|browser_session|browser_actions|website_adapters' backend package.json 2>/dev/null | head -100 || true
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: 1299ce8cfde111d3180a7fd76c9ef92e9c0a07a3
+[github_adaptor] GitHub SHA: fa8497fef52ea2aaad8d1942a3a84c3eb803ba1c
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
-[github_adaptor] 准备创建 /inbox/S431.txt
+[github_adaptor] 准备创建 /inbox/S505.txt
 [github_adaptor] Dropbox 文件创建成功
 [github_adaptor] Dropbox 文件验证成功
 [github_adaptor] 开始删除 GitHub shell_bridge.txt
-[github_adaptor] ERROR: Error: GitHub 404: {"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/contents#delete-a-file","status":"404"}
+[github_adaptor] ERROR: Error: GitHub 409: {"message":"is at ccd58dea88038e265eeef0964e4845d8ff97922d but expected d338b2e334340eae4d3705cf77744f8e38f5af91","documentation_url":"https://docs.github.com/rest/repos/contents#delete-a-file","status":"409"}
     at github (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:36:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async deleteGitHubFile (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:178:10)
