@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/extension/prompt_master/cortex.js')
+s = p.read_text()
+for folder in ('analyzer','rules','model_selector','experience','executor'):
+    s = s.replace(f'from "./{folder}/', f'from "./core/{folder}/')
+p.write_text(s)
+PY
+printf '%s\n' '=== CORTEX IMPORTS ==='
+sed -n '1,12p' backend/extension/prompt_master/cortex.js
