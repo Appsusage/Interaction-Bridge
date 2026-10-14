@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== CHANGED FILES ==='
+git status --short
+printf '%s\n' '=== DIFF CHECK ==='
+git diff --check
+printf '%s\n' '=== PROMPT MASTER IMPORT CHECK ==='
+grep -n -E 'askRouter|callOpenAI|ai_router|provider' backend/extension/prompt_master/adapter.js backend/extension/prompt_master/executor/executor.js || true
+printf '%s\n' '=== EXPORTS ==='
+tail -n 5 backend/extension/prompt_master/adapter.js
+printf '%s\n' '=== END S455 ==='
