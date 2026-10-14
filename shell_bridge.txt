@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-sed -n '450,535p' backend/memory.js
-sed -n '290,330p' backend/ai_core.js
