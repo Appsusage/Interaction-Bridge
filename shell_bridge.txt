@@ -1,0 +1,350 @@
+set -e
+cd /home/runner/workspace/ai-agent
+
+BASE="backend/extension/prompt_master"
+PRESERVED="$BASE/adapter.js（保留）"
+
+echo "=== 1. Preserve original adapter.js without changing its contents ==="
+if [ -f "$BASE/adapter.js" ] && [ ! -e "$PRESERVED" ]; then
+  mv "$BASE/adapter.js" "$PRESERVED"
+elif [ -e "$PRESERVED" ]; then
+  echo "Preserved adapter already exists; refusing to overwrite."
+  exit 2
+else
+  echo "Original adapter.js missing; refusing to continue."
+  exit 3
+fi
+
+echo "=== 2. Create Prompt Master module directories ==="
+mkdir -p "$BASE/analyzer" "$BASE/rules" "$BASE/task_classifier" "$BASE/model_selector" "$BASE/experience" "$BASE/learning" "$BASE/executor"
+
+cat > "$BASE/task_classifier/task_classifier.js" <<'EOF'
+const groups = [
+  { type: "shell_command", words: ["shell bridge", "inbox", "outbox", "执行命令", "运行命令", "终端命令"] },
+  { type: "file_operation", words: ["创建文件", "读取文件", "复制文件", "移动文件", "删除文件", "文件夹"] },
+  { type: "coding", words: ["代码", "bug", "报错", "debug", "javascript", "node.js", "函数", "测试", "编程"] },
+  { type: "analysis", words: ["分析", "比较", "原因", "检查", "诊断", "架构"] },
+  { type: "conversation", words: ["你好", "谢谢", "早安", "晚安", "再见"] }
+];
+
+export function classifyTask(input = "") {
+  const text = String(input).toLowerCase();
+  for (const group of groups) {
+    if (group.words.some(word => text.includes(word.toLowerCase()))) {
+      return { type: group.type, matchedBy: "keyword_rule" };
+    }
+  }
+  return { type: "general", matchedBy: "default_rule" };
+}
+
+export function classifyLearningIntent(input = "") {
+  const task = classifyTask(input).type;
+  if (task === "coding" || task === "shell_command" || task === "file_operation" || task === "analysis") return "technical";
+  if (task === "conversation") return "general";
+  return "conversation";
+}
+EOF
+
+cat > "$BASE/analyzer/analyzer.js" <<'EOF'
+import { classifyTask, classifyLearningIntent } from "../task_classifier/task_classifier.js";
+
+export function analyzeInput(input = {}) {
+  const message = String(input.message ?? "");
+  const task = classifyTask(message);
+  const learningIntent = classifyLearningIntent(message);
+  const complexity = message.length > 1200 ? "high" : message.length > 300 ? "medium" : "low";
+
+  return {
+    message,
+    taskType: task.type,
+    matchedBy: task.matchedBy,
+    intentForLearning: learningIntent,
+    complexity,
+    hasContext: Boolean(input.context),
+    mode: input.mode || "chat"
+  };
+}
+EOF
+
+cat > "$BASE/rules/rule_engine.js" <<'EOF'
+export function applyRules(analysis) {
+  if (!analysis || typeof analysis !== "object") {
+    return { action: "ask_for_clarification", needsModel: false, reason: "缺少有效分析结果" };
+  }
+
+  if (analysis.taskType === "shell_command") {
+    return { action: "prepare_shell_task", needsModel: false, reason: "Shell 任务可由本地规则整理；执行前仍须检查命令与权限" };
+  }
+
+  if (analysis.taskType === "file_operation") {
+    return { action: "prepare_file_task", needsModel: false, reason: "文件任务可先由本地规则分类和整理" };
+  }
+
+  if (analysis.taskType === "coding" || analysis.taskType === "analysis") {
+    return { action: "check_experience_first", needsModel: false, reason: "先检索经验；经验不足时再决定是否请求外部协助" };
+  }
+
+  if (analysis.taskType === "conversation") {
+    return { action: "local_classification", needsModel: false, reason: "简单寒暄可以由规则识别" };
+  }
+
+  return { action: "check_experience_then_escalate", needsModel: false, reason: "先查经验库；本模块不会自行调用任何 LLM" };
+}
+EOF
+
+cat > "$BASE/model_selector/model_selector.js" <<'EOF'
+export function selectModel(analysis, ruleDecision) {
+  if (ruleDecision?.needsModel !== true) {
+    return {
+      required: false,
+      provider: null,
+      route: ruleDecision?.action === "check_experience_then_escalate" ? "experience_or_external_ai_bridge" : "local",
+      reason: "当前决策不要求调用模型"
+    };
+  }
+
+  return {
+    required: true,
+    provider: null,
+    route: "model_registry_required",
+    taskType: analysis?.taskType || "general",
+    reason: "只返回选择建议；不在本模块内发起模型调用"
+  };
+}
+EOF
+
+cat > "$BASE/experience/experience_store.js" <<'EOF'
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+export const experienceFile = path.join(here, "experience.json");
+
+export function readExperiences() {
+  try {
+    const data = JSON.parse(fs.readFileSync(experienceFile, "utf8"));
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+}
+
+export function findExperiences(query, limit = 5) {
+  const terms = String(query || "").toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return [];
+  return readExperiences()
+    .map(item => {
+      const haystack = [item.pattern, item.taskType, item.lesson, ...(item.keywords || [])].join(" ").toLowerCase();
+      const score = terms.reduce((n, term) => n + (haystack.includes(term) ? 1 : 0), 0);
+      return { item, score };
+    })
+    .filter(entry => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(entry => ({ ...entry.item, matchScore: entry.score }));
+}
+
+export function saveExperience(experience) {
+  if (!experience || typeof experience !== "object") throw new TypeError("experience must be an object");
+  const entries = readExperiences();
+  const id = experience.id || `exp-${Date.now()}`;
+  const next = { ...experience, id, updatedAt: new Date().toISOString() };
+  const index = entries.findIndex(entry => entry.id === id);
+  if (index >= 0) entries[index] = next;
+  else entries.push(next);
+  fs.writeFileSync(experienceFile, JSON.stringify(entries, null, 2) + "\n", "utf8");
+  return next;
+}
+EOF
+
+cat > "$BASE/experience/experience.json" <<'EOF'
+[]
+EOF
+
+cat > "$BASE/learning/learning_engine.js" <<'EOF'
+import { saveExperience } from "../experience/experience_store.js";
+
+const usefulSources = new Set([
+  "shell_command",
+  "shell_raw_log",
+  "codex_execution",
+  "tool_execution",
+  "external_ai_response",
+  "prompt_master_decision",
+  "execution_result",
+  "user_operation"
+]);
+
+export function evaluateLearningCandidate(event = {}) {
+  const source = String(event.source || "");
+  const hasOutcome = event.success === true || event.success === false ||
+    Number.isInteger(event.exitCode) || Boolean(event.outcome);
+  const usefulText = Boolean(event.command || event.error || event.lesson || event.result);
+
+  if (!usefulSources.has(source) || !hasOutcome || !usefulText) {
+    return { accepted: false, reason: "缺少受支持的数据来源、执行结果或可分析内容" };
+  }
+
+  return {
+    accepted: true,
+    candidate: {
+      id: event.id,
+      source,
+      taskType: event.taskType || "unknown",
+      pattern: event.pattern || event.command || event.error || "execution_event",
+      keywords: Array.isArray(event.keywords) ? event.keywords : [],
+      lesson: event.lesson || event.result || event.error || "",
+      successCount: event.success === true || event.exitCode === 0 ? 1 : 0,
+      failureCount: event.success === false || (Number.isInteger(event.exitCode) && event.exitCode !== 0) ? 1 : 0,
+      verified: false,
+      evidence: {
+        command: event.command || null,
+        exitCode: Number.isInteger(event.exitCode) ? event.exitCode : null,
+        outcome: event.outcome || null,
+        timestamp: event.timestamp || new Date().toISOString()
+      }
+    }
+  };
+}
+
+export function ingestExecutionEvent(event) {
+  const evaluated = evaluateLearningCandidate(event);
+  if (!evaluated.accepted) return evaluated;
+  return {
+    accepted: true,
+    saved: saveExperience(evaluated.candidate),
+    note: "已保存为待验证经验；不会自动升级为可信规则"
+  };
+}
+EOF
+
+cat > "$BASE/executor/executor.js" <<'EOF'
+export function prepareShellTask(command, options = {}) {
+  if (typeof command !== "string" || !command.trim()) {
+    throw new TypeError("command must be a non-empty string");
+  }
+
+  return {
+    filename: options.filename || `PM-${Date.now()}.txt`,
+    target: "Shell Bridge inbox",
+    content: command.trim() + "\n",
+    requiresApproval: options.requiresApproval !== false,
+    dispatched: false,
+    note: "仅生成任务内容；本函数不会上传到 Dropbox，也不会直接执行命令"
+  };
+}
+
+export function createExecutionPlan(analysis, ruleDecision, modelDecision) {
+  return {
+    analysis,
+    decision: ruleDecision,
+    model: modelDecision,
+    executed: false,
+    createdAt: new Date().toISOString()
+  };
+}
+EOF
+
+cat > "$BASE/adapter.js" <<'EOF'
+import { analyzeInput } from "./analyzer/analyzer.js";
+import { applyRules } from "./rules/rule_engine.js";
+import { selectModel } from "./model_selector/model_selector.js";
+import { findExperiences } from "./experience/experience_store.js";
+import { createExecutionPlan } from "./executor/executor.js";
+
+export async function optimizePrompt(input = {}) {
+  const analysis = analyzeInput(input);
+  const experiences = findExperiences(input.message || "", 5);
+  const ruleDecision = applyRules(analysis);
+  const modelDecision = selectModel(analysis, ruleDecision);
+  const plan = createExecutionPlan(analysis, ruleDecision, modelDecision);
+
+  const masterResult = {
+    type: analysis.mode === "typing_predict" ? "prediction" : analysis.mode === "autonomy" ? "autonomy" : "reply",
+    intent_for_learning: analysis.intentForLearning,
+    task: analysis.message,
+    cleaned_context: [
+      "Prompt Master 本地分析结果（未调用 LLM）",
+      `任务类型：${analysis.taskType}`,
+      `复杂度：${analysis.complexity}`,
+      `决策：${ruleDecision.action}`,
+      `理由：${ruleDecision.reason}`,
+      `匹配经验：${experiences.length} 条`,
+      input.context ? `已有上下文：\n${input.context}` : ""
+    ].filter(Boolean).join("\n"),
+    taskType: analysis.taskType,
+    action: ruleDecision.action,
+    needsModel: modelDecision.required,
+    modelRoute: modelDecision.route,
+    confidence: analysis.matchedBy === "keyword_rule" ? 0.65 : 0.25,
+    matchedExperiences: experiences,
+    plan
+  };
+
+  return {
+    system: input.system || "",
+    context: masterResult.cleaned_context,
+    message: input.message || "",
+    intent_for_learning: masterResult.intent_for_learning,
+    task: masterResult.task,
+    masterResult
+  };
+}
+
+export { analyzeInput } from "./analyzer/analyzer.js";
+export { applyRules } from "./rules/rule_engine.js";
+export { classifyTask, classifyLearningIntent } from "./task_classifier/task_classifier.js";
+export { selectModel } from "./model_selector/model_selector.js";
+export { findExperiences, readExperiences, saveExperience } from "./experience/experience_store.js";
+export { evaluateLearningCandidate, ingestExecutionEvent } from "./learning/learning_engine.js";
+export { prepareShellTask, createExecutionPlan } from "./executor/executor.js";
+EOF
+
+cat > "$BASE/README.md" <<'EOF'
+# Prompt Master（本地分析与学习核心）
+
+此目录新增的模块优先使用 JavaScript 规则和本地经验，不直接导入 LLM provider 或 ai_router。
+
+- analyzer/：分析输入与复杂度
+- rules/：按条件决定本地处理策略
+- task_classifier/：任务和学习意图分类
+- model_selector/：判断是否需要外部模型；本模块只给出决策，不发起调用
+- experience/：保存与检索经验
+- learning/：接收执行事件，筛选待验证经验
+- executor/：生成执行计划或 Shell 任务文本；当前不自动上传、不直接执行命令
+- adapter.js：本地入口，保留旧接口 optimizePrompt(input)
+- adapter.js（保留）：原有 LLM 版 adapter.js 原样保留
+
+安全原则：原始日志不自动变成可信规则；新经验默认 verified=false。Shell 命令必须经过现有桥接流程和必要的授权。
+EOF
+
+echo "=== 3. Verify preserved original and new module files ==="
+test -s "$PRESERVED"
+test -s "$BASE/adapter.js"
+find "$BASE" -maxdepth 3 -type f -print | sort
+echo "=== 4. Verify new adapter does not import LLM/router ==="
+if grep -nE 'callOpenAI|askRouter|ai_router|provider/' "$BASE/adapter.js" "$BASE"/{analyzer,rules,task_classifier,model_selector,experience,learning,executor}/*.js; then
+  echo "ERROR: unexpected LLM/router reference found"
+  exit 4
+else
+  echo "PASS: no direct LLM/router imports in new Prompt Master modules"
+fi
+echo "=== 5. Syntax and behavior smoke tests ==="
+node --input-type=module <<'EOF'
+import assert from "node:assert/strict";
+import { optimizePrompt, prepareShellTask, evaluateLearningCandidate } from "./backend/extension/prompt_master/adapter.js";
+const result = await optimizePrompt({message:"检查 Shell Bridge inbox 并生成执行命令",context:"test context"});
+assert.equal(result.masterResult.taskType, "shell_command");
+assert.equal(result.masterResult.needsModel, false);
+assert.equal(result.message, "检查 Shell Bridge inbox 并生成执行命令");
+const task = prepareShellTask("echo test");
+assert.equal(task.dispatched, false);
+assert.equal(task.content, "echo test\n");
+assert.equal(evaluateLearningCandidate({source:"shell_raw_log",exitCode:0,command:"npm test"}).accepted, true);
+assert.equal(evaluateLearningCandidate({source:"unknown",exitCode:0,command:"npm test"}).accepted, false);
+console.log("PASS: adapter, task preparation, and learning filter smoke tests");
+EOF
+echo "=== 6. Confirm preserved adapter still contains original callOpenAI implementation ==="
+grep -n -A3 -B2 'callOpenAI' "$PRESERVED"
