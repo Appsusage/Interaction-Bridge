@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; head -n 180 backend/extension/prompt_master/learning/learning_engine.js; head -n 120 backend/extension/prompt_master/rules/rule_engine.js
