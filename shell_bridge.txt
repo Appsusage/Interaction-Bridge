@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/extension/prompt_master/cortex.js')
+s = p.read_text()
+s = s.replace('from "./task_classifier/task_classifier.js"', 'from "./core/task_classifier/task_classifier.js"')
+s = s.replace('from "./learning/learning_engine.js"', 'from "./core/learning/learning_engine.js"')
+p.write_text(s)
+PY
+node --check backend/ai_core.js
+node --check backend/extension/prompt_master/cortex.js
+node --check backend/extension/prompt_master/core/executor/executor.js
+node --input-type=module -e 'import("./backend/extension/prompt_master/cortex.js").then(m => { for (const k of ["optimizePrompt","executeApprovedShellTask","classifyTask","ingestExecutionEvent"]) if (typeof m[k] !== "function") throw new Error("Missing export: "+k); console.log("Cortex imports and exports OK") })'
+npm test
+git diff --check
