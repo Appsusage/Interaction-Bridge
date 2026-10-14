@@ -1,0 +1,20 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+mv backend/extension/prompt_master/core/cortex.js backend/extension/prompt_master/cortex.js
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/ai_core.js')
+s = p.read_text()
+old = './extension/prompt_master/core/cortex.js'
+new = './extension/prompt_master/cortex.js'
+if old not in s:
+    raise SystemExit('Expected Cortex import path not found; stopped without changing ai_core.js')
+p.write_text(s.replace(old, new))
+p = Path('backend/extension/prompt_master/README.md')
+s = p.read_text().replace('core/cortex.js：本地认知入口', 'cortex.js：本地认知入口')
+p.write_text(s)
+PY
+printf '%s\n' '=== CORTEX PATHS ==='
+find backend/extension/prompt_master -maxdepth 3 -type f -name '*cortex*' -print
+printf '%s\n' '=== IMPORT REFERENCES ==='
+grep -RIn --exclude-dir=node_modules --exclude='adapter.js（保留）' --exclude='adapter.js.bk' 'prompt_master.*cortex\|core/cortex.js\|cortex.js' backend/ai_core.js backend/extension/prompt_master/README.md
