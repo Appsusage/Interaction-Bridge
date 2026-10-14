@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; head -n 180 backend/extension/prompt_master/adapter.js
