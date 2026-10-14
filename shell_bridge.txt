@@ -1,0 +1,4 @@
+cd /home/runner/workspace/ai-agent || exit 1
+sed -n '1,80p' backend/extension/prompt_master/cortex.js
+printf '\n=== TASK CLASSIFIER REFERENCES ===\n'
+grep -RIn --include='*.js' 'task_classifier/' backend/extension/prompt_master
