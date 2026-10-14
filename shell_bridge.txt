@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1; echo S442; nl -ba backend/extension/prompt_master/adapter.js | sed -n '1,420p'; echo '--- backup ---'; ls -l backend/extension/prompt_master/adapter.js*; echo '--- module tree ---'; find backend/extension/prompt_master -maxdepth 3 -type f -print | sort
