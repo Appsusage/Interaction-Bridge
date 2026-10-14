@@ -1,0 +1,15 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/extension/prompt_master/adapter.js")
+s = p.read_text()
+old = 'export { prepareShellTask, createExecutionPlan } from "./executor/executor.js";'
+new = 'export { prepareShellTask, dispatchShellTask, collectShellTaskResult, createExecutionPlan } from "./executor/executor.js";'
+if old not in s:
+    raise SystemExit("expected export line not found; refusing edit")
+p.write_text(s.replace(old, new, 1))
+print("UPDATED adapter exports")
+PY
+node --check backend/extension/prompt_master/adapter.js
+node --input-type=module -e "import('./backend/extension/prompt_master/adapter.js').then(m => { if (!m.dispatchShellTask || !m.collectShellTaskResult) process.exit(2); const t=m.prepareShellTask('echo smoke',{filename:'PM-smoke.txt'}); if(t.dispatched!==false) process.exit(3); return m.dispatchShellTask(t); }).then(r=>{ if(r.dispatched!==false || r.reason!=='approval_required') process.exit(4); console.log('PASS: exports, task preparation, approval gate'); }).catch(e=>{ console.error(e); process.exit(1); })"
+npm test
