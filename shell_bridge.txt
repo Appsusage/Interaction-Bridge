@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent || exit 1
+sed -n '250,470p' backend/ai_core.js
+printf '\n===== CORTEX README =====\n'
+sed -n '1,240p' backend/extension/prompt_master/README.md
+printf '\n===== ROUTER RESPONSE SHAPE =====\n'
+sed -n '1,220p' backend/router/response_parser.js
+printf '\n===== EXISTING AI CORE TEST/EXPORT SHAPE =====\n'
+sed -n '1,180p' backend/ai_core.js
+printf '\n===== EXECUTION PLAN =====\n'
+sed -n '1,260p' backend/extension/prompt_master/core/executor/executor.js
