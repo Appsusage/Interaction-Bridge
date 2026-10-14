@@ -1,0 +1,54 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/extension/prompt_master/cortex.js')
+s = p.read_text()
+old = '  analysis.localResponseAvailable = typeof localResponse === "string";\n'
+new = old + '  analysis.shellCommandProvided = typeof input.shellCommand === "string" && input.shellCommand.trim().length > 0;\n'
+if s.count(old) != 1:
+    raise SystemExit('Cortex analysis anchor mismatch; no change made')
+p.write_text(s.replace(old, new, 1))
+
+p = Path('backend/extension/prompt_master/core/rules/rule_engine.js')
+s = p.read_text()
+start = s.index('  if (analysis.taskType === "shell_command") {')
+end = s.index('\n  if (analysis.taskType === "coding" || analysis.taskType === "analysis") {', start)
+replacement = '''  if (analysis.taskType === "shell_command" && analysis.shellCommandProvided === true) {
+    return { action: "prepare_shell_task", needsModel: false, reason: "已提供明确命令，可由本地规则准备任务；执行前仍须检查显式授权" };
+  }
+
+  if (analysis.taskType === "file_operation" || analysis.taskType === "shell_command") {
+    return {
+      action: "use_external_ai",
+      needsModel: true,
+      reason: "目前缺少可独立完成此操作的本地执行器或明确命令，交由现有外部 AI 路由协助"
+    };
+  }
+'''
+p.write_text(s[:start] + replacement + s[end:])
+PY
+cat >> test/prompt-master-local-routing.test.mjs <<'EOF'
+
+test("Cortex keeps explicit Shell commands on the local preparation path without dispatching them", async () => {
+  const result = await optimizePrompt({
+    message: "请通过 Shell Bridge 执行命令",
+    shellCommand: "printf 'approved only later'"
+  });
+  assert.equal(result.masterResult.needsModel, false);
+  assert.equal(result.masterResult.route, "local");
+  assert.equal(result.masterResult.preparedShellTask.dispatched, false);
+  assert.equal(result.masterResult.preparedShellTask.requiresApproval, true);
+});
+
+test("Cortex escalates file operations when no local executor is available", async () => {
+  const result = await optimizePrompt({ message: "请创建文件 report.txt" });
+  assert.equal(result.masterResult.needsModel, true);
+  assert.equal(result.masterResult.route, "external_ai");
+});
+EOF
+node --check backend/extension/prompt_master/cortex.js
+node --check backend/extension/prompt_master/core/rules/rule_engine.js
+node --check backend/ai_core.js
+node --test test/prompt-master-local-routing.test.mjs
+npm test
+git diff --check
