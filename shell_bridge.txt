@@ -1,0 +1,56 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/extension/prompt_master/cortex.js')
+s = p.read_text()
+s = s.replace(
+  'function generateLocalResponse(message, mode = "chat") {',
+  'function generateLocalResponse(message, mode = "chat", conversationHistory = []) {',
+  1
+)
+needle = '''  if (!text) return null;
+
+  if (/^(你好|您好|嗨|哈喽|hello|hi)[！!。.,，\\s]*$/i.test(text)) {'''
+replacement = '''  if (!text) return null;
+
+  if (/^(我刚刚说了什么|我刚才说了什么|你记得我刚刚说什么吗|你记得我刚才说什么吗|刚刚我们聊了什么|刚才我们聊了什么)[？?。!！\\s]*$/i.test(text)) {
+    const previousUserMessage = [...(Array.isArray(conversationHistory) ? conversationHistory : [])]
+      .reverse()
+      .find(item => item?.role === "user" && typeof item.content === "string" && item.content.trim());
+    if (!previousUserMessage) return null;
+    const previousText = previousUserMessage.content.trim();
+    const conciseText = previousText.length > 240 ? `${previousText.slice(0, 237)}...` : previousText;
+    return `你刚才说：${conciseText}`;
+  }
+
+  if (/^(你好|您好|嗨|哈喽|hello|hi)[！!。.,，\\s]*$/i.test(text)) {'''
+if needle not in s:
+    raise SystemExit('Cortex response insertion anchor not found; no Cortex change made')
+s = s.replace(needle, replacement, 1)
+s = s.replace(
+  '  const localResponse = generateLocalResponse(input.message, input.mode || "chat");',
+  '  const localResponse = generateLocalResponse(input.message, input.mode || "chat", input.conversationHistory);',
+  1
+)
+p.write_text(s)
+
+p = Path('backend/ai_core.js')
+s = p.read_text()
+needle = '''predictionContext,
+shellCommand: options.shellCommand
+
+};'''
+replacement = '''predictionContext,
+conversationHistory: memory.messages?.slice(-20) || [],
+shellCommand: options.shellCommand
+
+};'''
+if s.count(needle) != 1:
+    raise SystemExit('ai_core prompt insertion anchor mismatch; no ai_core.js change made')
+p.write_text(s.replace(needle, replacement, 1))
+PY
+node --check backend/extension/prompt_master/cortex.js
+node --check backend/ai_core.js
+node --test test/prompt-master-local-routing.test.mjs
+npm test
+git diff --check
