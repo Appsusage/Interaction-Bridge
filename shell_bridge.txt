@@ -1,0 +1,44 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+mkdir -p backend/extension/prompt_master/core
+mv backend/extension/prompt_master/analyzer backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/rules backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/task_classifier backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/model_selector backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/experience backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/learning backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/executor backend/extension/prompt_master/core/
+mv backend/extension/prompt_master/adapter.js backend/extension/prompt_master/core/cortex.js
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/ai_core.js")
+s = p.read_text()
+old = './extension/prompt_master/adapter.js'
+new = './extension/prompt_master/core/cortex.js'
+if old not in s:
+    raise SystemExit("Expected ai_core adapter import not found; aborting")
+p.write_text(s.replace(old, new))
+p = Path("backend/extension/prompt_master/core/executor/executor.js")
+s = p.read_text()
+old = '../../../../bridge/shell/dropbox_token.js'
+new = '../../../../../bridge/shell/dropbox_token.js'
+if old not in s:
+    raise SystemExit("Expected executor Dropbox import not found; aborting")
+p.write_text(s.replace(old, new))
+p = Path("backend/extension/prompt_master/README.md")
+s = p.read_text()
+s = s.replace("- analyzer/：分析输入与复杂度", "- core/analyzer/：分析输入与复杂度")
+s = s.replace("- rules/：按条件决定本地处理策略", "- core/rules/：按条件决定本地处理策略")
+s = s.replace("- task_classifier/：任务和学习意图分类", "- core/task_classifier/：任务和学习意图分类")
+s = s.replace("- model_selector/：判断是否需要外部模型；本模块只给出决策，不发起调用", "- core/model_selector/：判断是否需要外部模型；本模块只给出决策，不发起调用")
+s = s.replace("- experience/：保存与检索经验", "- core/experience/：保存与检索经验")
+s = s.replace("- learning/：接收执行事件，筛选待验证经验", "- core/learning/：接收执行事件，筛选待验证经验")
+s = s.replace("- executor/：生成执行计划或 Shell 任务文本；当前不自动上传、不直接执行命令", "- core/executor/：生成执行计划或 Shell 任务文本；只有明确授权才投递执行")
+s = s.replace("- adapter.js：本地入口，保留旧接口 optimizePrompt(input)", "- core/cortex.js：本地认知入口，保留 optimizePrompt(input) 接口")
+s = s.replace("- adapter.js（保留）：原有 LLM 版 adapter.js 原样保留", "- adapter.js（保留）：原有旧版文件原样保留")
+s = s.replace("The current backend/ai_core.js chat flow is not changed by this module; it still calls askRouter.", "普通聊天目前仍由 backend/ai_core.js 在 Cortex 本地分析后调用 askRouter；Cortex 还没有接管所有普通回答。")
+p.write_text(s)
+PY
+printf '%s\n' '=== MOVED STRUCTURE ==='
+find backend/extension/prompt_master -maxdepth 3 -type f -print | sort
+printf '%s\n' '=== END MOVE ==='
