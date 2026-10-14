@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== ALL CORE IMPORTS ==='
+grep -RIn --include='*.js' -E 'from ["'"'][.][./]' backend/extension/prompt_master/cortex.js backend/extension/prompt_master/core
