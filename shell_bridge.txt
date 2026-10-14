@@ -1,0 +1,183 @@
+cd /home/runner/workspace/ai-agent || exit 1
+cat > backend/extension/prompt_master/cortex.js <<'EOF'
+import { analyzeInput } from "./core/analyzer/analyzer.js";
+import { applyRules } from "./core/rules/rule_engine.js";
+import { selectModel } from "./core/model_selector/model_selector.js";
+import { findExperiences } from "./core/experience/experience_store.js";
+import { createExecutionPlan, prepareShellTask } from "./core/executor/executor.js";
+
+function generateLocalResponse(message, mode = "chat") {
+  if (mode !== "chat") return null;
+  const text = String(message ?? "").trim();
+  if (!text) return null;
+
+  if (/^(你好|您好|嗨|哈喽|hello|hi)[！!。.,，\s]*$/i.test(text)) {
+    return "你好！有什么我可以帮你？";
+  }
+  if (/^(谢谢|谢谢你|多谢|thanks|thank you)[！!。.,，\s]*$/i.test(text)) {
+    return "不客气！有需要可以继续告诉我。";
+  }
+  if (/^(早安|早上好)[！!。.,，\s]*$/i.test(text)) {
+    return "早上好！今天想先处理什么？";
+  }
+  if (/^(晚安)[！!。.,，\s]*$/i.test(text)) {
+    return "晚安，祝你今晚休息好。";
+  }
+  if (/^(再见|拜拜|bye)[！!。.,，\s]*$/i.test(text)) {
+    return "再见！需要时随时可以继续。";
+  }
+  if (/^(你是谁|你是什么|你是什么助手)[？?。!！\s]*$/i.test(text)) {
+    return "我是你的 AI 助手。Cortex 正在逐步增强本地理解、决策和任务处理能力；需要更复杂推理时，仍可调用现有外部 AI 路由。";
+  }
+  if (/^(你能做什么|你会做什么|你有什么能力)[？?。!！\s]*$/i.test(text)) {
+    return "我可以协助聊天、分析问题、整理任务、检查项目结构，并在获得明确授权后准备和执行 Shell Bridge 任务。复杂任务目前仍可交给现有外部 AI 路由。";
+  }
+  return null;
+}
+
+export async function optimizePrompt(input = {}) {
+  const analysis = analyzeInput(input);
+  const experiences = findExperiences(input.message || "", 5);
+  const localResponse = generateLocalResponse(input.message, input.mode || "chat");
+  analysis.localResponseAvailable = typeof localResponse === "string";
+  const ruleDecision = applyRules(analysis);
+  const modelDecision = selectModel(analysis, ruleDecision);
+  const plan = createExecutionPlan(analysis, ruleDecision, modelDecision);
+  const preparedShellTask = typeof input.shellCommand === "string" && input.shellCommand.trim()
+    ? prepareShellTask(input.shellCommand, { requiresApproval: true })
+    : null;
+
+  const masterResult = {
+    type: analysis.mode === "typing_predict" ? "prediction" : analysis.mode === "autonomy" ? "autonomy" : "reply",
+    intent_for_learning: analysis.intentForLearning,
+    task: analysis.message,
+    cleaned_context: [
+      "Prompt Master 本地分析结果（优先本地决策）",
+      `任务类型：${analysis.taskType}`,
+      `复杂度：${analysis.complexity}`,
+      `决策：${ruleDecision.action}`,
+      `理由：${ruleDecision.reason}`,
+      `匹配经验：${experiences.length} 条`,
+      input.context ? `已有上下文：\n${input.context}` : ""
+    ].filter(Boolean).join("\n"),
+    taskType: analysis.taskType,
+    action: ruleDecision.action,
+    needsModel: modelDecision.required,
+    route: modelDecision.required ? "external_ai" : "local",
+    localResponse,
+    modelRoute: modelDecision.route,
+    confidence: localResponse !== null ? 0.98 : analysis.matchedBy === "keyword_rule" ? 0.65 : 0.25,
+    matchedExperiences: experiences,
+    preparedShellTask,
+    plan
+  };
+
+  return {
+    system: input.system || "",
+    context: masterResult.cleaned_context,
+    message: input.message || "",
+    intent_for_learning: masterResult.intent_for_learning,
+    task: masterResult.task,
+    masterResult
+  };
+}
+
+export { analyzeInput } from "./core/analyzer/analyzer.js";
+export { applyRules } from "./core/rules/rule_engine.js";
+export { classifyTask, classifyLearningIntent } from "./core/task_classifier/task_classifier.js";
+export { selectModel } from "./core/model_selector/model_selector.js";
+export { findExperiences, readExperiences, saveExperience } from "./core/experience/experience_store.js";
+export { evaluateLearningCandidate, ingestExecutionEvent } from "./core/learning/learning_engine.js";
+export { prepareShellTask, dispatchShellTask, collectShellTaskResult, executeApprovedShellTask, createExecutionPlan } from "./core/executor/executor.js";
+EOF
+cat > backend/extension/prompt_master/core/rules/rule_engine.js <<'EOF'
+export function applyRules(analysis) {
+  if (!analysis || typeof analysis !== "object") {
+    return { action: "ask_for_clarification", needsModel: false, reason: "缺少有效分析结果" };
+  }
+
+  if (analysis.localResponseAvailable === true) {
+    return { action: "local_reply", needsModel: false, reason: "该输入匹配 Cortex 已支持的本地回复规则" };
+  }
+
+  if (analysis.taskType === "shell_command") {
+    return { action: "prepare_shell_task", needsModel: false, reason: "Shell 任务可由本地规则整理；执行前仍须检查命令与权限" };
+  }
+
+  if (analysis.taskType === "file_operation") {
+    return { action: "prepare_file_task", needsModel: false, reason: "本地可分类并整理文件任务；实际操作仍须经过对应执行器与权限检查" };
+  }
+
+  if (analysis.taskType === "coding" || analysis.taskType === "analysis") {
+    return {
+      action: "use_external_ai",
+      needsModel: true,
+      reason: "当前尚无足够的本地求解能力；保留现有外部 AI 路由"
+    };
+  }
+
+  if (analysis.taskType === "conversation") {
+    return {
+      action: "use_external_ai",
+      needsModel: true,
+      reason: "该对话尚未匹配本地回复规则，交由现有外部 AI 路由"
+    };
+  }
+
+  return {
+    action: "use_external_ai",
+    needsModel: true,
+    reason: "本地规则尚不能可靠完成此任务，交由现有外部 AI 路由"
+  };
+}
+EOF
+python3 - <<'PY'
+from pathlib import Path
+p = Path('backend/ai_core.js')
+s = p.read_text()
+anchor = '''// Prompt Master 已经完成:
+// 1. 理解用户
+// 2. 判断学习类型
+// 3. 判断 topic
+// 4. 生成 topic id
+'''
+if anchor not in s:
+    raise SystemExit('Could not find exact local-routing insertion point; no ai_core.js changes made')
+insert = '''if (typeof masterResult.masterResult.localResponse === "string") {
+    const localReply = masterResult.masterResult.localResponse;
+
+    saveConversation({
+        memory,
+        message,
+        reply: localReply,
+        masterResult
+    });
+
+    if (mode === "chat") {
+        autoLearn(memory, message, masterResult);
+    }
+
+    saveMemory(memory);
+
+    return {
+        text: localReply,
+        masterResult
+    };
+}
+
+
+// Prompt Master 已经完成:
+// 1. 理解用户
+// 2. 判断学习类型
+// 3. 判断 topic
+// 4. 生成 topic id
+'''
+s = s.replace(anchor, insert, 1)
+p.write_text(s)
+PY
+node --check backend/extension/prompt_master/cortex.js
+node --check backend/extension/prompt_master/core/rules/rule_engine.js
+node --check backend/ai_core.js
+node --test test/prompt-master-local-routing.test.mjs
+npm test
+git diff --check
