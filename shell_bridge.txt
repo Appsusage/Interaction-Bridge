@@ -1,0 +1,49 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+node --input-type=module <<'JS'
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+const experiencePath = "backend/extension/prompt_master/experience/experience.json";
+const originalExperience = await fs.readFile(experiencePath);
+let uploadedPath = "";
+let uploadedContent = "";
+globalThis.fetch = async (url, options = {}) => {
+  const u = String(url);
+  if (u.includes("/oauth2/token")) return new Response(JSON.stringify({ access_token: "test-token", expires_in: 3600 }), { status: 200 });
+  if (u.endsWith("/files/list_folder")) {
+    const request = JSON.parse(options.body);
+    assert.equal(request.path, "/");
+    return new Response(JSON.stringify({ entries: [{ ".tag": "file", name: "S467.txt" }], has_more: false }), { status: 200 });
+  }
+  if (u.endsWith("/files/upload")) {
+    const arg = JSON.parse(options.headers["Dropbox-API-Arg"]);
+    uploadedPath = arg.path;
+    uploadedContent = Buffer.from(options.body).toString("utf8");
+    return new Response(JSON.stringify({ id: "mock-id", path_display: arg.path }), { status: 200 });
+  }
+  if (u.endsWith("/files/download")) return new Response("[Shell Bridge] Shell exit code: 0\nmock output\n", { status: 200 });
+  throw new Error("Unexpected mocked request: " + u);
+};
+try {
+  const m = await import("./backend/extension/prompt_master/adapter.js?bridge-smoke-fixed");
+  const task = m.prepareShellTask("printf smoke");
+  const dispatched = await m.dispatchShellTask(task, { approved: true });
+  assert.equal(dispatched.filename, "S468.txt");
+  assert.equal(uploadedPath, "/inbox/S468.txt");
+  assert.equal(uploadedContent, "printf smoke\n");
+  const result = await m.collectShellTaskResult("S468.txt", { command: "printf smoke" });
+  assert.equal(result.completed, true);
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.learned.accepted, true);
+  assert.ok(result.learned.saved && typeof result.learned.saved === "object");
+  assert.equal(result.learned.saved.verified, false);
+  console.log("PASS: sequence allocation, inbox upload, outbox collection, unverified learning ingestion");
+} finally {
+  await fs.writeFile(experiencePath, originalExperience);
+}
+JS
+node --check backend/ai_core.js
+node --check backend/extension/prompt_master/executor/executor.js
+node --check backend/extension/prompt_master/adapter.js
+npm test
+git diff --check
