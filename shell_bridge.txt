@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '=== IMPORTS ===\n'
-grep -RIn --include='*.js' 'from ' backend/extension/prompt_master/analyzer backend/extension/prompt_master/rules backend/extension/prompt_master/task_classifier backend/extension/prompt_master/model_selector backend/extension/prompt_master/experience backend/extension/prompt_master/learning backend/extension/prompt_master/executor
-printf '=== AI CORE ENTRY ===\n'
-sed -n '1,12p' backend/ai_core.js
-printf '=== ADAPTER IMPORTS ===\n'
-sed -n '1,35p' backend/extension/prompt_master/adapter.js
-printf '=== README ===\n'
-sed -n '1,100p' backend/extension/prompt_master/README.md
