@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n 1,240p backend/router/response_parser.js; sed -n 380,430p backend/extension/AICortex/steward.js
