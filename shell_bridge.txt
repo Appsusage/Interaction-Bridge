@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent
+cat > backend/extension/browser/browser_service.js <<'EOF'
+import { chromium } from "playwright";
+
+export async function launchBrowser() {
+  const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/repl/tools/bin/chromium";
+  return chromium.launch({ headless: true, executablePath });
+}
+EOF
+node --check backend/extension/browser/browser_service.js
