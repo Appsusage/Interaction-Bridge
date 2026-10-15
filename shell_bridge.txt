@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -n -C 8 optimizePrompt backend/extension/AICortex/steward.js; grep -n -C 6 parseAIResponse backend/extension/AICortex/prompt_master/adapter.js
