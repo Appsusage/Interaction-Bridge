@@ -1,0 +1,14 @@
+cd /home/runner/workspace/ai-agent
+cat >> backend/extension/browser/browser_service.js <<'EOF'
+
+export async function clickElement(page, selector) {
+  await page.locator(selector).click({ timeout: 10000 });
+  return { clicked: true };
+}
+
+export async function typeText(page, selector, text) {
+  await page.locator(selector).fill(String(text), { timeout: 10000 });
+  return { typed: true };
+}
+EOF
+node --check backend/extension/browser/browser_service.js
