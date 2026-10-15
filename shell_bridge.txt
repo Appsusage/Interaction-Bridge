@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/ai_core.js")
+s = p.read_text()
+old = 'from "./extension/prompt_master/cortex.js";'
+new = 'from "./extension/prompt_master/adapter.js";'
+if s.count(old) != 1:
+    raise SystemExit("EXPECTED_SINGLE_STALE_IMPORT_NOT_FOUND; no changes made")
+p.write_text(s.replace(old, new, 1))
+PY
+node --check backend/ai_core.js
+node --input-type=module -e 'import("./backend/ai_core.js").then(()=>console.log("AI_CORE_IMPORT_OK")).catch(e=>{console.error(e.stack||e);process.exitCode=1})'
