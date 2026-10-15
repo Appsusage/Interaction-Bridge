@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '\n--- TOOL MANIFEST ---\n'
-sed -n '1,220p' backend/tools/tool_manifest.js
-printf '\n--- TOOL PROMPT LOADER ---\n'
-sed -n '1,180p' backend/tool_prompt_loader.js
-printf '\n--- AI CORE PROMPT / EXECUTION ---\n'
-sed -n '120,230p' backend/ai_core.js
-sed -n '300,380p' backend/ai_core.js
