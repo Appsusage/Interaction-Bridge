@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== SERVER IMPORTS ==='
+head -100 backend/server.js
+printf '%s\n' '=== AI CORE EXPORTS ==='
+grep -n 'export' backend/ai_core.js | head -40
+printf '%s\n' '=== EXTENSION JS FILES ==='
+find backend/extension -maxdepth 2 -type f -name '*.js' -print | head -50
