@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent
+grep -nE 'function selfEvaluate|function metaLearn|const selfEvaluate|const metaLearn|selfEvaluate\(|metaLearn\(' backend/extension/nexus.js
+grep -RniE 'export.*selfEvaluate|export.*metaLearn|function selfEvaluate|function metaLearn' backend/extension
+sed -n '1,100p' backend/extension/upgrade/strategy_memory.js
+sed -n '1,100p' backend/extension/upgrade/upgrade_memory.js
