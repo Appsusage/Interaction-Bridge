@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -n '1300,1455p' backend/extension/nexus.js
-sed -n '1455,1535p' backend/extension/nexus.js
