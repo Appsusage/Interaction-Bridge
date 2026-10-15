@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+sed -n '880,930p' backend/server.js
+sed -n '970,1065p' backend/server.js
+sed -n '1160,1210p' backend/server.js
+sed -n '1,80p' backend/ai_core.js
+sed -n '410,455p' backend/ai_core.js
+grep -Rni 'loadToolPrompts' backend --include='*.js'
