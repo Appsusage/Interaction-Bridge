@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent
+sed -n '45,90l' backend/tools/tool_manifest.js
