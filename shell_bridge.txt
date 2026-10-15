@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && printf '\n=== Chat request body and askAI call ===\n' && sed -n '780,920p' backend/server.js && printf '\n=== Browser Nexus dispatch ===\n' && sed -n '255,325p' backend/extension/nexus.js && printf '\n=== Browser action response path ===\n' && sed -n '930,1025p' backend/server.js
