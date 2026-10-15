@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '\n--- TOOL MANIFEST ---\n'
-sed -n '1,240p' backend/tools/tool_manifest.js
-printf '\n--- TOOL PROMPT LOADER ---\n'
-sed -n '1,180p' backend/tool_prompt_loader.js
-printf '\n--- AUTONOMOUS ACTION ROUTING ---\n'
-grep -nE 'autonomousAction|receiveAIInstruction|parseAIResponse' backend/server.js backend/ai_core.js
