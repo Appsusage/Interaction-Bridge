@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent
+sed -n '380,500p' backend/ai_core.js
+printf '\n--- ROUTER RESPONSE PARSER ---\n'
+sed -n '1,220p' backend/router/response_parser.js
+printf '\n--- TOOL REGISTRY REFERENCES ---\n'
+grep -RniE 'toolManifest|executeTool|tool_call|toolName|tool_name' backend --include='*.js' | head -120
