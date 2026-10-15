@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent && set +e
+printf '%s\n' '=== TASK S627: READ-ONLY FRONTEND/BROWSER VIEWER INSPECTION ==='
+printf '%s\n' '=== PROJECT ROOT ==='
+pwd
+printf '%s\n' '=== GIT STATUS ==='
+git status --short
+printf '%s\n' '=== TOP-LEVEL AND FRONTEND FILES ==='
+find . -maxdepth 3 -type f \( -path './node_modules/*' -o -path './.git/*' \) -prune -o -type f -print 2>/dev/null | grep -E '(^\./(package\.json|.*\.(html|css|jsx|tsx|js|json))$|frontend|client|public|src/)' | head -100
+printf '%s\n' '=== PACKAGE SCRIPTS/DEPENDENCIES (NO ENV VALUES) ==='
+node -e "const p=require('./package.json'); console.log(JSON.stringify({scripts:p.scripts,dependencies:p.dependencies,devDependencies:p.devDependencies},null,2))" 2>&1
+printf '%s\n' '=== SERVER ROUTES / STATIC SERVING ==='
+grep -nE 'express\(|createServer|app\.(get|post|use|put|delete)|serveStatic|static\(|sendFile|index\.html|listen\(' backend/server.js 2>/dev/null | head -100
+printf '%s\n' '=== BROWSER SERVICE ==='
+sed -n '1,220p' backend/extension/browser/browser_service.js 2>/dev/null
+printf '%s\n' '=== BROWSER ACTION DISPATCH ==='
+sed -n '250,330p' backend/extension/nexus.js 2>/dev/null
+printf '%s\n' '=== FRONTEND BROWSER REFERENCES ==='
+grep -Rni --exclude-dir=node_modules --exclude-dir=.git --exclude='*.map' -E 'browser|iframe|screenshot|floating|viewer' . 2>/dev/null | head -100
+printf '%s\n' '=== END S627 ==='
