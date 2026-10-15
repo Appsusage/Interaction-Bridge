@@ -1,0 +1,10 @@
+TASK: Update only /home/runner/workspace/ai-agent/system_prompts/Static_Prompt/core_behavior.md so the AI explicitly knows Browser is an available autonomousAction capability.
+
+Requirements:
+1. Before editing, verify the exact target file exists and inspect its current autonomousAction/action-type rules and JSON examples.
+2. Add Browser to the existing list of capabilities that autonomousAction may invoke. Explain that Browser uses an isolated Playwright browser session to open web pages, read page titles/text, click, type, scroll, and take screenshots when appropriate.
+3. Document the actual browser action types supported by the existing project: browser_new_session, browser_open, browser_read, browser_click, browser_type, browser_scroll, browser_screenshot, browser_close_session. Use the existing project’s exact parameter names/schema where available; inspect the existing Browser tool prompt or executor rather than inventing fields.
+4. Include at least one valid autonomousAction JSON example for starting a browser session and one for opening https://example.com, consistent with the actual executor contract. Make clear that actions are execution instructions, not user-facing prose, and the AI should call Browser when a user asks it to browse/read a page rather than claiming it has no browser.
+5. Preserve all unrelated content and formatting. Do not edit any other file, do not install packages, do not run external-impact browser actions, and do not expose secrets.
+6. If the actual executor contract differs from the action names above, do not guess: report the mismatch and make no edit.
+7. After editing, show the exact diff and verify the modified section. Return raw command output.
