@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -n '1240,1435p' backend/extension/nexus.js
-sed -n '1530,1645p' backend/extension/nexus.js
-printf '\n--- TOOL CHAIN ---\n'
-sed -n '1,220p' backend/extension/upgrade/tool_chain.js
-printf '\n--- TOOL SELECTOR ---\n'
-sed -n '1,220p' backend/extension/upgrade/tool_selector.js
