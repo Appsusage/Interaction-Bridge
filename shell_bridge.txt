@@ -1,0 +1,234 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== TASK S629: implement first live floating browser viewer (CDP screencast, no screenshot polling) ==="
+python3 - <<'PY'
+from pathlib import Path
+import re, sys
+root = Path('/home/runner/workspace/ai-agent')
+server = root/'backend/server.js'
+service = root/'backend/extension/browser/browser_service.js'
+index = root/'frontend/index.html'
+if not all(p.exists() for p in (server, service, index)):
+    print('BLOCKED: expected server/browser service/frontend index missing; no files changed')
+    sys.exit(20)
+s = server.read_text()
+b = service.read_text()
+h = index.read_text()
+# Idempotency and avoid clobbering an earlier implementation.
+if 'attachBrowserLive' in s or (root/'backend/extension/browser/browser_live.js').exists() or 'browser-live-viewer' in h:
+    print('BLOCKED: live viewer marker/module already exists; refusing to overwrite')
+    sys.exit(21)
+if 'from "ws"' not in (root/'package.json').read_text():
+    print('BLOCKED: ws dependency is not declared; no files changed')
+    sys.exit(22)
+# Add event bus and session listing to browser_service without changing existing API semantics.
+if 'export const browserActivity' not in b:
+    b = b.replace('import { chromium } from "playwright";', 'import { chromium } from "playwright";\nimport { EventEmitter } from "node:events";\n\nexport const browserActivity = new EventEmitter();\nfunction sessionIdForPage(page) {\n  for (const [id, session] of browserSessions) if (session.page === page) return id;\n  return null;\n}\nfunction activity(page, action, state, detail = {}) {\n  const sessionId = sessionIdForPage(page);\n  if (sessionId) browserActivity.emit("activity", { sessionId, action, state, detail, at: Date.now() });\n}')
+    # session map is declared later; helper closure resolves it at call time.
+    b = b.replace('  await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 30000 });\n  return { url: page.url(), title: await page.title() };', '  activity(page, "浏览网页", "进行中", { url: target.href });\n  try {\n    await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 30000 });\n    const result = { url: page.url(), title: await page.title() };\n    activity(page, "浏览网页", "完成", result);\n    return result;\n  } catch (error) { activity(page, "浏览网页", "失败", { error: error.message }); throw error; }')
+    b = b.replace('  await page.locator(selector).click({ timeout: 10000 });\n  return { clicked: true };', '  activity(page, "点击元素", "进行中", { selector });\n  try { await page.locator(selector).click({ timeout: 10000 }); activity(page, "点击元素", "完成", { selector }); return { clicked: true }; }\n  catch (error) { activity(page, "点击元素", "失败", { selector, error: error.message }); throw error; }')
+    b = b.replace('  await page.locator(selector).fill(String(text), { timeout: 10000 });\n  return { typed: true };', '  activity(page, "输入文字", "进行中", { selector });\n  try { await page.locator(selector).fill(String(text), { timeout: 10000 }); activity(page, "输入文字", "完成", { selector }); return { typed: true }; }\n  catch (error) { activity(page, "输入文字", "失败", { selector, error: error.message }); throw error; }')
+    b = b.replace('  await page.evaluate(amount => window.scrollBy(0, amount), Number(pixels));\n  return { scrolled: true };', '  activity(page, "滑动页面", "进行中", { pixels: Number(pixels) });\n  try { await page.evaluate(amount => window.scrollBy(0, amount), Number(pixels)); activity(page, "滑动页面", "完成", { pixels: Number(pixels) }); return { scrolled: true }; }\n  catch (error) { activity(page, "滑动页面", "失败", { error: error.message }); throw error; }')
+    b = b.replace('  browserSessions.set(sessionId, { browser, context, page });\n  return { sessionId };', '  browserSessions.set(sessionId, { browser, context, page });\n  browserActivity.emit("session-created", { sessionId, url: page.url(), at: Date.now() });\n  return { sessionId };')
+    b = b.replace('export function getBrowserPage(sessionId) {', 'export function listBrowserSessions() {\n  return [...browserSessions.entries()].map(([sessionId, session]) => ({ sessionId, url: session.page.url() }));\n}\n\nexport function getBrowserPage(sessionId) {')
+    b = b.replace('  browserSessions.delete(String(sessionId));\n  await session.context.close();', '  browserSessions.delete(String(sessionId));\n  browserActivity.emit("session-closed", { sessionId: String(sessionId), at: Date.now() });\n  await session.context.close();')
+    service.write_text(b)
+# Create CDP screencast WebSocket broadcaster; frames are streamed by Chromium, not requested as screenshots.
+live = root/'backend/extension/browser/browser_live.js'
+live.write_text(r'''import { WebSocketServer } from "ws";
+import { browserActivity, getBrowserPage, listBrowserSessions } from "./browser_service.js";
+
+export function attachBrowserLive(server) {
+  const wss = new WebSocketServer({ server, path: "/browser/live" });
+  const clients = new Set();
+  const streams = new Map();
+
+  function send(client, message) {
+    if (client.readyState === 1) client.send(JSON.stringify(message));
+  }
+  function broadcast(message) {
+    for (const client of clients) send(client, message);
+  }
+  async function stopStream(client) {
+    const state = client._browserLive;
+    if (!state) return;
+    client._browserLive = null;
+    const stream = streams.get(state.sessionId);
+    if (stream && stream.client === client) {
+      streams.delete(state.sessionId);
+      try { await stream.cdp.send("Page.stopScreencast"); } catch {}
+      try { await stream.cdp.detach(); } catch {}
+    }
+  }
+  async function attach(client, sessionId) {
+    await stopStream(client);
+    let page;
+    try { page = getBrowserPage(sessionId); }
+    catch (error) { send(client, { type: "error", message: error.message }); return; }
+    const prior = streams.get(sessionId);
+    if (prior) {
+      try { await prior.cdp.send("Page.stopScreencast"); } catch {}
+      try { await prior.cdp.detach(); } catch {}
+      if (prior.client && prior.client !== client) {
+        prior.client._browserLive = null;
+        send(prior.client, { type: "status", state: "stream-replaced" });
+      }
+    }
+    try {
+      const cdp = await page.context().newCDPSession(page);
+      const state = { sessionId, cdp };
+      client._browserLive = state;
+      streams.set(sessionId, { client, cdp });
+      cdp.on("Page.screencastFrame", async frame => {
+        send(client, { type: "frame", sessionId, data: frame.data, metadata: frame.metadata });
+        try { await cdp.send("Page.screencastFrameAck", { sessionId: frame.sessionId }); } catch {}
+      });
+      cdp.on("Page.frameNavigated", event => {
+        if (event.frame?.url) send(client, { type: "navigation", sessionId, url: event.frame.url });
+      });
+      await cdp.send("Page.enable");
+      await cdp.send("Page.startScreencast", { format: "jpeg", quality: 65, maxWidth: 1100, maxHeight: 800, everyNthFrame: 1 });
+      send(client, { type: "status", state: "streaming", sessionId, url: page.url(), title: await page.title() });
+      send(client, { type: "activity", sessionId, action: "已连接实时画面", state: "进行中", at: Date.now() });
+    } catch (error) {
+      await stopStream(client);
+      send(client, { type: "error", message: "无法启动 Chromium 实时画面：" + error.message });
+    }
+  }
+
+  browserActivity.on("activity", event => broadcast({ type: "activity", ...event }));
+  browserActivity.on("session-created", event => broadcast({ type: "session-created", ...event }));
+  browserActivity.on("session-closed", event => broadcast({ type: "session-closed", ...event }));
+
+  wss.on("connection", (client, request) => {
+    const origin = request.headers.origin;
+    const host = request.headers.host;
+    if (origin && host) {
+      try { if (new URL(origin).host !== host) { client.close(1008, "Origin not allowed"); return; } }
+      catch { client.close(1008, "Invalid origin"); return; }
+    }
+    clients.add(client);
+    send(client, { type: "sessions", sessions: listBrowserSessions() });
+    client.on("message", raw => {
+      let message;
+      try { message = JSON.parse(raw.toString()); } catch { return; }
+      if (message.type === "attach" && typeof message.sessionId === "string") attach(client, message.sessionId);
+      if (message.type === "detach") stopStream(client);
+    });
+    client.on("close", () => { clients.delete(client); stopStream(client); });
+    client.on("error", () => { clients.delete(client); stopStream(client); });
+  });
+  return wss;
+}
+''')
+# Wire live stream into existing Express HTTP server.
+if 'attachBrowserLive' not in s:
+    s = s.replace('import {\n  createBrowserSession,', 'import { attachBrowserLive } from "./extension/browser/browser_live.js";\n\nimport {\n  createBrowserSession,')
+    old = 'app.listen(3000, "0.0.0.0", () => {\n    console.log("AI Server running on port 3000");\n});'
+    new = 'const httpServer = app.listen(Number(process.env.PORT || 3000), "0.0.0.0", () => {\n    console.log("AI Server running on port " + (process.env.PORT || 3000));\n});\nattachBrowserLive(httpServer);'
+    if old not in s:
+        print('BLOCKED: could not find exact app.listen anchor; browser service may have been updated but server wiring not changed')
+        sys.exit(23)
+    s = s.replace(old, new)
+    server.write_text(s)
+# Add viewer assets and inject them into the existing app shell.
+css = root/'frontend/browser-live-viewer.css'
+css.write_text(r'''#browser-live-viewer{position:fixed;right:14px;bottom:14px;width:min(520px,calc(100vw - 28px));height:min(430px,calc(100vh - 28px));z-index:99999;background:#10151d;color:#eef3fa;border:1px solid #435064;border-radius:12px;box-shadow:0 12px 40px #0007;display:flex;flex-direction:column;overflow:hidden;font:13px/1.4 system-ui,sans-serif}#browser-live-viewer.minimized{height:44px;width:min(310px,calc(100vw - 28px))}#browser-live-viewer .blv-head{display:flex;align-items:center;gap:8px;padding:10px;background:#1a2330;cursor:move;touch-action:none;user-select:none}#browser-live-viewer .blv-title{font-weight:700;flex:1}#browser-live-viewer button,#browser-live-viewer select{font:inherit;color:inherit;background:#273447;border:1px solid #52627a;border-radius:6px;padding:5px 8px}#browser-live-viewer .blv-state{padding:6px 10px;color:#b8c6d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#browser-live-viewer .blv-screen{flex:1;min-height:0;background:#05070a;display:flex;align-items:center;justify-content:center;overflow:hidden}#browser-live-viewer .blv-screen img{width:100%;height:100%;object-fit:contain}#browser-live-viewer .blv-placeholder{padding:20px;text-align:center;color:#c0c9d6}#browser-live-viewer .blv-foot{max-height:82px;overflow:auto;border-top:1px solid #354052;padding:6px 10px;color:#c7d1df;font-size:12px}#browser-live-viewer .blv-log{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#browser-live-viewer .blv-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d7a54a;margin-right:6px}#browser-live-viewer .blv-dot.live{background:#48d597}@media(max-width:600px){#browser-live-viewer{right:8px;bottom:8px;width:calc(100vw - 16px);height:min(48vh,400px)}#browser-live-viewer.minimized{width:230px;height:44px}}
+''')
+js = root/'frontend/browser-live-viewer.js'
+js.write_text(r'''(() => {
+  if (document.getElementById("browser-live-viewer")) return;
+  const root = document.createElement("section");
+  root.id = "browser-live-viewer";
+  root.innerHTML = '<div class="blv-head"><span class="blv-dot" aria-hidden="true"></span><span class="blv-title">AI 实时浏览器</span><select aria-label="浏览器会话" class="blv-sessions"><option value="">等待 AI 浏览器会话…</option></select><button type="button" class="blv-min" aria-label="收起">−</button></div><div class="blv-state" aria-live="polite">正在连接实时画面…</div><div class="blv-screen"><div class="blv-placeholder">等待 AI 打开网页。连接后这里会连续显示同一浏览器会话的实时画面，不使用截图轮询。</div></div><div class="blv-foot" aria-live="polite"><div class="blv-log">操作状态：等待中</div></div>';
+  document.body.appendChild(root);
+  const state = root.querySelector(".blv-state");
+  const screen = root.querySelector(".blv-screen");
+  const select = root.querySelector(".blv-sessions");
+  const dot = root.querySelector(".blv-dot");
+  const log = root.querySelector(".blv-log");
+  let ws, selected = "", reconnectTimer, minimized = false;
+  const seen = new Map();
+  function connect() {
+    clearTimeout(reconnectTimer);
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(proto + "//" + location.host + "/browser/live");
+    ws.onopen = () => { state.textContent = "实时连接已建立，等待/选择浏览器会话"; };
+    ws.onclose = () => { dot.classList.remove("live"); state.textContent = "连接中断，正在重连…"; reconnectTimer = setTimeout(connect, 1800); };
+    ws.onerror = () => { try { ws.close(); } catch {} };
+    ws.onmessage = event => {
+      let m; try { m = JSON.parse(event.data); } catch { return; }
+      if (m.type === "sessions") {
+        const sessions = m.sessions || [];
+        select.replaceChildren();
+        if (!sessions.length) select.add(new Option("等待 AI 浏览器会话…", ""));
+        for (const s of sessions) select.add(new Option((s.url || "新会话") + " · " + s.sessionId.slice(-6), s.sessionId));
+        if (selected && sessions.some(s => s.sessionId === selected)) select.value = selected;
+        else if (sessions.length) { selected = sessions[sessions.length - 1].sessionId; select.value = selected; attach(); }
+      } else if (m.type === "session-created") {
+        seen.set(m.sessionId, m.url || "");
+        const exists = [...select.options].some(o => o.value === m.sessionId);
+        if (!exists) select.add(new Option((m.url || "新会话") + " · " + m.sessionId.slice(-6), m.sessionId));
+        selected = m.sessionId; select.value = selected; attach();
+        state.textContent = "检测到 AI 新建浏览器会话，正在连接…";
+      } else if (m.type === "session-closed") {
+        const option = [...select.options].find(o => o.value === m.sessionId); if (option) option.remove();
+        if (selected === m.sessionId) { selected = ""; screen.innerHTML = '<div class="blv-placeholder">浏览器会话已关闭，等待下一个会话。</div>'; state.textContent = "会话已关闭"; }
+      } else if (m.type === "status") {
+        if (m.state === "streaming") { dot.classList.add("live"); state.textContent = (m.title || "网页") + " · " + (m.url || "实时串流中"); }
+        else state.textContent = "实时画面状态：" + m.state;
+      } else if (m.type === "navigation") {
+        state.textContent = "正在浏览：" + m.url;
+        const option = [...select.options].find(o => o.value === m.sessionId); if (option) option.textContent = m.url + " · " + m.sessionId.slice(-6);
+      } else if (m.type === "activity") {
+        if (!m.sessionId || m.sessionId === selected) {
+          const detail = m.detail || {};
+          log.textContent = "操作状态：" + (m.action || "操作") + " — " + (m.state || "进行中") + (detail.url ? " · " + detail.url : detail.pixels ? " · " + detail.pixels + "px" : detail.selector ? " · " + detail.selector : "");
+          if (m.action === "输入文字") log.textContent += "（不会显示或记录输入内容）";
+        }
+      } else if (m.type === "frame" && m.sessionId === selected) {
+        let img = screen.querySelector("img");
+        if (!img) { screen.replaceChildren(); img = document.createElement("img"); img.alt = "AI 操作中的网页实时画面"; screen.appendChild(img); }
+        img.src = "data:image/jpeg;base64," + m.data;
+      } else if (m.type === "error") state.textContent = m.message;
+    };
+  }
+  function attach() { if (ws && ws.readyState === WebSocket.OPEN && selected) ws.send(JSON.stringify({type:"attach",sessionId:selected})); }
+  select.addEventListener("change", () => { selected = select.value; screen.innerHTML = '<div class="blv-placeholder">正在连接所选浏览器会话…</div>'; attach(); });
+  root.querySelector(".blv-min").addEventListener("click", () => { minimized = !minimized; root.classList.toggle("minimized", minimized); root.querySelector(".blv-min").textContent = minimized ? "□" : "−"; });
+  // Draggable by its header; touch and mouse are supported.
+  const head = root.querySelector(".blv-head");
+  let drag = null;
+  head.addEventListener("pointerdown", e => { if (e.target.closest("button,select")) return; const r = root.getBoundingClientRect(); drag = {x:e.clientX,y:e.clientY,left:r.left,top:r.top}; head.setPointerCapture(e.pointerId); });
+  head.addEventListener("pointermove", e => { if (!drag) return; const left = Math.max(0, Math.min(innerWidth-root.offsetWidth, drag.left+e.clientX-drag.x)); const top = Math.max(0, Math.min(innerHeight-44, drag.top+e.clientY-drag.y)); root.style.left=left+"px"; root.style.top=top+"px"; root.style.right="auto"; root.style.bottom="auto"; });
+  head.addEventListener("pointerup", () => { drag = null; });
+  connect();
+})();
+''')
+# Inject assets idempotently.
+if 'browser-live-viewer.css' not in h:
+    h = h.replace('</head>', '  <link rel="stylesheet" href="/browser-live-viewer.css">\n</head>', 1)
+if 'browser-live-viewer.js' not in h:
+    h = h.replace('</body>', '  <script src="/browser-live-viewer.js" defer></script>\n</body>', 1)
+if h == index.read_text():
+    print('BLOCKED: could not insert viewer assets into index.html; inspect HTML closing tags')
+    sys.exit(24)
+index.write_text(h)
+print('WROTE: backend/extension/browser/browser_live.js')
+print('WROTE: frontend/browser-live-viewer.js and frontend/browser-live-viewer.css')
+print('UPDATED: backend/extension/browser/browser_service.js, backend/server.js, frontend/index.html')
+PY
+PATCH_RC=$?
+if [ "$PATCH_RC" -ne 0 ]; then echo "PATCH_FAILED=$PATCH_RC"; exit "$PATCH_RC"; fi
+echo "--- syntax checks ---"
+node --check backend/server.js; echo "server_check=$?"
+node --check backend/extension/browser/browser_service.js; echo "browser_service_check=$?"
+node --check backend/extension/browser/browser_live.js; echo "browser_live_check=$?"
+node --check frontend/browser-live-viewer.js; echo "viewer_js_check=$?"
+echo "--- integration markers ---"
+grep -nE 'browser-live-viewer|attachBrowserLive|app\.listen|browserActivity|listBrowserSessions' backend/server.js backend/extension/browser/browser_service.js frontend/index.html
+echo "--- diff summary ---"
+git diff --stat -- backend/server.js backend/extension/browser/browser_service.js frontend/index.html
+echo "--- new files ---"
+git status --short backend/server.js backend/extension/browser/browser_service.js backend/extension/browser/browser_live.js frontend/index.html frontend/browser-live-viewer.js frontend/browser-live-viewer.css
+echo "--- end S629 ---"
