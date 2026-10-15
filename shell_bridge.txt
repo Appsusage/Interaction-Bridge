@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p = Path("test/prompt-master-local-routing.test.mjs")
+s = p.read_text()
+old = '../backend/extension/AICortex/prompt_master/cortex.js'
+new = '../backend/extension/AICortex/steward.js'
+if old not in s:
+    raise SystemExit("Expected test import not found; stopped")
+p.write_text(s.replace(old, new, 1))
+PY
+printf '%s\n' '=== syntax checks ==='
+node --check backend/extension/AICortex/steward.js
+node --check backend/ai_core.js
+node --check test/prompt-master-local-routing.test.mjs
+printf '%s\n' '=== stale path scan ==='
+grep -RInE 'extension/prompt_master|prompt_master/cortex\.js|backend/extension/prompt_master/SKILL\.md|AICortex/prompt_master/cortex\.js' . --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null || true
+printf '%s\n' '=== full tests ==='
+npm test
