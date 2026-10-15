@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -n '1,260p' backend/server.js
-sed -n '1,300p' backend/ai_core.js
