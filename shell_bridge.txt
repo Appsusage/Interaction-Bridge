@@ -1,3 +1,0 @@
-TASK S588
-READ ONLY. In /home/runner/workspace/ai-agent run: grep -nE 'autonomousAction|masterResult|askRouter' backend/ai_core.js
-Write command output and exit code to /home/runner/workspace/ai-agent/bridge/shell/outbox/S588.txt if that path exists; otherwise use the bridge's normal result mechanism. Do not modify project files.
