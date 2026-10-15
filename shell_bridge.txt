@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -R -n autonomousAction system_prompts backend/extension/AICortex | head -60
