@@ -1,2 +1,0 @@
-cd /home/runner/workspace/ai-agent
-nl -ba backend/server.js | tail -n +900 | head -n 335
