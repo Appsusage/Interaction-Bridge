@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent
+set +e
+printf '%s\n' '=== Chat route definition and request schema ==='
+grep -nE 'app\.post\(.*/chat|router\.post\(.*/chat|app\.post\(' backend/server.js | head -n 80
+sed -n '780,850p' backend/server.js
+printf '%s\n' '=== AI response parser / provider response handling ==='
+sed -n '1,95p' backend/ai_core.js
+sed -n '210,330p' backend/ai_core.js
+printf '%s\n' '=== Browser tool registration and dispatch ==='
+sed -n '250,315p' backend/extension/nexus.js
+sed -n '1310,1370p' backend/extension/nexus.js
+sed -n '920,1010p' backend/extension/nexus.js
+printf '%s\n' '=== Current service health ==='
+curl -sS --max-time 3 -i http://127.0.0.1:3000/health 2>&1 | head -n 20
+printf '%s\n' '=== Existing browser session/API configuration (names only) ==='
+grep -nE 'BROWSER_API_KEY|browser/session|browser/open|browser/read|app\.post\(.*/chat' backend/server.js | head -n 80
