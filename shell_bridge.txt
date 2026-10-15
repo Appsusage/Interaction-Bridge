@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n 180,380p backend/extension/AICortex/steward.js; find backend/extension/AICortex -maxdepth 3 -type f -name adapter.js -print
