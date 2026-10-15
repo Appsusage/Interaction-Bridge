@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== PACKAGE SCRIPTS AND PLAYWRIGHT ==='
+node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json","utf8")); console.log(JSON.stringify({scripts:p.scripts,dependencies:p.dependencies,devDependencies:p.devDependencies},null,2))'
+printf '%s\n' '=== BROWSER-RELATED PATHS ==='
+find backend -maxdepth 5 \( -iname '*browser*' -o -iname '*playwright*' \) -print 2>/dev/null | sort | head -200
+printf '%s\n' '=== BACKEND EXTENSION DIRECTORIES ==='
+find backend/extension -maxdepth 2 -type d -print 2>/dev/null | sort | head -120
+printf '%s\n' '=== TEST FILES ==='
+find . -maxdepth 4 -type f \( -iname '*.test.js' -o -iname '*.spec.js' -o -path '*/test/*' -o -path '*/tests/*' \) -not -path './node_modules/*' -print 2>/dev/null | sort | head -160
+printf '%s\n' '=== EXISTING ROUTE / TOOL REGISTRATION REFERENCES ==='
+grep -RIn --exclude-dir=node_modules --exclude-dir=.git -E 'express\.Router|app\.(get|post|put|delete)\(|register.*tool|extension/.+controller|toolRegistry' backend/server.js backend/extension backend 2>/dev/null | head -180
+printf '%s\n' '=== GIT STATUS (SUMMARY ONLY) ==='
+git status --short | head -100
