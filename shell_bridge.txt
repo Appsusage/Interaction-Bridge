@@ -1,0 +1,10 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== TASK S635: inspect browser session implementation before multi-session UI changes ==="
+for f in backend/extension/browser/browser_service.js backend/extension/browser/browser_live.js frontend/browser-live-viewer.js frontend/browser-live-viewer.css frontend/index.html; do
+  echo "--- FILE: $f ---"
+  if [ -f "$f" ]; then sed -n '1,260p' "$f"; else echo "MISSING"; fi
+done
+echo "--- package dependency check ---"
+node -e "for (const p of ['playwright','ws']) { try { console.log(p + '=' + require.resolve(p)) } catch(e) { console.log(p + '=MISSING') } }"
+echo "--- end S635 ---"
