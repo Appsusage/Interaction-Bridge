@@ -1,0 +1,10 @@
+# S624 Actual Browser chat-chain regression test after server restart
+set -u
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== SERVER HEALTH ==='
+curl -sS --max-time 10 -i http://127.0.0.1:3000/health || true
+printf '\n%s\n' '=== POST CHAT BROWSER TEST ==='
+START=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)
+printf 'TEST_STARTED_AT: %s\n' "$START"
+curl -sS --max-time 180 -w '\nHTTP_STATUS: %{http_code}\n' -X POST http://127.0.0.1:3000/chat -H 'Content-Type: application/json' --data-binary '{"message":"请实际使用你已有的 Browser 工具完成一次网页读取测试：打开 https://example.com，先创建一个 browser session，然后必须复用返回的 sessionId 调用 browser_open，再调用 browser_read 读取网页标题和正文，最后关闭同一 session。不要重复创建 session；每一步都根据上一步真实返回结果决定下一步，不要编造结果。如果任一步失败，请报告真实失败信息。","autonomyType":"chat"}' || true
+printf 'TEST_FINISHED_AT: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
