@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== active cortex.js ==='
+sed -n '1,240p' backend/extension/prompt_master/cortex.js
+printf '%s\n' '=== imports and file paths in active cortex ==='
+grep -nE 'from |import\(|SKILL|references|core/' backend/extension/prompt_master/cortex.js
+printf '%s\n' '=== adapter backup imports and file paths ==='
+grep -nE 'from |import\(|SKILL|references|core/' 'backend/extension/prompt_master/adapter.js.bk' 'backend/extension/prompt_master/adapter.js（保留）'
