@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent
+grep -RniE 'selfEvaluate|metaLearn' backend --include='*.js' --exclude='nexus.js'
+printf '\n--- NEXUS IMPORTS 120-230 ---\n'
+sed -n '120,230p' backend/extension/nexus.js
+printf '\n--- CATCH BLOCK ---\n'
+sed -n '1150,1235p' backend/extension/nexus.js
