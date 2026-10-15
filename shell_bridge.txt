@@ -1,0 +1,12 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== TASK S633: verify live browser viewer ==="
+node --check backend/server.js; echo server_syntax=$?
+node --check backend/extension/browser/browser_service.js; echo service_syntax=$?
+node --check backend/extension/browser/browser_live.js; echo live_syntax=$?
+node --check frontend/browser-live-viewer.js; echo viewer_syntax=$?
+echo "--- stream markers ---"
+grep -nE 'Page\.startScreencast|Page\.screencastFrame|WebSocketServer|browserActivity|listBrowserSessions' backend/extension/browser/browser_live.js backend/extension/browser/browser_service.js
+echo "--- files ---"
+git status --short backend/server.js backend/extension/browser/browser_service.js backend/extension/browser/browser_live.js frontend/index.html frontend/browser-live-viewer.js frontend/browser-live-viewer.css
+echo "--- end S633 ---"
