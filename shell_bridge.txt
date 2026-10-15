@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; grep -n -C 12 'optimizerPrompt' backend/extension/AICortex/steward.js
