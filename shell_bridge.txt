@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+set +e
+printf '%s\n' '=== server.js route beginning and middleware ==='
+sed -n '1,175p' backend/server.js
+printf '%s\n' '=== server.js main chat route body ==='
+sed -n '600,785p' backend/server.js
+printf '%s\n' '=== server.js chat execution and response return ==='
+sed -n '785,1045p' backend/server.js
+printf '%s\n' '=== ai_core askAI signature and return shape ==='
+grep -nE 'export async function askAI|export function askAI|return \{|autonomousAction|parseAIResponse|askRouter\(' backend/ai_core.js | head -n 100
+sed -n '105,230p' backend/ai_core.js
+printf '%s\n' '=== Current chat service health ==='
+curl -sS --max-time 3 -i http://127.0.0.1:3000/health 2>&1 | head -n 18
