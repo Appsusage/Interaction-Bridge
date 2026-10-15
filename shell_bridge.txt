@@ -1,0 +1,67 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'EOF'
+import { spawn } from "node:child_process";
+import { setTimeout as delay } from "node:timers/promises";
+const port = "3197";
+const key = "temporary-browser-api-test-key";
+const child = spawn(process.execPath, ["backend/server.js"], {
+  cwd: process.cwd(),
+  env: { ...process.env, PORT: port, BROWSER_API_KEY: key },
+  stdio: ["ignore", "ignore", "pipe"]
+});
+let stderr = "";
+child.stderr.setEncoding("utf8");
+child.stderr.on("data", chunk => { stderr += chunk; });
+const base = "http://127.0.0.1:" + port;
+let sessionId;
+async function request(path, body, authorized = true) {
+  const headers = { "content-type": "application/json" };
+  if (authorized) headers["x-browser-key"] = key;
+  return fetch(base + path, { method: "POST", headers, body: JSON.stringify(body || {}) });
+}
+try {
+  let ready = false;
+  for (let i = 0; i < 60; i++) {
+    if (child.exitCode !== null) throw new Error("SERVER_EXITED:" + child.exitCode + ":" + stderr);
+    try { await fetch(base + "/"); ready = true; break; }
+    catch { await delay(250); }
+  }
+  if (!ready) throw new Error("SERVER_START_TIMEOUT:" + stderr);
+  const denied = await request("/browser/session", {}, false);
+  if (denied.status !== 401) throw new Error("UNAUTHORIZED_REQUEST_NOT_BLOCKED:" + denied.status);
+  const createdResponse = await request("/browser/session", {});
+  if (!createdResponse.ok) throw new Error("SESSION_CREATE_HTTP_" + createdResponse.status + ":" + await createdResponse.text());
+  const created = await createdResponse.json();
+  sessionId = created.sessionId;
+  if (!sessionId) throw new Error("SESSION_ID_MISSING");
+  const openedResponse = await request("/browser/open", { sessionId, url: "https://example.com" });
+  const opened = await openedResponse.json();
+  if (!openedResponse.ok || opened.title !== "Example Domain") throw new Error("OPEN_FAILED:" + JSON.stringify(opened));
+  const readResponse = await request("/browser/read", { sessionId });
+  const read = await readResponse.json();
+  if (!readResponse.ok || read.title !== "Example Domain" || !(read.text?.length > 0)) throw new Error("READ_FAILED");
+  const shotResponse = await request("/browser/screenshot", { sessionId });
+  const shot = Buffer.from(await shotResponse.arrayBuffer());
+  if (!shotResponse.ok || shot.length < 100 || !shotResponse.headers.get("content-type")?.includes("image/png")) throw new Error("SCREENSHOT_FAILED:" + shotResponse.status);
+  const closedResponse = await request("/browser/close", { sessionId });
+  const closed = await closedResponse.json();
+  if (!closedResponse.ok || closed.closed !== true) throw new Error("CLOSE_FAILED");
+  sessionId = null;
+  console.log("BROWSER_API_TEST_OK", JSON.stringify({
+    unauthorizedStatus: denied.status,
+    openedTitle: opened.title,
+    readTextLength: read.text.length,
+    screenshotBytes: shot.length,
+    sessionClosed: closed.closed
+  }));
+} finally {
+  if (sessionId) {
+    try { await request("/browser/close", { sessionId }); } catch {}
+  }
+  child.kill("SIGTERM");
+  await Promise.race([
+    new Promise(resolve => child.once("exit", resolve)),
+    delay(3000)
+  ]);
+}
+EOF
