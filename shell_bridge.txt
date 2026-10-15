@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n 460,540p backend/ai_core.js && grep -n -C 4 browser backend/tools/tool_manifest.js && cat system_prompts/Dynamic_Prompt/tools/browser.md
