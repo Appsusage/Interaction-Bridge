@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -n return backend/extension/AICortex/steward.js; tail -n 100 backend/extension/AICortex/steward.js
