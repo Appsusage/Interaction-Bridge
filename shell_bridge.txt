@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent
+grep -n 'autonomousTools' backend/extension/nexus.js
+sed -n '1,180p' backend/extension/nexus.js
