@@ -1,0 +1,37 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'EOF'
+import { selectToolChain } from "./backend/extension/upgrade/tool_selector.js";
+import { receiveAIInstruction } from "./backend/extension/nexus.js";
+const types = [
+  "browser_new_session", "browser_open", "browser_read",
+  "browser_click", "browser_type", "browser_scroll",
+  "browser_screenshot", "browser_close_session"
+];
+const routes = types.map(type => ({ type, chain: selectToolChain({ type }).chain }));
+console.log("BROWSER_TOOL_ROUTES", JSON.stringify(routes));
+if (routes.some(x => !Array.isArray(x.chain) || x.chain[0] !== x.type)) {
+  throw new Error("Browser tool routing failed");
+}
+const created = await receiveAIInstruction({ type: "browser_new_session" });
+console.log("BROWSER_SESSION_RESULT", JSON.stringify(created));
+function findSession(value) {
+  if (!value || typeof value !== "object") return null;
+  if (typeof value.sessionId === "string") return value.sessionId;
+  for (const child of Object.values(value)) {
+    const found = findSession(child);
+    if (found) return found;
+  }
+  return null;
+}
+const sessionId = findSession(created);
+if (!sessionId) throw new Error("Nexus did not return a browser session ID");
+try {
+  const opened = await receiveAIInstruction({ type: "browser_open", sessionId, url: "https://example.com" });
+  console.log("BROWSER_OPEN_RESULT", JSON.stringify(opened));
+  const read = await receiveAIInstruction({ type: "browser_read", sessionId });
+  console.log("BROWSER_READ_RESULT", JSON.stringify(read).slice(0, 1000));
+} finally {
+  const closed = await receiveAIInstruction({ type: "browser_close_session", sessionId });
+  console.log("BROWSER_CLOSE_RESULT", JSON.stringify(closed));
+}
+EOF
