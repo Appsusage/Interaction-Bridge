@@ -1,0 +1,14 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== TASK S634: runtime check for browser live viewer ==="
+echo "--- service process ---"
+ps -eo pid,args | grep -E '[n]ode backend/server.js|[n]pm start' || true
+echo "--- health endpoint ---"
+curl -sS -i --max-time 4 http://127.0.0.1:3000/health 2>&1 | head -30
+echo "--- frontend endpoint ---"
+curl -sS -i --max-time 4 http://127.0.0.1:3000/ 2>&1 | head -25
+echo "--- viewer asset endpoint ---"
+curl -sS -i --max-time 4 http://127.0.0.1:3000/browser-live-viewer.js 2>&1 | head -25
+echo "--- websocket handshake probe ---"
+curl -sS -i --max-time 4 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' http://127.0.0.1:3000/browser/live 2>&1 | head -25
+echo "--- end S634 ---"
