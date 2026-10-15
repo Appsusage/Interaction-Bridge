@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '\n--- BROWSER SERVICE ---\n'
-sed -n '1,240p' backend/extension/browser/browser_service.js
-printf '\n--- SERVER IMPORTS AND MIDDLEWARE ---\n'
-sed -n '1,150p' backend/server.js
-printf '\n--- SERVER LISTEN ---\n'
-sed -n '1240,1280p' backend/server.js
