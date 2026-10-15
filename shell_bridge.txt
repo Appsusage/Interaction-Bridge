@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== server routes after line 260 ==='
+sed -n '260,650p' backend/server.js
+printf '%s\n' '=== ai_core after line 300 ==='
+sed -n '300,650p' backend/ai_core.js
+printf '%s\n' '=== response parser ==='
+sed -n '1,260p' backend/router/response_parser.js
+printf '%s\n' '=== nexus action receiver ==='
+sed -n '1,260p' backend/extension/nexus.js
