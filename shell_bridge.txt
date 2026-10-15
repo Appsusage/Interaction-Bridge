@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent
+cat >> backend/extension/browser/browser_service.js <<'EOF'
+
+export async function captureScreenshot(page, filePath) {
+  await page.screenshot({ path: filePath, fullPage: true });
+  return { saved: true, path: filePath };
+}
+EOF
+node --check backend/extension/browser/browser_service.js
