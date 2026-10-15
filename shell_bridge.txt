@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== all project references to old paths ==='
+grep -RInE 'extension/prompt_master|prompt_master/cortex\.js|backend/extension/prompt_master/SKILL\.md' . --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null | head -n 300 || true
+printf '%s\n' '=== test files ==='
+find test -maxdepth 2 -type f -print 2>/dev/null | sort
