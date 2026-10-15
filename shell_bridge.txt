@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent
+printf '\n--- NEXUS ACTION DISPATCH ---\n'
+sed -n '950,1015p' backend/extension/nexus.js
+sed -n '1100,1155p' backend/extension/nexus.js
+sed -n '1300,1345p' backend/extension/nexus.js
+printf '\n--- TOOL SELECTOR ---\n'
+sed -n '1,180p' backend/extension/upgrade/tool_selector.js
+printf '\n--- BROWSER SERVICE ---\n'
+sed -n '1,120p' backend/extension/browser/browser_service.js
