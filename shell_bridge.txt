@@ -1,0 +1,90 @@
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/server.js")
+s = p.read_text()
+anchor = 'const PORT =\nprocess.env.PORT || 3000;'
+routes = '''function requireBrowserKey(req, res, next) {
+  const expected = process.env.BROWSER_API_KEY;
+  if (!expected || req.get("x-browser-key") !== expected) {
+    return res.status(401).json({ error: "Browser API is not authorized" });
+  }
+  next();
+}
+
+app.post("/browser/session", requireBrowserKey, async (req, res) => {
+  try {
+    res.json(await createBrowserSession());
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/browser/open", requireBrowserKey, async (req, res) => {
+  try {
+    const page = getBrowserPage(req.body.sessionId);
+    res.json(await openPage(page, req.body.url));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/browser/read", requireBrowserKey, async (req, res) => {
+  try {
+    res.json(await readPage(getBrowserPage(req.body.sessionId)));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/browser/click", requireBrowserKey, async (req, res) => {
+  try {
+    res.json(await clickElement(getBrowserPage(req.body.sessionId), req.body.selector));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/browser/type", requireBrowserKey, async (req, res) => {
+  try {
+    res.json(await typeText(getBrowserPage(req.body.sessionId), req.body.selector, req.body.text));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/browser/scroll", requireBrowserKey, async (req, res) => {
+  try {
+    res.json(await scrollPage(getBrowserPage(req.body.sessionId), req.body.pixels));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/browser/screenshot", requireBrowserKey, async (req, res) => {
+  try {
+    const screenshotPath = path.join("/tmp", "ai-agent-browser-" + Date.now() + ".png");
+    await captureScreenshot(getBrowserPage(req.body.sessionId), screenshotPath);
+    res.sendFile(screenshotPath);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/browser/close", requireBrowserKey, async (req, res) => {
+  try {
+    res.json(await closeBrowserSession(req.body.sessionId));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+const PORT =
+process.env.PORT || 3000;'''
+if anchor not in s:
+    raise SystemExit("PORT_ANCHOR_NOT_FOUND; no changes made")
+if 'app.post("/browser/session"' in s:
+    raise SystemExit("BROWSER_ROUTES_ALREADY_EXIST; no changes made")
+p.write_text(s.replace(anchor, routes, 1))
+PY
+node --check backend/server.js
