@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent; grep -n -C 8 'cleaned_context' backend/extension/AICortex/steward.js
