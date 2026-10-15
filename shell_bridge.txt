@@ -1,0 +1,22 @@
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/extension/nexus.js")
+s = p.read_text()
+old = '''if(!chain){
+
+return await executeAutonomousAction(action);
+
+}'''
+new = '''if(!chain || chain.length === 0){
+
+return await executeAutonomousAction(action);
+
+}'''
+if new in s:
+    raise SystemExit("EMPTY_CHAIN_DISPATCH_ALREADY_FIXED; no changes made")
+if old not in s:
+    raise SystemExit("DISPATCH_ANCHOR_NOT_FOUND; no changes made")
+p.write_text(s.replace(old, new, 1))
+PY
+node --check backend/extension/nexus.js
