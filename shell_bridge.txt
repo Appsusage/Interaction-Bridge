@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+printf '\n--- NEXUS TOOL REGISTRY ---\n'
+sed -n '240,380p' backend/extension/nexus.js
+printf '\n--- NEXUS ACTION ENTRY ---\n'
+grep -nE 'executeToolWorkflow|selectToolChain|safetyCheck|executeAutonomousAction' backend/extension/nexus.js
+printf '\n--- BROWSER SERVICE EXPORTS ---\n'
+grep -n '^export' backend/extension/browser/browser_service.js
+printf '\n--- SERVER BROWSER ROUTES ---\n'
+grep -nE 'browser/(session|open|read|click|type|scroll|screenshot|close)|BROWSER_API_KEY|browser_service' backend/server.js
+printf '\n--- SYNTAX ---\n'
+node --check backend/extension/nexus.js
+node --check backend/extension/browser/browser_service.js
+node --check backend/server.js
