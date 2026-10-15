@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n 45,180p backend/extension/AICortex/steward.js; grep -n -C 6 parseAIResponse backend/extension/AICortex/adapter.js
