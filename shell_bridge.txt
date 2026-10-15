@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent
+sed -n '230,360p' backend/extension/nexus.js
+printf '\n--- ACTION CLASSIFIER ---\n'
+sed -n '1,240p' backend/extension/upgrade/action_classifier.js
+printf '\n--- SAFETY GATE ---\n'
+sed -n '1,180p' backend/extension/upgrade/safety_gate.js
