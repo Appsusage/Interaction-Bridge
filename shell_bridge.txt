@@ -1,0 +1,10 @@
+# S625 Read-only Browser test: ChatGPT web send/receive
+set -u
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== SERVER HEALTH ==='
+curl -sS --max-time 10 -i http://127.0.0.1:3000/health || true
+printf '\n%s\n' '=== CHATGPT WEB SEND/RECEIVE TEST ==='
+START=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)
+printf 'TEST_STARTED_AT: %s\n' "$START"
+curl -sS --max-time 180 -w '\nHTTP_STATUS: %{http_code}\n' -X POST http://127.0.0.1:3000/chat -H 'Content-Type: application/json' --data-binary '{"message":"只做这次实际网页测试，不要修改任何文件或代码。请使用现有 Browser 工具打开 https://chatgpt.com 并检查页面真实状态。如果已经登录且能正常使用，请复用同一个 browser session，在网页 ChatGPT 输入并发送这条无敏感信息的测试消息：网页 ChatGPT 收发测试，请只回复：网页 ChatGPT 收发测试成功。然后读取网页上实际出现的回复并报告原文。请根据真实结果判断是否已登录、消息是否真的发送、回复是否真的读取；不得编造或仅根据页面静态文字推断成功。如果页面要求登录、验证码或其他人工验证，不要尝试绕过，不要输入任何凭证，停止并明确报告阻塞原因。尽可能使用 browser_screenshot 记录实际页面状态；完成后关闭本次 session。不要更改 browser_scroll 或任何其他项目逻辑。","autonomyType":"chat"}' || true
+printf 'TEST_FINISHED_AT: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
