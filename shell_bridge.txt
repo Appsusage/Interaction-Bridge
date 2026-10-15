@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+printf '\n--- ACTIVE ADAPTER ---\n'
+sed -n '1,90p' backend/extension/prompt_master/adapter.js
+printf '\n--- PRESERVED CORTEX BACKUP ---\n'
+sed -n '1,90p' 'backend/extension/prompt_master/cortex.js（保留）'
+printf '\n--- EXISTENCE CHECK ---\n'
+test -f backend/extension/prompt_master/cortex.js; echo "cortex.js_exists=$?"
