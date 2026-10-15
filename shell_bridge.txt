@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -nE "parseAIResponse|askRouter|optimizePrompt|autonomousAction|toolManifest|loadToolPrompts" backend/ai_core.js backend/router/response_parser.js backend/tool_prompt_loader.js 2>&1
