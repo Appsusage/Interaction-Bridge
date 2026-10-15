@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n 300,460p backend/ai_core.js && cat backend/tool_prompt_loader.js
