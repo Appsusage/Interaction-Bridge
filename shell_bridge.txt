@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'EOF'
+import { launchBrowser, openPage, readPage } from "./backend/extension/browser/browser_service.js";
+const browser = await launchBrowser();
+try {
+  const page = await browser.newPage();
+  await openPage(page, "https://example.com");
+  const result = await readPage(page);
+  console.log(JSON.stringify({ title: result.title, textLength: result.text.length, textStart: result.text.slice(0, 120) }));
+} finally {
+  await browser.close();
+}
+EOF
