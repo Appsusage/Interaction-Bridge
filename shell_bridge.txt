@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent
-cat >> backend/extension/browser/browser_service.js <<'EOF'
-
-export async function scrollPage(page, pixels = 600) {
-  await page.evaluate(amount => window.scrollBy(0, amount), Number(pixels));
-  return { scrolled: true };
-}
-EOF
-node --check backend/extension/browser/browser_service.js
