@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '\n--- BROWSER REFERENCES IN NEXUS ---\n'
-grep -nEi 'browser|receiveAIInstruction|export .*receiveAIInstruction|export async function' backend/extension/nexus.js | head -100
-printf '\n--- NEXUS IMPORTS ---\n'
-sed -n '1,130p' backend/extension/nexus.js
-printf '\n--- RISK ANALYZER ---\n'
-sed -n '1,200p' backend/extension/upgrade/risk_analyzer.js
-printf '\n--- PACKAGE TEST SCRIPT ---\n'
-node -p 'JSON.stringify(require("./package.json").scripts)'
