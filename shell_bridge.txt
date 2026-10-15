@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent
+npm test
