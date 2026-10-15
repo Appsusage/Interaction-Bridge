@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '\n--- AI CORE TOOL REFERENCES ---\n'
-grep -nEi 'tool|execute|function call|askAI|router' backend/ai_core.js | head -100
-printf '\n--- TOOL FILES ---\n'
-find backend -maxdepth 4 -type f | grep -Ei '/tools?/|tool' | head -100
