@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent
+printf '\n--- SERVER LISTEN ---\n'
+grep -nE 'app\.listen|const PORT|process\.env\.PORT' backend/server.js
+printf '\n--- PORT 3000 LISTENER ---\n'
+(ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null || true) | grep -E ':3000|:3197' || true
