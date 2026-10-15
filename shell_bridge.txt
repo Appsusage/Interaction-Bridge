@@ -1,0 +1,20 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== TASK S628: inspect integration points for live browser streaming; DO NOT use screenshot polling ==="
+echo "--- server bootstrap/static serving ---"
+nl -ba backend/server.js | sed -n '1,145p'
+echo "--- browser routes ---"
+nl -ba backend/server.js | sed -n '1240,1375p'
+echo "--- browser service ---"
+nl -ba backend/extension/browser/browser_service.js | sed -n '1,240p'
+echo "--- package ws and server type ---"
+node -e "const p=require('./package.json'); console.log(JSON.stringify({type:p.type,scripts:p.scripts,ws:p.dependencies?.ws,playwright:p.dependencies?.playwright},null,2))"
+echo "--- browser folder files ---"
+find backend/extension/browser -maxdepth 2 -type f -print
+echo "--- frontend/static assets candidates ---"
+find . -maxdepth 3 -type f \( -name 'index.html' -o -name '*.html' -o -name '*.css' -o -name '*.js' \) -not -path './node_modules/*' -not -path './.git/*' | sort | head -160
+echo "--- HTTP server construction/listen ---"
+grep -nE 'createServer|app\.listen|server\.listen|new WebSocketServer|WebSocketServer|static|sendFile|writeHead|createReadStream' backend/server.js
+echo "--- git status (do not alter) ---"
+git status --short
+echo "--- end S628 ---"
