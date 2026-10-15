@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '--- BROWSER SERVICE ---'
+sed -n '1,260p' backend/extension/browser/browser_service.js
+printf '%s\n' '--- BROWSER SERVER ROUTES ---'
+grep -n 'browser/session\|browser/open\|browser/read\|browser/click\|browser/type\|browser/scroll\|browser/screenshot\|browser/close\|BROWSER_API_KEY' backend/server.js
+printf '%s\n' '--- NEXUS IMPORT END ---'
+sed -n '180,280p' backend/extension/nexus.js
