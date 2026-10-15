@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent
-mkdir -p backend/extension/browser
-printf '%s\n' 'export const browserModuleAvailable = true;' > backend/extension/browser/browser_service.js
-node --check backend/extension/browser/browser_service.js
