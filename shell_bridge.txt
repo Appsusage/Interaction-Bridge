@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent; awk 'NR>=540 && NR<=630 {print}' backend/extension/AICortex/steward.js
