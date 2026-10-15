@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -n '130,165p' backend/ai_core.js
-printf '\n--- EXISTING TOOL PROMPT STYLE ---\n'
-sed -n '1,120p' system_prompts/Dynamic_Prompt/tools/diff.md
-printf '\n--- TOOL PROMPT DIRECTORY ---\n'
-find system_prompts/Dynamic_Prompt/tools -maxdepth 1 -type f -printf '%f\n' | sort
