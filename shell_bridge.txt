@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -n -C 5 'autonomousAction\|JSON\|response_format\|json_object' backend/ai_router.js backend/router/*.js backend/extension/AICortex/steward.js
