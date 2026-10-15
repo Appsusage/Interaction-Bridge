@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -n '1120,1255p' backend/extension/nexus.js
-printf '\n--- SAVE RESULT IMPLEMENTATION ---\n'
-grep -Rni 'function saveUpgradeResult\|export.*saveUpgradeResult\|function updateTask\|export.*updateTask' backend/extension/upgrade backend/extension/task_manager.js
-printf '\n--- POSSIBLY EMPTY JSON FILES ---\n'
-find backend -type f -name '*.json' -size 0 -print | head -50
