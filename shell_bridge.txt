@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent
+sed -n '1000,1130p' backend/extension/nexus.js
+grep -n 'executeToolWorkflow\|executeAutonomousAction\|classifyAction' backend/extension/nexus.js
