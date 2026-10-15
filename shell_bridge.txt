@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-grep -n 'listen' backend/server.js | tail -20
-grep -n 'app.post' backend/server.js | tail -20
