@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '%s\n' '=== server chat route continuation ==='
-sed -n '600,920p' backend/server.js
-printf '%s\n' '=== nexus browser/action dispatch locations ==='
-grep -nE 'receiveAIInstruction|browser_|autonomousAction' backend/extension/nexus.js
-printf '%s\n' '=== ai_core imports and response route ==='
-sed -n '1,100p' backend/ai_core.js
-grep -nE 'askRouter|parseAIResponse|autonomousAction|receiveAIInstruction|localResponse' backend/ai_core.js backend/server.js
