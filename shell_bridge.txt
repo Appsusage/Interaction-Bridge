@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent
+printf '\n--- PROMPT MASTER FILES ---\n'
+find backend/extension/prompt_master -maxdepth 2 -type f -printf '%p\n' 2>/dev/null | sort
+printf '\n--- OPTIMIZE PROMPT EXPORTS ---\n'
+grep -RniE 'export .*optimizePrompt|function optimizePrompt|export .*analyzeIntent' backend/extension/prompt_master backend --include='*.js' | head -80
+printf '\n--- AI CORE IMPORT ---\n'
+sed -n '1,24p' backend/ai_core.js
+printf '\n--- BROWSER PROMPT LOADER CHECK ---\n'
+node --check backend/tools/tool_manifest.js
+node --input-type=module -e 'import {loadToolPrompts} from "./backend/tool_prompt_loader.js"; const p=loadToolPrompts(); console.log("browser prompt present:",p.includes("browser_new_session"),"characters:",p.length)'
