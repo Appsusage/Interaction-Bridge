@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '%s\n' '=== Prompt Master / ai_core browser tool context and response parsing ==='
-grep -RInE 'toolContext|loadToolPrompts|autonomousAction|receiveAIInstruction|optimizePrompt|askAI\(' backend/ai_core.js backend/extension/AICortex/steward.js backend/extension/nexus.js backend/server.js --exclude-dir=node_modules | head -n 240
-printf '%s\n' '=== ai_core askAI implementation ==='
-grep -nE 'export async function askAI|function askAI|autonomousAction|optimizePrompt|JSON.parse|toolContext' backend/ai_core.js
-printf '%s\n' '=== server chat route ==='
-grep -nE 'app\.post\(.*/chat|receiveAIInstruction|askAI\(|autonomousAction|toolContext' backend/server.js
-printf '%s\n' '=== Browser tools registry / selector ==='
-grep -nE 'browser_new_session|browser_open|selectToolChain|function executeTool|async function executeTool' backend/extension/nexus.js backend/extension/upgrade/tool_selector.js backend/tools/tool_manifest.js
