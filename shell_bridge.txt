@@ -1,0 +1,11 @@
+# S622 Read-only inspect action result contract before fixing duplicate-action stop
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== SERVER ACTION LOOP ==='
+nl -ba backend/server.js | sed -n '930,1085p'
+printf '%s\n' '=== receiveAIInstruction DEFINITIONS ==='
+grep -R -n -B 15 -A 75 'function receiveAIInstruction\|const receiveAIInstruction\|receiveAIInstruction *=' backend --include='*.js' || true
+printf '%s\n' '=== NEXUS BROWSER/ACTION RESULT RETURNS ==='
+grep -n -B 8 -A 30 'browser_new_session\|browser_open\|browser_read\|return .*success\|success:' backend/extension/nexus.js backend/extension/browser/browser_service.js || true
+printf '%s\n' '=== PACKAGE/TEST REFERENCES TO ACTION RESULT ==='
+grep -R -n -E 'receiveAIInstruction|执行结果|success.*false|success.*true|action.*result' test backend --include='*.js' --include='*.mjs' | head -240 || true
