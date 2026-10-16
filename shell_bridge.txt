@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== CONFIG REFERENCES (VALUES REDACTED) ==='
+grep -nE 'BROWSER_API_KEY|browser|run|start' .replit package.json backend/server.js 2>/dev/null | sed -E 's/(BROWSER_API_KEY[=: ]+).*/\1[REDACTED]/' | head -100 || true
+printf '%s\n' '=== PUBLIC ENDPOINT STATUS ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
+curl -sS -o /dev/null -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.js
+curl -sS -o /dev/null -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.css
+printf '%s\n' '=== AUTH GATE CHECK (NO CREDENTIALS SENT) ==='
+curl -sS -o /dev/null -w 'browser_session_without_key_http=%{http_code}\n' -X POST http://127.0.0.1:3000/browser/session -H 'content-type: application/json' -d '{}'
