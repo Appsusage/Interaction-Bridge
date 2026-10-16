@@ -1,0 +1,126 @@
+cd /home/runner/workspace/ai-agent && set -eu
+python3 - <<'PY'
+from pathlib import Path
+p = Path("frontend/browser-live-viewer.js")
+if not p.exists():
+    raise SystemExit("BLOCKED: frontend/browser-live-viewer.js not found; no files changed")
+p.write_text(r'''(() => {
+  if (document.getElementById("browser-live-viewer")) return;
+  const root = document.createElement("section");
+  root.id = "browser-live-viewer";
+  root.innerHTML = '<div class="blv-head"><span class="blv-dot" aria-hidden="true"></span><span class="blv-title">AI 实时浏览器</span><button type="button" class="blv-min" aria-label="收起">−</button><button type="button" class="blv-hide" aria-label="隐藏查看器">×</button></div><div class="blv-tabs" role="tablist" aria-label="浏览器会话"></div><div class="blv-state" aria-live="polite">正在连接实时画面…</div><div class="blv-screen"><div class="blv-placeholder">等待 AI 打开网页。这里使用 CDP 连续画面串流，不使用截图轮询。</div></div><div class="blv-foot" aria-live="polite"><div class="blv-log">操作状态：等待中</div></div>';
+  document.body.appendChild(root);
+  const state = root.querySelector(".blv-state");
+  const screen = root.querySelector(".blv-screen");
+  const tabs = root.querySelector(".blv-tabs");
+  const dot = root.querySelector(".blv-dot");
+  const log = root.querySelector(".blv-log");
+  let ws, selected = "", reconnectTimer, minimized = false, manuallyHidden = false, hideTimer = null;
+  const sessions = new Map();
+  const pending = new Set();
+  function showViewer() { manuallyHidden = false; clearTimeout(hideTimer); root.classList.remove("blv-hidden"); }
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    if (pending.size) return;
+    hideTimer = setTimeout(() => { if (!pending.size) root.classList.add("blv-hidden"); }, 7000);
+  }
+  function tabFor(id) { return [...tabs.querySelectorAll("button")].find(b => b.dataset.sessionId === id); }
+  function renderTab(id, label) {
+    let tab = tabFor(id);
+    if (!tab) {
+      tab = document.createElement("button"); tab.type = "button"; tab.className = "blv-tab"; tab.dataset.sessionId = id;
+      tab.addEventListener("click", () => { selected = id; updateTabs(); showViewer(); screen.replaceChildren(Object.assign(document.createElement("div"), {className:"blv-placeholder", textContent:"正在连接所选浏览器会话…"})); attach(); });
+      tabs.appendChild(tab);
+    }
+    tab.textContent = label || "浏览器 " + id.slice(-6);
+    tab.title = sessions.get(id)?.url || id;
+    tab.classList.toggle("active", id === selected);
+  }
+  function updateTabs() { for (const tab of tabs.querySelectorAll("button")) tab.classList.toggle("active", tab.dataset.sessionId === selected); }
+  function addSession(s) {
+    sessions.set(s.sessionId, {url:s.url || "", state:"background", needsAttention:false});
+    renderTab(s.sessionId, (s.url || "新会话") + " · " + s.sessionId.slice(-5));
+    if (!selected) { selected = s.sessionId; updateTabs(); }
+  }
+  function connect() {
+    clearTimeout(reconnectTimer);
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(proto + "//" + location.host + "/browser/live");
+    ws.onopen = () => { state.textContent = "实时连接已建立，等待/选择浏览器会话"; };
+    ws.onclose = () => { dot.classList.remove("live"); state.textContent = "连接中断，正在重连…"; reconnectTimer = setTimeout(connect, 1800); };
+    ws.onerror = () => { try { ws.close(); } catch {} };
+    ws.onmessage = event => {
+      let m; try { m = JSON.parse(event.data); } catch { return; }
+      if (m.type === "sessions") {
+        for (const s of (m.sessions || [])) addSession(s);
+        updateTabs();
+        if (selected) attach();
+      } else if (m.type === "session-created") {
+        addSession(m);
+        // Keep the user's foreground selection; a new background session never steals focus.
+        showViewer();
+        if (!selected) { selected = m.sessionId; updateTabs(); attach(); }
+        state.textContent = "检测到 AI 新建浏览器会话：" + (m.url || m.sessionId.slice(-6));
+      } else if (m.type === "session-closed") {
+        sessions.delete(m.sessionId);
+        const tab = tabFor(m.sessionId); if (tab) tab.remove();
+        if (selected === m.sessionId) {
+          selected = sessions.size ? sessions.keys().next().value : "";
+          updateTabs();
+          if (selected) attach();
+          else { screen.innerHTML = '<div class="blv-placeholder">浏览器会话已关闭，等待下一个会话。</div>'; state.textContent = "会话已关闭"; }
+        }
+      } else if (m.type === "status") {
+        if (m.state === "streaming") { dot.classList.add("live"); state.textContent = (m.title || "网页") + " · " + (m.url || "实时串流中"); }
+        else state.textContent = "实时画面状态：" + m.state;
+      } else if (m.type === "navigation") {
+        const s = sessions.get(m.sessionId); if (s) s.url = m.url;
+        renderTab(m.sessionId, m.url + " · " + m.sessionId.slice(-5));
+        if (m.sessionId === selected) state.textContent = "正在浏览：" + m.url;
+      } else if (m.type === "activity") {
+        const id = m.sessionId;
+        if (id) {
+          const s = sessions.get(id) || {url:"",state:"background",needsAttention:false}; sessions.set(id,s);
+          const tab = tabFor(id);
+          if (m.state === "进行中" || m.state === "running") { pending.add(id); s.state = "running"; s.needsAttention = false; if (tab) {tab.classList.add("running");tab.classList.remove("attention","failed");} showViewer(); }
+          else if (m.state === "失败" || m.state === "error") { pending.delete(id); s.state = "error"; s.needsAttention = true; if (tab) {tab.classList.remove("running");tab.classList.add("failed","attention");} }
+          else if (m.state === "完成" || m.state === "completed") { pending.delete(id); s.state = "completed"; s.needsAttention = id !== selected; if (tab) {tab.classList.remove("running");tab.classList.toggle("attention",s.needsAttention);} }
+        }
+        if (!id || id === selected) {
+          const d = m.detail || {};
+          log.textContent = "操作状态：" + (m.action || "操作") + " — " + (m.state || "进行中") + (d.url ? " · " + d.url : d.pixels ? " · " + d.pixels + "px" : d.selector ? " · " + d.selector : "");
+          if (m.action === "输入文字") log.textContent += "（不会显示或记录输入内容）";
+        }
+        if (!pending.size && (m.state === "完成" || m.state === "失败" || m.state === "completed" || m.state === "error")) scheduleHide();
+      } else if (m.type === "frame" && m.sessionId === selected) {
+        let img = screen.querySelector("img");
+        if (!img) { screen.replaceChildren(); img = document.createElement("img"); img.alt = "AI 操作中的网页实时画面"; screen.appendChild(img); }
+        img.src = "data:image/jpeg;base64," + m.data;
+      } else if (m.type === "error") state.textContent = m.message;
+    };
+  }
+  function attach() { if (ws && ws.readyState === WebSocket.OPEN && selected) ws.send(JSON.stringify({type:"attach",sessionId:selected})); }
+  root.querySelector(".blv-min").addEventListener("click", () => { minimized = !minimized; root.classList.toggle("minimized", minimized); root.querySelector(".blv-min").textContent = minimized ? "□" : "−"; });
+  root.querySelector(".blv-hide").addEventListener("click", () => { manuallyHidden = true; root.classList.add("blv-hidden"); });
+  tabs.addEventListener("click", e => { const t = e.target.closest(".blv-tab"); if (t) { const s = sessions.get(t.dataset.sessionId); if (s) { s.needsAttention = false; t.classList.remove("attention"); } } });
+  const head = root.querySelector(".blv-head");
+  let drag = null;
+  head.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; const r = root.getBoundingClientRect(); drag = {x:e.clientX,y:e.clientY,left:r.left,top:r.top}; head.setPointerCapture(e.pointerId); });
+  head.addEventListener("pointermove", e => { if (!drag) return; const left = Math.max(0, Math.min(innerWidth-root.offsetWidth, drag.left+e.clientX-drag.x)); const top = Math.max(0, Math.min(innerHeight-44, drag.top+e.clientY-drag.y)); root.style.left=left+"px"; root.style.top=top+"px"; root.style.right="auto"; root.style.bottom="auto"; });
+  head.addEventListener("pointerup", () => { drag = null; });
+  connect();
+})();
+''', encoding="utf-8")
+css = Path("frontend/browser-live-viewer.css")
+if not css.exists():
+    raise SystemExit("BLOCKED: frontend/browser-live-viewer.css not found")
+css.write_text(r'''#browser-live-viewer{position:fixed;right:14px;bottom:14px;width:min(560px,calc(100vw - 28px));height:min(460px,calc(100vh - 28px));z-index:99999;background:rgba(16,21,29,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#eef3fa;border:1px solid #435064;border-radius:12px;box-shadow:0 12px 40px #0007;display:flex;flex-direction:column;overflow:hidden;font:13px/1.4 system-ui,sans-serif;transition:opacity .18s,background .18s}#browser-live-viewer:hover,#browser-live-viewer:focus-within{background:rgba(16,21,29,.97)}#browser-live-viewer.blv-hidden{display:none}#browser-live-viewer.minimized{height:44px;width:min(330px,calc(100vw - 28px))}#browser-live-viewer.minimized .blv-tabs,#browser-live-viewer.minimized .blv-state,#browser-live-viewer.minimized .blv-screen,#browser-live-viewer.minimized .blv-foot{display:none}#browser-live-viewer .blv-head{display:flex;align-items:center;gap:8px;padding:9px 10px;background:rgba(26,35,48,.9);cursor:move;touch-action:none;user-select:none}#browser-live-viewer .blv-title{font-weight:700;flex:1}#browser-live-viewer button{font:inherit;color:inherit;background:rgba(39,52,71,.94);border:1px solid #52627a;border-radius:6px;padding:5px 8px}#browser-live-viewer .blv-tabs{display:flex;gap:5px;overflow-x:auto;padding:6px 8px;border-bottom:1px solid #354052;background:rgba(15,21,30,.72)}#browser-live-viewer .blv-tab{white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis;position:relative}#browser-live-viewer .blv-tab.active{border-color:#6db8ff;background:#284a69}#browser-live-viewer .blv-tab.running:before{content:"● ";color:#48d597}#browser-live-viewer .blv-tab.failed:before{content:"! ";color:#ff7777}#browser-live-viewer .blv-tab.attention{animation:blv-pulse 1.5s ease-in-out infinite}#browser-live-viewer .blv-state{padding:6px 10px;color:#b8c6d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#browser-live-viewer .blv-screen{flex:1;min-height:0;background:#05070a;display:flex;align-items:center;justify-content:center;overflow:hidden}#browser-live-viewer .blv-screen img{width:100%;height:100%;object-fit:contain}#browser-live-viewer .blv-placeholder{padding:20px;text-align:center;color:#c0c9d6}#browser-live-viewer .blv-foot{max-height:82px;overflow:auto;border-top:1px solid #354052;padding:6px 10px;color:#c7d1df;font-size:12px}#browser-live-viewer .blv-log{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#browser-live-viewer .blv-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d7a54a;margin-right:6px}#browser-live-viewer .blv-dot.live{background:#48d597}@keyframes blv-pulse{0%,100%{filter:brightness(.72)}50%{filter:brightness(1.7)}}@media(max-width:600px){#browser-live-viewer{right:8px;bottom:8px;width:calc(100vw - 16px);height:min(52vh,420px)}#browser-live-viewer.minimized{width:230px;height:44px}}
+''', encoding="utf-8")
+PY
+node --check frontend/browser-live-viewer.js
+printf '%s\n' '=== VERIFY VIEWER REQUIREMENTS ==='
+grep -nE 'session-created|selected = m.sessionId|blv-hidden|blv-pulse|blv-tabs|backdrop-filter' frontend/browser-live-viewer.js frontend/browser-live-viewer.css
+printf '%s\n' '=== HTTP ASSET CHECK ==='
+curl -sS -o /dev/null -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.js || true
+curl -sS -o /dev/null -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.css || true
+printf '%s\n' '=== TASK COMPLETE ==='
