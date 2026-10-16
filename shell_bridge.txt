@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== FLOATING HTML ==='
+sed -n '185,305p' frontend/index.html
+printf '%s\n' '=== FLOATING CSS BASE AND OVERRIDES ==='
+sed -n '890,1140p' frontend/style.css
+sed -n '1200,1255p' frontend/style.css
+sed -n '1330,1385p' frontend/style.css
+printf '%s\n' '=== FLOATING JS / RECONNECT / VOICE ==='
+sed -n '1800,2110p' frontend/app.js
+printf '%s\n' '=== CHAT / INPUT MARKUP ==='
+sed -n '120,190p' frontend/index.html
+printf '%s\n' '=== BROWSER LIVE SERVER / SERVICE EVENTS ==='
+sed -n '1,240p' backend/extension/browser/browser_live.js
+grep -nE 'browser/(session|open|read|click|type|scroll|screenshot|close)|requireBrowserKey|browserActivity|function (click|scroll|type|listBrowserSessions)|export ' backend/server.js backend/extension/browser/browser_service.js | head -n 200
+printf '%s\n' '=== SCRIPT INCLUDES ==='
+tail -n 40 frontend/index.html
