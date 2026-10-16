@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent && {
+  printf '%s\n' '=== BROWSER KEY REFERENCES (NAMES/LOGIC ONLY) ==='
+  grep -R -n -E 'BROWSER_API_KEY|x-browser-key|browserApiKey|browser-api-key|browserKey' backend frontend .env.example 2>/dev/null | sed -E 's/(BROWSER_API_KEY[[:space:]]*=[[:space:]]*).*/\1[REDACTED]/; s/(x-browser-key[^,;}]*)/x-browser-key:[REDACTED]/I' | head -160
+  printf '%s\n' '=== ENV PRESENCE ONLY ==='
+  node --input-type=module -e 'console.log(JSON.stringify({BROWSER_API_KEY_present: Boolean(process.env.BROWSER_API_KEY), PORT: process.env.PORT || null}))'
+  printf '%s\n' '=== SERVER ROUTE REGISTRATION ==='
+  sed -n '1268,1359p' backend/server.js | sed -E 's/(process\.env\.BROWSER_API_KEY).*/\1 [value intentionally not displayed]/'
+  printf '%s\n' '=== VIEWER API CALLS ==='
+  grep -n -E 'fetch\(|headers:|x-browser-key|browserFloatButton|BROWSER_API_KEY' frontend/browser-live-viewer.js frontend/index.html | head -100
+  printf '%s\n' '=== COMPLETE ==='
+} 2>&1
