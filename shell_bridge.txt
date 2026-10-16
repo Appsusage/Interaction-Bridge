@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -n 'requireBrowserKey\|/browser/session\|x-browser-key' backend/server.js frontend/browser-live-viewer.js frontend/app.js && grep -n 'browser_new_session\|autonomousTools' backend/extension/nexus.js
