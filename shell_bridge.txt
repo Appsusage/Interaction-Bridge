@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== FRONTEND FILES ==='
+find frontend -maxdepth 2 -type f | sort
+printf '%s\n' '=== FLOATING / VOICE / RECONNECT CONTROLS ==='
+grep -RniE 'float|floating|voice|speech|reconnect|重新连接|语音|mic|microphone|browser-live|browser-live-viewer' frontend --include='*.js' --include='*.css' --include='*.html' | head -n 260
+printf '%s\n' '=== INDEX CONTROL MARKUP ==='
+grep -nE '<button|voice|speech|reconnect|float|browser-live' frontend/index.html | head -n 220
+printf '%s\n' '=== PACKAGE TEST SCRIPTS ==='
+node -e "const p=require('./package.json'); console.log(JSON.stringify(p.scripts||{},null,2))"
+printf '%s\n' '=== CURRENT HEALTH ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
