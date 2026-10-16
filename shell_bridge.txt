@@ -1,0 +1,20 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'NODE'
+import WebSocket from "ws";
+const ws = new WebSocket("ws://127.0.0.1:3000/browser/live");
+const timer = setTimeout(() => { console.log("websocket_result=timeout"); ws.close(); process.exitCode = 2; }, 5000);
+ws.on("open", () => console.log("websocket_open=ok"));
+ws.on("message", data => {
+  try {
+    const m = JSON.parse(data.toString());
+    if (m.type === "sessions") {
+      console.log(JSON.stringify({websocket_open:"ok",initial_message:"sessions",session_count:(m.sessions||[]).length,sessions:(m.sessions||[]).map(s=>({sessionId:s.sessionId,url:s.url}))}));
+      clearTimeout(timer); ws.close();
+    } else {
+      console.log(JSON.stringify({message_type:m.type,state:m.state||null}));
+    }
+  } catch { console.log("message_parse=failed"); }
+});
+ws.on("error", e => { console.log("websocket_error="+e.message); clearTimeout(timer); process.exitCode=1; });
+ws.on("close", () => clearTimeout(timer));
+NODE
+printf '%s\n' '=== COMPLETE ==='
