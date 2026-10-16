@@ -1,0 +1,17 @@
+cd /home/runner/workspace/ai-agent && {
+  printf '%s\n' '=== SERVER AUTH / MIDDLEWARE SETUP (NO ENV VALUES) ==='
+  sed -n '1,180p' backend/server.js | sed -E 's/(process\.env\.[A-Z0-9_]+[[:space:]]*\|\|?[[:space:]]*).*/\1[REDACTED]/'
+  printf '%s\n' '=== ROUTE / MIDDLEWARE DEFINITIONS ==='
+  grep -n -E 'app\.use\(|app\.(get|post|put|delete)\(|requireBrowserKey|createBrowserSession|askAI|router|session|auth|csrf|origin' backend/server.js | head -260
+  printf '%s\n' '=== BROWSER SERVICE IMPORT / USE CALL SITES ==='
+  grep -R -n -E 'createBrowserSession\(|listBrowserSessions\(|closeBrowserSession\(|openPage\(' backend --exclude='browser_service.js' --exclude='browser_live.js' 2>/dev/null | head -200
+  printf '%s\n' '=== AI TOOL REGISTRY / BROWSER TOOL DEFINITIONS ==='
+  grep -R -n -i -E 'browser|playwright|webpage|open_url|navigate' backend/tools backend/extension backend 2>/dev/null | grep -v -E 'browser_service\.js|browser_live\.js|browser-live-viewer|node_modules' | head -240
+  printf '%s\n' '=== FRONTEND CALL PATTERNS (PATHS AND ROUTES ONLY) ==='
+  grep -R -n -E 'fetch\(|axios\.|XMLHttpRequest|/chat|/api/' frontend --include='*.js' | head -160
+  printf '%s\n' '=== HEALTH CHECK ONLY ==='
+  curl -sS -o /tmp/browser-health-check.txt -w 'HTTP_STATUS=%{http_code}\n' http://127.0.0.1:3000/health
+  cat /tmp/browser-health-check.txt
+  rm -f /tmp/browser-health-check.txt
+  printf '%s\n' '=== READ-ONLY DIAGNOSTIC COMPLETE; NO FILES MODIFIED ==='
+} 2>&1
