@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== BROWSER SERVICE FULL ==='
-cat backend/extension/browser/browser_service.js
-printf '%s\n' '=== BROWSER LIVE FULL ==='
-cat backend/extension/browser/browser_live.js
-printf '%s\n' '=== CURRENT VIEWER WITH LINE NUMBERS ==='
-nl -ba frontend/browser-live-viewer.js | sed -n '1,220p'
-printf '%s\n' '=== SERVER BROWSER ROUTES ==='
-sed -n '1260,1360p' backend/server.js
