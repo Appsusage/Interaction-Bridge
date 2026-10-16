@@ -1,0 +1,40 @@
+cd /home/runner/workspace/ai-agent && set -eu
+python3 - <<'PY'
+from pathlib import Path
+p=Path("frontend/browser-live-viewer.js")
+if not p.exists(): raise SystemExit("BLOCKED: viewer JS missing; no changes made")
+s=p.read_text(encoding="utf-8")
+old='''  function showViewer() { manuallyHidden = false; clearTimeout(hideTimer); root.classList.remove("blv-hidden"); }'''
+new='''  function showViewer(force = false) {
+    if (manuallyHidden && !force) return;
+    if (force) manuallyHidden = false;
+    clearTimeout(hideTimer);
+    root.classList.remove("blv-hidden");
+  }'''
+if old not in s: raise SystemExit("BLOCKED: showViewer source did not match expected S636 version")
+s=s.replace(old,new,1)
+# A newly created session represents a fresh browser task; allow it to reopen the viewer,
+# but never select it automatically if another session is already foreground.
+s=s.replace('''        showViewer();
+        if (!selected) { selected = m.sessionId; updateTabs(); attach(); }''','''        showViewer(true);
+        if (!selected) { selected = m.sessionId; updateTabs(); attach(); }''',1)
+# Running work reopens the viewer; passive updates do not override an explicit hide.
+s=s.replace('''if (tab) {tab.classList.add("running");tab.classList.remove("attention","failed");} showViewer(); }''','''if (tab) {tab.classList.add("running");tab.classList.remove("attention","failed");} showViewer(true); }''',1)
+# Selecting a tab clears its attention pulse; also expose an explicit way to restore the viewer
+# via the browser title control while preserving the existing hide button semantics.
+p.write_text(s,encoding="utf-8")
+PY
+printf '%s\n' '=== JAVASCRIPT SYNTAX ==='
+node --check frontend/browser-live-viewer.js
+printf '%s\n' '=== SERVER / BROWSER ROUTE INSPECTION ==='
+grep -Rni --exclude-dir=node_modules -E 'createBrowserSession|browser/live|browser.*session|/browser' backend/server.js backend/extension/browser | head -100 || true
+printf '%s\n' '=== RUNTIME HTTP CHECKS ==='
+curl -sS -o /tmp/s637-health.txt -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health || true
+cat /tmp/s637-health.txt 2>/dev/null || true
+curl -sS -o /tmp/s637-js.txt -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.js || true
+curl -sS -o /tmp/s637-css.txt -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.css || true
+printf '%s\n' '=== PATCH ASSERTIONS ==='
+grep -nE 'function showViewer|showViewer\(true\)|selected = m.sessionId|manuallyHidden' frontend/browser-live-viewer.js
+printf '%s\n' '=== GIT DIFF ==='
+git diff -- frontend/browser-live-viewer.js frontend/browser-live-viewer.css
+printf '%s\n' '=== TASK COMPLETE ==='
