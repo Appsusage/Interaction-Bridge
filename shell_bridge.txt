@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -n -B 8 -A 12 'autonomousTools\[' backend/extension/nexus.js && grep -n -E 'browser/session|x-browser-key|WebSocket|sessions' frontend/browser-live-viewer.js
