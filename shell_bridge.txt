@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== BROWSER SERVICE ===' && sed -n '1,260p' backend/extension/browser/browser_service.js && printf '%s\n' '=== LIVE STREAM ===' && sed -n '1,220p' backend/extension/browser/browser_live.js && printf '%s\n' '=== VIEWER STARTUP ===' && sed -n '1,180p' frontend/browser-live-viewer.js && printf '%s\n' '=== COMPLETE ==='
