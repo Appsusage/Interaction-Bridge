@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== BROWSER AUTH IMPLEMENTATION ==='
+grep -n -B8 -A18 'requireBrowserKey' backend/server.js | head -100
+printf '%s\n' '=== BROWSER KEY VARIABLE NAMES (VALUES REDACTED) ==='
+grep -Rho --exclude-dir=node_modules --exclude-dir=.git -E 'process\.env\.[A-Z0-9_]*(BROWSER|PLAYWRIGHT|API_KEY|TOKEN)[A-Z0-9_]*' backend/server.js backend/extension/browser 2>/dev/null | sort -u || true
+printf '%s\n' '=== HTTP HEALTH AND VIEWER ASSETS ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
+curl -sS -o /dev/null -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.js
+curl -sS -o /dev/null -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/browser-live-viewer.css
+printf '%s\n' '=== WORKTREE STATUS (NO MODIFICATIONS) ==='
+git status --short
+printf '%s\n' '=== TASK COMPLETE ==='
