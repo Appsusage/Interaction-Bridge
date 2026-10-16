@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== S653: verify browser key presence and live stream ==='
+node --input-type=module - <<'NODE'
+import fs from 'node:fs';
+import {execSync} from 'node:child_process';
+const pids=execSync("pgrep -f '^node backend/server.js$' || true").toString().trim().split(/\s+/).filter(Boolean);
+console.log('server_pids='+(pids.join(',')||'none'));
+let present=false;
+for(const pid of pids){try{const env=fs.readFileSync('/proc/'+pid+'/environ','utf8');const yes=env.split('\0').some(v=>v.startsWith('BROWSER_API_KEY=')&&v.length>'BROWSER_API_KEY='.length);console.log('pid='+pid+' BROWSER_API_KEY_present='+(yes?'yes':'no'));if(yes)present=true;}catch{console.log('pid='+pid+' environ=unreadable');}}
+if(!present){console.log('BLOCKED: running server process does not expose BROWSER_API_KEY; no auth bypass attempted.');process.exit(0)}
+NODE
+printf '%s\n' '=== API check (without key; should remain protected) ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
+curl -sS -o /dev/null -w 'browser_session_without_key_http=%{http_code}\n' -X POST http://127.0.0.1:3000/browser/session -H 'Content-Type: application/json' -d '{}'
+printf '%s\n' '=== Syntax check ==='
+node --check backend/server.js
+node --check backend/extension/browser/browser_service.js
+node --check backend/extension/browser/browser_live.js
+node --check frontend/browser-live-viewer.js
+node --check frontend/app.js
+printf '%s\n' 'S653 verification complete. Never print secret value; no auth bypass.'
