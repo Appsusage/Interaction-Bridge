@@ -139,3 +139,4 @@ printf '%s\n' '=== PRIORITY API PASS-THROUGH ==='
 grep -nE 'createBrowserSession\(req.body|openPage\(page, req.body.url|readPage\(getBrowserPage|displayPolicy|requiresUserAction' backend/server.js backend/extension/browser/browser_service.js | head -n 80
 printf '%s\n' '=== NO USER TEXT INPUT HANDLER ==='
 if grep -nE 'message\.type === "user-type"|message\.type === "user-key|Input\.dispatchKeyEvent|Input\.insertText' backend/extension/browser/browser_live.js; then exit 4; else echo 'no keyboard/text forwarding handlers'; fi
+printf '%s\n' 'S650_RETRIGGER=1'
