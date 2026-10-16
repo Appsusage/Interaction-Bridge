@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n '180,330p' backend/extension/nexus.js
