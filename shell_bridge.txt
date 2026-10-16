@@ -1,0 +1,17 @@
+cd /home/runner/workspace/ai-agent && {
+  printf '%s\n' '=== VIEWER JS: INITIALIZATION / TOGGLE / SESSION MESSAGE HANDLING ==='
+  grep -n -E 'function |toggleBrowserViewer|browserFloatButton|WebSocket|sessions|sessionId|onmessage|addEventListener|fetch\(' frontend/browser-live-viewer.js | head -180
+  printf '%s\n' '=== VIEWER JS FIRST 280 LINES ==='
+  sed -n '1,280p' frontend/browser-live-viewer.js
+  printf '%s\n' '=== BROWSER SERVICE SESSION CREATION / EXPORTS ==='
+  grep -n -E 'createBrowserSession|export |function getBrowserPage|sessions|module.exports' backend/extension/browser/browser_service.js
+  printf '%s\n' '=== BROWSER SERVICE SESSION FUNCTION CONTEXT ==='
+  grep -n -A90 -B15 'createBrowserSession' backend/extension/browser/browser_service.js | head -180
+  printf '%s\n' '=== BROWSER LIVE SESSION BROADCAST / ATTACH ==='
+  grep -n -A35 -B12 -E 'sessions|screencast|WebSocketServer|attach|broadcast' backend/extension/browser/browser_live.js | head -220
+  printf '%s\n' '=== EXISTING AUTH / SAME-ORIGIN / CSRF PATTERNS (CODE ONLY) ==='
+  grep -R -n -E 'csrf|same.origin|sameOrigin|origin.*req|req\.get\(["'\''"]origin|isAuthenticated|requireAuth|session\(' backend/server.js backend/middleware backend/routes 2>/dev/null | head -120
+  printf '%s\n' '=== BROWSER UI ROUTE / BUTTON WIRING ==='
+  grep -n -A8 -B8 -E 'browserFloatButton|browser-live-viewer' frontend/index.html
+  printf '%s\n' '=== READ-ONLY DIAGNOSTIC COMPLETE; NO FILES MODIFIED ==='
+} 2>&1
