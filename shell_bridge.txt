@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent
+grep -n -A18 -B4 'app.post("/browser/click"' backend/server.js
