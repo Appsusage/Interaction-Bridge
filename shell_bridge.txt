@@ -1,0 +1,347 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+files = [
+    Path("backend/extension/browser/browser_live.js"),
+    Path("backend/extension/browser/chatgpt_live.js"),
+    Path("frontend/browser-live-viewer.js"),
+]
+for p in files:
+    backup = Path(str(p) + ".before-remote-audio-bridge")
+    if not backup.exists():
+        backup.write_text(p.read_text())
+
+p = Path("backend/extension/browser/chatgpt_live.js")
+s = p.read_text()
+s = s.replace(
+'const CHATGPT_HOME = "https://chatgpt.com/";',
+'const CHATGPT_HOME = "https://chatgpt.com/c/6ad37538-30e4-83ec-8aab-d49150f1e753";'
+)
+marker = 'const getExecutablePath = () => process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/repl/tools/bin/chromium";'
+bridge = r'''
+const getExecutablePath = () => process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/repl/tools/bin/chromium";
+
+// Runs in the remote ChatGPT page before application scripts. The phone browser
+// supplies the microphone track over WebRTC; ChatGPT's playback is mixed back
+// into the same WebRTC audio connection.
+function installRemoteAudioBridge() {
+  if (window.__aiAudioBridgeInstalled) return;
+  window.__aiAudioBridgeInstalled = true;
+  const mediaDevices = navigator.mediaDevices;
+  const originalGetUserMedia = mediaDevices && mediaDevices.getUserMedia
+    ? mediaDevices.getUserMedia.bind(mediaDevices) : null;
+  let peer = null;
+  let audioContext = null;
+  let destination = null;
+  const connectedElements = new WeakSet();
+  window.__aiAudioBridgeMicStream = null;
+
+  function ensureAudioGraph() {
+    if (!audioContext) {
+      audioContext = new AudioContext();
+      destination = audioContext.createMediaStreamDestination();
+    }
+    document.querySelectorAll("audio,video").forEach(element => {
+      if (connectedElements.has(element)) return;
+      try {
+        const source = audioContext.createMediaElementSource(element);
+        source.connect(audioContext.destination);
+        source.connect(destination);
+        connectedElements.add(element);
+      } catch {}
+    });
+    if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+    return destination;
+  }
+
+  const observer = new MutationObserver(() => ensureAudioGraph());
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  document.addEventListener("click", () => {
+    ensureAudioGraph();
+    if (audioContext && audioContext.state === "suspended") audioContext.resume().catch(() => {});
+  }, true);
+
+  if (mediaDevices && originalGetUserMedia) {
+    try {
+      Object.defineProperty(mediaDevices, "getUserMedia", {
+        configurable: true,
+        writable: true,
+        value: async constraints => {
+          const remoteMic = window.__aiAudioBridgeMicStream;
+          if (constraints && constraints.audio && remoteMic && remoteMic.getAudioTracks().length) {
+            const tracks = remoteMic.getAudioTracks().map(track => track.clone());
+            if (constraints.video) {
+              const extra = await originalGetUserMedia({ audio: false, video: constraints.video });
+              tracks.push(...extra.getVideoTracks());
+            }
+            return new MediaStream(tracks);
+          }
+          return originalGetUserMedia(constraints);
+        }
+      });
+    } catch {}
+  }
+
+  function waitForIce(pc) {
+    if (pc.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise(resolve => {
+      const timer = setTimeout(resolve, 12000);
+      pc.addEventListener("icegatheringstatechange", () => {
+        if (pc.iceGatheringState === "complete") {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+  }
+
+  window.__aiAudioBridge = {
+    async acceptOffer(offer) {
+      if (peer) { try { peer.close(); } catch {} }
+      const graph = ensureAudioGraph();
+      peer = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+      peer.ontrack = event => {
+        window.__aiAudioBridgeMicStream = event.streams[0] || new MediaStream([event.track]);
+      };
+      await peer.setRemoteDescription(offer);
+      let transceiver = peer.getTransceivers().find(item => item.receiver && item.receiver.track && item.receiver.track.kind === "audio");
+      if (!transceiver) transceiver = peer.addTransceiver("audio", { direction: "sendrecv" });
+      transceiver.direction = "sendrecv";
+      const outputTrack = graph.stream.getAudioTracks()[0];
+      if (outputTrack) await transceiver.sender.replaceTrack(outputTrack);
+      await peer.setLocalDescription(await peer.createAnswer());
+      await waitForIce(peer);
+      return { type: peer.localDescription.type, sdp: peer.localDescription.sdp };
+    },
+    close() {
+      if (peer) { try { peer.close(); } catch {} peer = null; }
+      window.__aiAudioBridgeMicStream = null;
+    }
+  };
+}
+'''
+if marker not in s:
+    raise SystemExit("chatgpt_live insertion marker missing")
+if "function installRemoteAudioBridge()" not in s:
+    s = s.replace(marker, bridge.strip(), 1)
+old = '''    const context = await chromium.launchPersistentContext(profileDir, {
+      headless: process.env.CHATGPT_BROWSER_HEADLESS !== "false",
+      executablePath: getExecutablePath(),
+      viewport: { width: 1280, height: 900 },
+      args: ["--no-sandbox"]
+    });
+    pageRef = context.pages()[0] || await context.newPage();'''
+new = '''    const context = await chromium.launchPersistentContext(profileDir, {
+      headless: process.env.CHATGPT_BROWSER_HEADLESS !== "false",
+      executablePath: getExecutablePath(),
+      viewport: { width: 1280, height: 900 },
+      ignoreDefaultArgs: ["--mute-audio"],
+      args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"]
+    });
+    try { await context.grantPermissions(["microphone"], { origin: "https://chatgpt.com" }); } catch {}
+    await context.addInitScript(installRemoteAudioBridge);
+    pageRef = context.pages()[0] || await context.newPage();'''
+if old not in s:
+    raise SystemExit("chatgpt_live launch block missing")
+s = s.replace(old, new, 1)
+p.write_text(s)
+
+p = Path("backend/extension/browser/browser_live.js")
+s = p.read_text()
+marker = '  async function dispatchUserInput(client, message) {'
+handler = '''  async function handleAudioOffer(client, message) {
+    const sessionId = String(message.sessionId || "");
+    if (!sessionId || client._browserLive?.sessionId !== sessionId) {
+      throw new Error("请先连接当前 ChatGPT 浏览器画面");
+    }
+    const page = getBrowserPage(sessionId);
+    const answer = await page.evaluate(async offer => {
+      if (!window.__aiAudioBridge || typeof window.__aiAudioBridge.acceptOffer !== "function") {
+        throw new Error("远程页面尚未加载语音桥接模块，请刷新当前网页后重试");
+      }
+      return await window.__aiAudioBridge.acceptOffer(offer);
+    }, message.offer);
+    client._audioSessionId = sessionId;
+    send(client, { type: "audio-answer", sessionId, answer });
+  }
+
+  async function closeAudioBridge(client) {
+    const sessionId = client._audioSessionId;
+    client._audioSessionId = null;
+    if (!sessionId) return;
+    try {
+      const page = getBrowserPage(sessionId);
+      await page.evaluate(() => window.__aiAudioBridge?.close?.());
+    } catch {}
+  }
+
+'''
+if marker not in s:
+    raise SystemExit("browser_live insertion marker missing")
+if "async function handleAudioOffer" not in s:
+    s = s.replace(marker, handler + marker, 1)
+old = '''      else if (message.type === "attach" && typeof message.sessionId === "string") attach(client, message.sessionId);
+      else if (message.type === "detach") stopStream(client);
+      else if (message.type === "user-click"'''
+new = '''      else if (message.type === "attach" && typeof message.sessionId === "string") attach(client, message.sessionId);
+      else if (message.type === "detach") stopStream(client);
+      else if (message.type === "audio-offer") {
+        handleAudioOffer(client, message).catch(error => send(client, { type: "audio-error", sessionId: message.sessionId, message: error.message }));
+      } else if (message.type === "audio-close") {
+        closeAudioBridge(client);
+      } else if (message.type === "user-click"'''
+if old not in s:
+    raise SystemExit("browser_live message handler marker missing")
+s = s.replace(old, new, 1)
+s = s.replace('client.on("close", () => { clients.delete(client); stopStream(client); });',
+              'client.on("close", () => { clients.delete(client); stopStream(client); closeAudioBridge(client); });')
+s = s.replace('client.on("error", () => { clients.delete(client); stopStream(client); });',
+              'client.on("error", () => { clients.delete(client); stopStream(client); closeAudioBridge(client); });')
+p.write_text(s)
+
+p = Path("frontend/browser-live-viewer.js")
+s = p.read_text()
+marker = '  const dialogs = new Map();'
+audio_client = r'''
+  let audioPeer = null;
+  let localAudioStream = null;
+  let playbackContext = null;
+  let audioAnswerHandler = null;
+  let audioSetupPromise = null;
+
+  function waitForIceGathering(pc) {
+    if (pc.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise(resolve => {
+      const timer = setTimeout(resolve, 12000);
+      pc.addEventListener("icegatheringstatechange", () => {
+        if (pc.iceGatheringState === "complete") {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+  }
+
+  function closeAudioBridge() {
+    if (ws && ws.readyState === WebSocket.OPEN && selected) {
+      ws.send(JSON.stringify({ type: "audio-close", sessionId: selected }));
+    }
+    if (audioPeer) { try { audioPeer.close(); } catch {} audioPeer = null; }
+    if (localAudioStream) { localAudioStream.getTracks().forEach(track => track.stop()); localAudioStream = null; }
+    if (playbackContext) { try { playbackContext.close(); } catch {} playbackContext = null; }
+    audioSetupPromise = null;
+    audioAnswerHandler = null;
+  }
+
+  async function ensureAudioBridge() {
+    if (audioPeer && audioPeer.connectionState === "connected") return true;
+    if (audioSetupPromise) return audioSetupPromise;
+    const pageUrl = sessions.get(selected)?.url || "";
+    if (!/^https:\/\/chatgpt\.com\//i.test(pageUrl) || /\/auth\//i.test(pageUrl)) {
+      throw new Error("请先登录并打开现有 ChatGPT 对话，再点语音按钮");
+    }
+    if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
+      throw new Error("当前手机浏览器不支持麦克风/WebRTC；请在允许麦克风的 HTTPS 页面打开 ai-agent");
+    }
+    if (!ws || ws.readyState !== WebSocket.OPEN) throw new Error("浏览器实时连接尚未就绪");
+    audioSetupPromise = (async () => {
+      state.textContent = "正在申请手机麦克风权限并连接远程语音…";
+      if (!playbackContext) playbackContext = new (window.AudioContext || window.webkitAudioContext)();
+      try { await playbackContext.resume(); } catch {}
+      localAudioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+      audioPeer = pc;
+      localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+      pc.ontrack = event => {
+        const stream = event.streams[0] || new MediaStream([event.track]);
+        try {
+          const source = playbackContext.createMediaStreamSource(stream);
+          source.connect(playbackContext.destination);
+          playbackContext.resume().catch(() => {});
+          state.textContent = "远程语音已连接：可对着手机说话，并通过手机扬声器听 ChatGPT 回答";
+        } catch (error) {
+          state.textContent = "已收到远程声音，但手机播放失败：" + error.message;
+        }
+      };
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+          state.textContent = "远程语音网络连接失败（" + pc.connectionState + "）；请再次点 ChatGPT 语音按钮重试";
+        }
+      };
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
+      const connected = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("语音网络连接超时；当前网络可能阻止 WebRTC 音频")), 25000);
+        const check = () => {
+          if (pc.connectionState === "connected") { clearTimeout(timeout); resolve(true); }
+          else if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+            clearTimeout(timeout); reject(new Error("WebRTC 连接失败：" + pc.connectionState));
+          }
+        };
+        pc.addEventListener("connectionstatechange", check);
+        audioAnswerHandler = async answer => {
+          try { await pc.setRemoteDescription(answer); check(); }
+          catch (error) { clearTimeout(timeout); reject(error); }
+        };
+        ws.send(JSON.stringify({ type: "audio-offer", sessionId: selected, offer: pc.localDescription }));
+      });
+      await connected;
+      state.textContent = "手机麦克风与远程浏览器音频已连通，正在启动 ChatGPT 语音…";
+      return true;
+    })();
+    try { return await audioSetupPromise; }
+    catch (error) {
+      if (audioPeer) { try { audioPeer.close(); } catch {} audioPeer = null; }
+      if (localAudioStream) { localAudioStream.getTracks().forEach(track => track.stop()); localAudioStream = null; }
+      throw error;
+    } finally { audioSetupPromise = null; }
+  }
+'''
+if marker not in s:
+    raise SystemExit("viewer audio insertion marker missing")
+if "async function ensureAudioBridge()" not in s:
+    s = s.replace(marker, marker + audio_client, 1)
+# Handle answer and bridge errors on the existing websocket.
+marker = '      } else if (m.type === "frame" && m.sessionId === selected) {'
+new = '''      } else if (m.type === "audio-answer" && m.sessionId === selected) {
+        if (audioAnswerHandler) void audioAnswerHandler(m.answer);
+      } else if (m.type === "audio-error" && m.sessionId === selected) {
+        state.textContent = "远程语音连接失败：" + (m.message || "未知错误");
+      } else if (m.type === "frame" && m.sessionId === selected) {'''
+if marker not in s:
+    raise SystemExit("viewer audio answer marker missing")
+s = s.replace(marker, new, 1)
+# Replace only the click branch; dragging and other page clicks remain unchanged.
+old = '''    } else {
+      const point = normalizedPoint(event.clientX,event.clientY) || start.point;
+      ws.send(JSON.stringify({type:"user-click",sessionId:selected,x:point.x,y:point.y}));
+    }
+  });'''
+new = '''    } else {
+      const point = normalizedPoint(event.clientX,event.clientY) || start.point;
+      const pageUrl = sessions.get(selected)?.url || "";
+      // A bottom-right click on a ChatGPT conversation is the existing voice control.
+      // Obtain the phone mic in the real user gesture before forwarding that click remotely.
+      if (/^https:\/\/chatgpt\.com\//i.test(pageUrl) && !/\/auth\//i.test(pageUrl) && point.x > 0.72 && point.y > 0.68) {
+        try { await ensureAudioBridge(); }
+        catch (error) {
+          state.textContent = "远程语音尚未连通：" + error.message;
+          return;
+        }
+      }
+      ws.send(JSON.stringify({type:"user-click",sessionId:selected,x:point.x,y:point.y}));
+    }
+  });'''
+if old not in s:
+    raise SystemExit("viewer pointerup click marker missing")
+s = s.replace(old, new, 1)
+p.write_text(s)
+PY
+node --check backend/extension/browser/browser_live.js
+node --check backend/extension/browser/chatgpt_live.js
+node --check frontend/browser-live-viewer.js
+printf '%s\n' 'PATCH_OK'
