@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && printf '%s\n' '=== BROWSER ROUTES AND EXISTING SESSION CODE ===' && grep -R -n -E 'app\.post\("/browser/(session|open|read)|router\.post\("/browser/(session|open|read)|/browser/session|/browser/open' backend 2>/dev/null | head -80 && printf '%s\n' '=== LIVE SERVER ===' && curl -sS -m 5 http://127.0.0.1:3000/health || true
