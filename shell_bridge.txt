@@ -1,0 +1,36 @@
+set -e
+cd /home/runner/workspace/ai-agent
+echo '=== STOP OLD SERVER ==='
+kill -INT 110 2>/dev/null || true
+sleep 3
+if kill -0 110 2>/dev/null; then
+  echo 'SIGINT did not stop PID 110; force-stopping stale server to load verified code.'
+  kill -KILL 110 2>/dev/null || true
+fi
+if kill -0 460 2>/dev/null; then kill -TERM 460 2>/dev/null || true; fi
+for i in $(seq 1 10); do
+  if ! curl -fsS --max-time 1 http://127.0.0.1:3000/health >/dev/null 2>&1; then
+    echo "PORT_CLOSED_AFTER=\${i}s"
+    break
+  fi
+  sleep 1
+done
+if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/dev/null 2>&1; then
+  echo 'ERROR: port 3000 is still serving; refusing to start duplicate server.'
+  ps -eo pid,ppid,stat,etime,args | grep -E '[b]ackend/server.js'
+  exit 3
+fi
+nohup npm start >/tmp/ai-agent-server.log 2>&1 </dev/null &
+echo "NEW_START_PID=$!"
+for i in $(seq 1 30); do
+  sleep 1
+  if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/tmp/ai-health.txt 2>/dev/null; then
+    echo "HEALTH_OK_AFTER=\${i}s"
+    cat /tmp/ai-health.txt
+    break
+  fi
+done
+echo '=== FINAL PROCESS ==='
+ps -eo pid,ppid,stat,etime,args | grep -E '[b]ackend/server.js|[s]upervisor-router.js'
+echo '=== START LOG ==='
+tail -n 100 /tmp/ai-agent-server.log
