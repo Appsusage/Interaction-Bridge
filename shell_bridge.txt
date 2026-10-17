@@ -1,0 +1,11 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+printf '\n=== VIEWER ACTIVITY LOCK LOGIC ===\n'
+grep -nE 'pending\.|activity|completed|失败|running|interaction-blocked|blv-interactive|scheduleHide' frontend/browser-live-viewer.js
+sed -n '120,330p' frontend/browser-live-viewer.js
+printf '\n=== CURRENT CHATGPT READ RESPONSE HEADER ===\n'
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY; const sessionId='1792241456256-v95pmtm84w';
+console.log('KEY',!!key);
+if(key){const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'Content-Type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId})});const d=await r.json();console.log('STATUS',r.status,'URL',d.url,'TITLE',d.title,'HAS_GENERATING',/Stop generating|Generating|正在生成|停止生成/i.test(d.text||''),'TAIL',(d.text||'').slice(-1000));}
+NODE
