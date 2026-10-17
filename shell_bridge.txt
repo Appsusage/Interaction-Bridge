@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent
-ps -eo pid,etime,args | grep '[b]ackend/server.js'
-node --input-type=module <<'NODE'
-import WebSocket from "ws";
-const ws=new WebSocket("ws://127.0.0.1:3000/browser/live");
-const timer=setTimeout(()=>{console.log("WS_TIMEOUT");ws.close();},4000);
-ws.on("message",raw=>{let m;try{m=JSON.parse(raw.toString())}catch{return}if(m.type==="sessions"){clearTimeout(timer);console.log("LIVE_SESSIONS",JSON.stringify(m.sessions));ws.close();}});
-ws.on("error",e=>{console.log("WS_ERROR",e.message);clearTimeout(timer);});
-NODE
