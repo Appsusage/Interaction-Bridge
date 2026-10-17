@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent; sed -n '1280,1360p' backend/server.js; sed -n '1,180p' backend/extension/browser/browser_service.js; echo '=== CURRENT SERVER HEALTH ==='; curl -sS --max-time 2 http://127.0.0.1:3000/health
