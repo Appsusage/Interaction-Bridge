@@ -1,0 +1,25 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+printf '%s\n' '=== BROWSER ROUTES ==='
+sed -n '1260,1375p' backend/server.js
+printf '%s\n' '=== BROWSER LIVE SERVER ==='
+sed -n '1,260p' backend/extension/browser/browser_live.js
+printf '%s\n' '=== CHATGPT STARTUP LOG ==='
+tail -n 100 /tmp/ai-agent-server.log
+printf '%s\n' '=== ROUTE PROBE ==='
+for p in /health /browser/sessions /browser/session /browser/live /browser/status; do
+  printf '%s ' "$p"
+  curl -sS --max-time 2 -o /tmp/ai-probe.txt -w 'HTTP=%{http_code} bytes=%{size_download}\n' "http://127.0.0.1:3000$p"
+  head -c 200 /tmp/ai-probe.txt; echo
+done
+printf '%s\n' '=== CHATGPT SESSION STATUS ==='
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+const key=process.env.BROWSER_API_KEY;
+for(const p of ['/browser/sessions','/browser/list','/browser/status']){
+ try {
+  const r=await fetch('http://127.0.0.1:3000'+p,{headers:{'x-browser-key':key||''}});
+  console.log(p,r.status,(await r.text()).slice(0,500));
+ } catch(e){console.log(p,e.message)}
+}
+NODE
