@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== INDEX SCRIPT AND CSS REFERENCES ==='
-grep -nEi 'browser-live-viewer|browser-live|<script|stylesheet|browserFloatButton|浏览器' frontend/index.html | tail -n 100 || true
-printf '%s\n' '=== VIEWER END / INITIALIZATION ==='
-sed -n '240,320p' frontend/browser-live-viewer.js
-printf '%s\n' '=== FLOAT BUTTON AND VIEWER INTEGRATION ==='
-grep -n -B 8 -A 12 -E 'browserFloatButton|reconnectBrowserLive|browser-live-viewer' frontend/app.js frontend/index.html frontend/*.css 2>/dev/null | head -n 180 || true
-printf '%s\n' '=== STATIC SERVING CONFIG ==='
-grep -n -B 5 -A 12 -E 'express.static|frontend/index.html|sendFile|static\(' backend/server.js | head -n 100 || true
