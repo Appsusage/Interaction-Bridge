@@ -1,0 +1,10 @@
+set +e
+BASE="http://127.0.0.1:3000"
+KEY="${BROWSER_API_KEY:-}"
+if [ -z "$KEY" ]; then echo "ERROR: BROWSER_API_KEY missing"; exit 2; fi
+echo "=== CREATE/GET BROWSER SESSION ==="
+curl --silent --show-error --max-time 30 -i -X POST "$BASE/browser/session" -H "Content-Type: application/json" -H "x-browser-key: $KEY" --data '{"url":"https://chatgpt.com/","headless":false}'
+echo
+echo "=== SESSION ENDPOINT GET ==="
+curl --silent --show-error --max-time 20 -i "$BASE/browser/session" -H "x-browser-key: $KEY"
+echo
