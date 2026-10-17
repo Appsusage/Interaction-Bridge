@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent
+kill -TERM 7090
+sleep 3
+ps -p 7090 -o pid=,args= || true
+CHATGPT_BROWSER_HEADLESS=false node backend/server.js >/tmp/ai-agent-headed-browser.log 2>&1 &
+newpid=$!
+sleep 4
+echo "NEW_PID=$newpid"
+ps -p "$newpid" -o pid=,etime=,args= || true
