@@ -1,0 +1,37 @@
+set -euo pipefail
+cd /home/runner/workspace/ai-agent/backend/extension/AICortex
+
+printf '%s\n' '=== PRECHECK ==='
+printf 'cwd=%s\n' "$PWD"
+test -d core
+test ! -e 'core（保留）'
+test ! -e 'core.__copy_tmp'
+printf 'source_core_exists=yes\n'
+printf 'backup_target_absent=yes\n'
+printf 'temp_target_absent=yes\n'
+
+printf '%s\n' '=== COPY ORIGINAL CORE ==='
+cp -a core core.__copy_tmp
+
+printf '%s\n' '=== VERIFY TEMP COPY BEFORE RENAME ==='
+diff -qr core core.__copy_tmp
+source_count=$(find core -mindepth 1 -print | wc -l | tr -d ' ')
+copy_count=$(find core.__copy_tmp -mindepth 1 -print | wc -l | tr -d ' ')
+printf 'source_entries=%s\n' "$source_count"
+printf 'copied_entries=%s\n' "$copy_count"
+test "$source_count" = "$copy_count"
+
+printf '%s\n' '=== RENAME ORIGINAL AND INSTALL COPY ==='
+mv core 'core（保留）'
+mv core.__copy_tmp core
+
+printf '%s\n' '=== FINAL VERIFICATION ==='
+test -d core
+test -d 'core（保留）'
+diff -qr core 'core（保留）'
+core_count=$(find core -mindepth 1 -print | wc -l | tr -d ' ')
+backup_count=$(find 'core（保留）' -mindepth 1 -print | wc -l | tr -d ' ')
+printf 'core_entries=%s\n' "$core_count"
+printf 'core（保留）_entries=%s\n' "$backup_count"
+printf 'directories: core=yes, core（保留）=yes\n'
+printf '%s\n' 'verification=PASS'
