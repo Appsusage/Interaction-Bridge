@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== SERVER PROCESS ==='
+ps -eo pid,ppid,etime,args | grep -E '[n]ode backend/server.js|[n]pm start|[n]ode backend/heartbeat/supervisor-router.js' || true
+printf '%s\n' '=== HEALTH ==='
+curl -sS -o /tmp/chatgpt-live-health.json -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health || true
+cat /tmp/chatgpt-live-health.json 2>/dev/null || true
+printf '\n%s\n' '=== PROFILE DIR STATUS ==='
+if [ -d .chatgpt-profile ]; then find .chatgpt-profile -maxdepth 1 -mindepth 1 -printf '%f\n' | head -n 10; else echo 'profile not created yet'; fi
+printf '%s\n' '=== TEST SUITE ==='
+npm test
