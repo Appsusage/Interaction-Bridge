@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-ps -eo pid,etime,args | grep '[n]ode backend/server.js'
-grep -n 'CHATGPT_BROWSER_HEADLESS\|startChatGPTLive\|browser_live' backend/extension/browser/chatgpt_live.js backend/server.js | head -30
