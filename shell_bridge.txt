@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; echo '=== SIGNAL HANDLERS ==='; grep -RniE 'SIGTERM|SIGINT|process\.on\(.signal|process\.once\(.signal' backend/server.js backend/extension/browser backend/heartbeat 2>/dev/null | head -n 80; echo '=== PID STATUS ==='; ps -o pid,ppid,stat,wchan:30,etime,args -p 110; echo '=== OWNERSHIP ==='; id;
