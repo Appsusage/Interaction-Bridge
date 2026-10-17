@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== CURRENT SERVER PROCESS ==='
-ps -eo pid,ppid,args | grep -E 'node backend/server.js|node backend/heartbeat/supervisor-router.js|npm start' | grep -v grep || true
-printf '%s\n' '=== BROWSER SESSION ROUTE ==='
-sed -n '1270,1300p' backend/server.js
-printf '%s\n' '=== HEADFUL DISPLAY AVAILABLE ==='
-printf 'DISPLAY=%s\n' "${DISPLAY:-<unset>}"
