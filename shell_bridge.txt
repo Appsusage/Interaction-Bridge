@@ -1,0 +1,27 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import WebSocket from 'ws';
+const ws = new WebSocket('ws://127.0.0.1:3000/browser/live');
+const timer = setTimeout(()=>{console.log('DIAG_TIMEOUT');ws.close();process.exit(0)},20000);
+let sessionId='';
+ws.on('open',()=>console.log('WS_OPEN'));
+ws.on('message',raw=>{
+ const m=JSON.parse(raw.toString());
+ if(m.type==='sessions'){
+  const s=(m.sessions||[]).find(x=>String(x.url||'').includes('chatgpt.com'));
+  console.log('SESSIONS',JSON.stringify(m.sessions));
+  if(!s){console.log('NO_CHATGPT_SESSION');clearTimeout(timer);ws.close();return;}
+  sessionId=s.sessionId;
+  ws.send(JSON.stringify({type:'attach',sessionId}));
+ } else if(m.type==='status' && m.state==='streaming' && m.sessionId===sessionId){
+  console.log('PAGE_STREAMING',JSON.stringify(m));
+  ws.send(JSON.stringify({type:'audio-check',sessionId}));
+ } else if(m.type==='audio-check-result'){
+  console.log('AUDIO_CHECK_RESULT',JSON.stringify(m));
+  clearTimeout(timer);ws.close();
+ } else if(m.type==='error'){
+  console.log('BROWSER_ERROR',JSON.stringify(m));
+ }
+});
+ws.on('error',e=>{console.log('WS_ERROR',e.message);clearTimeout(timer)});
+NODE
