@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== REPLIT DOMAIN VARIABLES (VALUES ONLY FOR DOMAIN VARIABLES) ==='
+node --input-type=module <<'NODE'
+for (const k of ['REPLIT_DEV_DOMAIN','REPLIT_DOMAINS','REPLIT_DEPLOYMENT_URL','PORT','BROWSER_API_KEY']) {
+ const v=process.env[k];
+ console.log(k+'='+(!v?'(unset)':k==='BROWSER_API_KEY'?'(set; hidden)':v));
+}
+NODE
+printf '%s\n' '=== VIEWER COMPONENT HTML / LABELS ==='
+sed -n '1,340p' frontend/browser-live-viewer.js
+printf '%s\n' '=== FRONTEND HTML ENTRY ==='
+sed -n '1,260p' frontend/index.html
+printf '%s\n' '=== FRONTEND VIEWER MOUNT ==='
+sed -n '1800,1905p' frontend/app.js
+printf '%s\n' '=== ACTIVE BROWSER SESSION ==='
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,id='1792213313864-sycp4thv6gc';
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:id})});
+const j=await r.json();
+console.log(JSON.stringify({status:r.status,sessionId:id,url:j.url,title:j.title,text:String(j.text||'').slice(0,1200)}));
+NODE
