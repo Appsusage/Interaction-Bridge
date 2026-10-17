@@ -1,0 +1,36 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== CURRENT SERVER PROCESS ==='
+ps -eo pid,ppid,lstart,args | grep -E '[n]ode .*backend/server.js' || true
+printf '%s\n' '=== CHECK EXISTING SESSION STATUS ==='
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,base='http://127.0.0.1:3000';
+if(!key){console.log('BROWSER_API_KEY missing');process.exit(2)}
+const headers={'content-type':'application/json','x-browser-key':key};
+for(const id of ['1792213313864-sycp4thv6gc','1792214255597-souzcjtadd']){
+ const r=await fetch(base+'/browser/read',{method:'POST',headers,body:JSON.stringify({sessionId:id})});
+ const j=await r.json().catch(()=>({}));
+ console.log(JSON.stringify({id,http:r.status,url:j.url,title:j.title,challenge:/Just a moment|Verify you are human|security check/i.test(j.title+' '+j.text),loginVisible:/Log in|Sign up for free/i.test(j.text||''),text:(j.text||'').slice(0,500)}));
+}
+NODE
+printf '%s\n' '=== TRY A VISIBLE/HEADED SESSION (NO CAPTCHA BYPASS) ==='
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,base='http://127.0.0.1:3000';
+const headers={'content-type':'application/json','x-browser-key':key};
+try {
+ let r=await fetch(base+'/browser/session',{method:'POST',headers,body:JSON.stringify({headless:false,displayPolicy:'foreground',importance:100,requiresUserAction:true})});
+ let j=await r.json().catch(()=>({}));
+ console.log('headed_create_http='+r.status,JSON.stringify(j));
+ if(!r.ok||!j.sessionId) process.exit(0);
+ const id=j.sessionId;
+ r=await fetch(base+'/browser/open',{method:'POST',headers,body:JSON.stringify({sessionId:id,url:'https://chatgpt.com/',displayPolicy:'foreground',importance:100,requiresUserAction:true})});
+ j=await r.json().catch(()=>({}));
+ console.log('headed_open_http='+r.status,JSON.stringify({sessionId:id,url:j.url,title:j.title,error:j.error}));
+ await new Promise(resolve=>setTimeout(resolve,4000));
+ r=await fetch(base+'/browser/read',{method:'POST',headers,body:JSON.stringify({sessionId:id})});
+ j=await r.json().catch(()=>({}));
+ console.log('headed_read_http='+r.status,JSON.stringify({sessionId:id,url:j.url,title:j.title,challenge:/Just a moment|Verify you are human|security check/i.test(j.title+' '+j.text),loginVisible:/Log in|Sign up for free/i.test(j.text||''),text:(j.text||'').slice(0,700)}));
+} catch(e) {console.log('headed_test_error='+e.message)}
+NODE
+printf '%s\n' '=== CHECK VIEWER INPUT PATCH SERVED ==='
+curl -fsS http://127.0.0.1:3000/browser-live-viewer.js | grep -q 'blv-user-text' && echo viewer_input_bar=served
+printf '%s\n' '=== END ==='
