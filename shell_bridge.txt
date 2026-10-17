@@ -1,0 +1,6 @@
+set +e
+sleep 5
+BASE=http://127.0.0.1:3000
+KEY=${BROWSER_API_KEY:-}
+SID=1792241456256-v95pmtm84w
+curl -sS --max-time 25 -X POST "$BASE/browser/read" -H 'Content-Type: application/json' -H "x-browser-key: $KEY" --data "{\"sessionId\":\"$SID\"}"
