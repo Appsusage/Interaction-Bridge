@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== CHATGPT BROWSER SESSION STATUS ==='
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log('BROWSER_API_KEY missing');process.exit(2)}
+const id='1792214361283-hc7jwlplooh';
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:id})});
+const j=await r.json().catch(()=>({}));
+const t=String(j.text||'');
+console.log(JSON.stringify({http:r.status,url:j.url,title:j.title,hasLogin:/Log in|Sign up for free/i.test(t),hasEmailVerification:/Check your inbox|Enter the verification code/i.test(t),hasChatUI:/New chat|What can I help|Message ChatGPT/i.test(t),pageText:t.slice(0,1500)}));
+NODE
