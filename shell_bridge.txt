@@ -1,8 +1,0 @@
-set +e
-cd /home/runner/workspace/ai-agent || exit 2
-printf '\n=== WS ROUTES / SERVER IMPORTS ===\n'
-grep -RInE 'browser/live|listBrowserSessions|WebSocketServer|new WebSocketServer|browserActivity' backend --exclude='*.bak*' | head -180
-printf '\n=== SERVER STARTUP AND PORT ===\n'
-grep -nE 'PORT|listen\(|new WebSocket|upgrade|WebSocketServer|browser_live|browser-live' backend/server.js | head -120
-printf '\n=== CHATGPT SESSION PROFILE PROCESS ===\n'
-ps -eo pid,ppid,lstart,args | grep -E 'node backend/server.js|--user-data-dir=/home/runner/workspace/ai-agent/.chatgpt-profile' | grep -v grep | head -20
