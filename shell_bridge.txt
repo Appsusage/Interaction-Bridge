@@ -1,0 +1,3 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+cat backend/extension/browser/browser_service.js
