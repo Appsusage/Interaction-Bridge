@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== ROOT IGNORE RULES ==='
+cat ../.gitignore
+printf '%s\n' '=== ROBOTOMAIL ADAPTER (SECRETS REDACTED) ==='
+sed -n '1,260p' backend/bridge/mail/robotomail_adapter.js | sed -E 's/(process\.env\.[A-Z0-9_]+).*/\1/; s/(Bearer )[A-Za-z0-9._-]+/\1[REDACTED]/g'
+printf '%s\n' '=== ROBOTOMAIL BRIDGE USAGE ==='
+grep -nE 'robotomail|sendMail|fetch\(|ROBOTOMAIL|email|inbox|verification' backend/bridge/server.js backend/bridge/mail/robotomail_adapter.js | head -n 140
+printf '%s\n' '=== GIT ROOT / TRACKED STATUS ==='
+git rev-parse --show-toplevel
+git status --short
+printf '%s\n' '=== BROWSER SERVICE EXPORTS / SESSION FILES ==='
+grep -nE '^export |launchPersistentContext|storageState|userDataDir' backend/extension/browser/*.js
