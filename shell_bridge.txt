@@ -1,0 +1,5 @@
+set +e
+BASE=http://127.0.0.1:3000
+KEY=${BROWSER_API_KEY:-}
+echo CREATE_SESSION
+curl -sS --max-time 30 -X POST "$BASE/browser/session" -H 'Content-Type: application/json' -H "x-browser-key: $KEY" --data '{"headless":false}'
