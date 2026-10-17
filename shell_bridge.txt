@@ -1,0 +1,34 @@
+cd /home/runner/workspace/ai-agent || { echo "ERROR: project path not found"; exit 1; }
+set -eu
+printf '\n===== TARGET: backend/extension/AICortex/steward.js =====\n'
+if [ -f backend/extension/AICortex/steward.js ]; then
+  sed -n '1,500p' backend/extension/AICortex/steward.js
+else
+  echo "NOT FOUND: backend/extension/AICortex/steward.js"
+fi
+printf '\n===== TARGET DIRECTORY: backend/extension/AICortex/core/ =====\n'
+if [ -d backend/extension/AICortex/core ]; then
+  find backend/extension/AICortex/core -type f -print | sort | while IFS= read -r f; do
+    printf '\n----- FILE: %s -----\n' "$f"
+    sed -n '1,500p' "$f"
+  done
+else
+  echo "NOT FOUND: backend/extension/AICortex/core/"
+fi
+printf '\n===== TARGET DIRECTORY: backend/extension/AICortex/prompt_master/ (adapter.js excluded) =====\n'
+if [ -d backend/extension/AICortex/prompt_master ]; then
+  find backend/extension/AICortex/prompt_master -type f ! -name 'adapter.js' -print | sort | while IFS= read -r f; do
+    printf '\n----- FILE: %s -----\n' "$f"
+    case "$f" in
+      *.md|*.js|*.json|*.txt|*.yml|*.yaml|*.toml|*.mjs|*.cjs)
+        sed -n '1,500p' "$f"
+        ;;
+      *)
+        echo "[Skipped non-text/unsupported extension]"
+        ;;
+    esac
+  done
+else
+  echo "NOT FOUND: backend/extension/AICortex/prompt_master/"
+fi
+printf '\n===== READ-ONLY INSPECTION COMPLETE =====\n'
