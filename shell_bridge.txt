@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent; ps -eo pid,ppid,etime,args | grep -E 'python3|node --check|backend/server.js|shell_bridge' | grep -v grep | head -n 80; echo '--- server ---'; curl -sS --max-time 2 http://127.0.0.1:3000/health || true; echo
