@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent && set -eu
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,base='http://127.0.0.1:3000',id='1792214361283-hc7jwlplooh';
+if(!key){console.log('BROWSER_API_KEY missing');process.exit(2)}
+const h={'content-type':'application/json','x-browser-key':key};
+async function post(path,body){const r=await fetch(base+path,{method:'POST',headers:h,body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));console.log(path+' http='+r.status+' '+JSON.stringify({url:j.url,title:j.title,error:j.error,text:String(j.text||'').slice(0,2500)}));return j}
+console.log('=== CURRENT AUTH FAILURE CONFIRMED ===');
+await post('/browser/read',{sessionId:id});
+console.log('=== RETURN TO OFFICIAL CHATGPT LOGIN ===');
+await post('/browser/open',{sessionId:id,url:'https://chatgpt.com/auth/login',displayPolicy:'foreground',importance:100,requiresUserAction:true});
+await new Promise(r=>setTimeout(r,3500));
+console.log('=== LOGIN METHODS SHOWN BY CHATGPT ===');
+await post('/browser/read',{sessionId:id});
+console.log('=== CHECK ROUTE SUPPORT ===');
+grep:
+NODE
+printf '%s\n' '=== browser routes and browser methods ==='
+grep -nE 'browser/(open|read|session|evaluate|click|type|navigate)|app\.post\("/browser|app\.get\("/browser|export async function (open|read|click|type|navigate)' backend/server.js backend/extension/browser/*.js | head -n 100
