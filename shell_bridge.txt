@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== BROWSER SESSION STATE ==='
+grep -RInE 'browser/(read|open|sessions|status)|createBrowserSession|registerBrowserSession|startChatGPTLive' backend/server.js backend/extension/browser | head -n 70
+printf '%s\n' '=== SERVER ==='
+ps -eo pid,etime,args | grep '[n]ode backend/server.js' || true
+printf '%s\n' '=== PERSISTENT PROFILE ==='
+ls -ld .chatgpt-profile ~/.config/chromium 2>/dev/null || true
