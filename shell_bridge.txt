@@ -1,4 +1,0 @@
-set +e
-cd /home/runner/workspace/ai-agent || exit 2
-echo '=== browser routes in server.js ==='
-grep -n 'browser' backend/server.js
