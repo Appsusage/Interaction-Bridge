@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent && set -eu
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,base='http://127.0.0.1:3000',id='1792214361283-hc7jwlplooh';
+if(!key){console.log('BROWSER_API_KEY missing');process.exit(2)}
+const h={'content-type':'application/json','x-browser-key':key};
+await new Promise(r=>setTimeout(r,3500));
+const r=await fetch(base+'/browser/read',{method:'POST',headers:h,body:JSON.stringify({sessionId:id})});
+const j=await r.json().catch(()=>({}));
+console.log('read_http='+r.status);
+console.log(JSON.stringify({url:j.url,title:j.title,error:j.error,text:String(j.text||'').slice(0,3000)}));
+NODE
+printf '%s\n' '=== LIVE INPUT MARKERS ==='
+grep -nE 'user-text|blv-user-text|user-key|Input.insertText|input-note' backend/extension/browser/browser_live.js frontend/browser-live-viewer.js frontend/browser-live-viewer.css || true
