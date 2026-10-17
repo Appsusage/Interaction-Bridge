@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-echo '=== NODE PROCESSES ==='
-ps -eo pid,ppid,etime,args | grep -E '[b]ackend/server.js|[n]pm start|[s]upervisor-router.js'
-echo '=== SERVER LOG ==='
-tail -n 120 /tmp/ai-agent-server.log 2>/dev/null || true
-echo '=== PORT 3000 ==='
-curl -sS --max-time 2 -o /tmp/ai-health.txt -w 'HTTP=%{http_code}\n' http://127.0.0.1:3000/health || true
-cat /tmp/ai-health.txt 2>/dev/null || true
