@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== SERVER AFTER RESTART ATTEMPT ==='
+curl -sS --max-time 5 -w '\nhealth_http=%{http_code}\n' http://127.0.0.1:3000/health || true
+ps -eo pid,ppid,comm,args | grep -E '[n]ode.*backend/server.js|[n]ode.*server.js' || true
+printf '%s\n' '=== SERVER LOG TAIL ==='
+tail -n 80 /tmp/ai-agent-server-chatgpt.log 2>/dev/null || true
