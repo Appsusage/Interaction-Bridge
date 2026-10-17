@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent; echo '=== BROWSER ROUTES ==='; grep -nE 'browser/read|browser/eval|browser/evaluate|browser/sessions|browser/click|browser/type|browser/close|browser/reload' backend/server.js backend/extension/browser/*.js | head -n 140; echo '=== CURRENT CHATGPT PAGE AFTER WAIT ==='; node --input-type=module <<'NODE'
-const key=process.env.BROWSER_API_KEY;
-const sessionId='1792250980360-yrrwetpvqd';
-const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'Content-Type':'application/json','x-browser-key':key||''},body:JSON.stringify({sessionId})});
-const d=await r.json(); console.log(JSON.stringify({http:r.status,url:d.url,title:d.title,text:(d.text||'').slice(-1600),error:d.error||null}));
-NODE
