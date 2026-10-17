@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-KEY="${BROWSER_API_KEY:-}"
-test -n "$KEY"
-SESSION_ID='1792211391529-s2y2p73y89n'
-curl -fsS --max-time 30 -X POST http://127.0.0.1:3000/browser/screenshot -H "content-type: application/json" -H "x-browser-key: $KEY" -d "{\"sessionId\":\"$SESSION_ID\"}" -o /tmp/chatgpt-page.png
-printf '%s\n' 'CHATGPT_SCREENSHOT_PNG_BASE64_BEGIN'
-base64 -w0 /tmp/chatgpt-page.png
-printf '\n%s\n' 'CHATGPT_SCREENSHOT_PNG_BASE64_END'
