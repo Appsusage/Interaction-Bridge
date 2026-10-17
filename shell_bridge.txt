@@ -1,0 +1,27 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== RESTART BACKEND TO LOAD HEADED-BROWSER OPTION ==='
+PID=$(pgrep -f '^/nix/store/.*/bin/node backend/server.js$' | head -n 1 || true)
+test -n "$PID"
+printf 'old_server_pid=%s\n' "$PID"
+kill -TERM "$PID"
+sleep 2
+nohup node backend/server.js >/tmp/ai-agent-server-chatgpt.log 2>&1 &
+NEWPID=$!
+printf 'new_server_pid=%s\n' "$NEWPID"
+for n in $(seq 1 25); do
+  if curl -fsS --max-time 2 http://127.0.0.1:3000/health >/tmp/chatgpt-health-after-restart.txt 2>/dev/null; then break; fi
+  sleep 1
+done
+cat /tmp/chatgpt-health-after-restart.txt
+printf '%s\n' '=== CREATE HEADED BROWSER SESSION ==='
+KEY="${BROWSER_API_KEY:-}"
+test -n "$KEY"
+SESSION_JSON=$(curl -fsS --max-time 20 -X POST http://127.0.0.1:3000/browser/session -H "content-type: application/json" -H "x-browser-key: $KEY" -d '{"headless":false,"displayPolicy":"foreground","importance":100}')
+printf '%s\n' "$SESSION_JSON"
+SESSION_ID=$(printf '%s' "$SESSION_JSON" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{process.stdout.write(JSON.parse(s).sessionId||"")}catch{}})')
+test -n "$SESSION_ID"
+printf 'headed_session_id=%s\n' "$SESSION_ID"
+curl -fsS --max-time 45 -X POST http://127.0.0.1:3000/browser/open -H "content-type: application/json" -H "x-browser-key: $KEY" -d "{\"sessionId\":\"$SESSION_ID\",\"url\":\"https://chatgpt.com/\",\"displayPolicy\":\"foreground\",\"importance\":100}"
+sleep 6
+curl -fsS --max-time 25 -X POST http://127.0.0.1:3000/browser/read -H "content-type: application/json" -H "x-browser-key: $KEY" -d "{\"sessionId\":\"$SESSION_ID\"}" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);console.log("url="+x.url);console.log("title="+x.title);console.log("body_excerpt="+String(x.text||"").slice(0,1600))})'
+printf '%s\n' '=== HEADED CHATGPT SESSION IS ACTIVE ==='
