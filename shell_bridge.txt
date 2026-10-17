@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== FIND BROWSER LIVE VIEWER ENTRY ==='
+grep -RniE 'browser/live|browserLive|type: *["'\''"]attach|WebSocket\(' --exclude-dir=node_modules --exclude-dir=.git . 2>/dev/null | head -n 120 || true
+printf '%s\n' '=== PUBLIC/STATIC FILES ==='
+find public backend -maxdepth 3 -type f \( -iname '*.html' -o -iname '*.js' -o -iname '*.css' \) 2>/dev/null | grep -Ei 'browser|live|index|viewer|dashboard|app' | head -n 100 || true
+printf '%s\n' '=== USER SESSION STILL OPEN ==='
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,id='1792213313864-sycp4thv6gc';
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:id})});
+const j=await r.json();
+console.log(JSON.stringify({status:r.status,sessionId:id,url:j.url,title:j.title,text:String(j.text||'').slice(0,900)}));
+NODE
