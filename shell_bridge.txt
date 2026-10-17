@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY;
+const id="1792217710528-jub44gfxbdh";
+async function post(path,body){
+ const r=await fetch("http://127.0.0.1:3000"+path,{method:"POST",headers:{"content-type":"application/json","x-browser-key":key},body:JSON.stringify(body)});
+ return {status:r.status,data:await r.json().catch(()=>({}))};
+}
+const close=await post("/browser/close",{sessionId:id});
+console.log("CLOSE",JSON.stringify(close));
+const create=await post("/browser/session",{});
+console.log("CREATE",JSON.stringify(create));
+const sid=create.data?.sessionId||create.data?.id;
+if(!sid){console.log("NO_SESSION_ID");process.exit(0);}
+const open=await post("/browser/open",{sessionId:sid,url:"https://chatgpt.com/"});
+console.log("OPEN",JSON.stringify(open));
+await new Promise(r=>setTimeout(r,7000));
+const read=await post("/browser/read",{sessionId:sid});
+const j=read.data||{},t=String(j.text||"");
+console.log("AFTER_OPEN",JSON.stringify({status:read.status,sessionId:sid,url:j.url,title:j.title,challenge:/Just a moment|verify you are human|security check|captcha/i.test(String(j.title||"")+" "+t),login:/Log in or sign up|Continue with Google|Enter your email/i.test(t),loggedIn:/New chat|What’s on the agenda|What can I help with|Upgrade|Free/i.test(t)&&!/Log in or sign up|Continue with Google|Enter your email|Check your inbox|verification code/i.test(t),text:t.slice(0,600)}));
+NODE
