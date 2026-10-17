@@ -1,0 +1,4 @@
+cd /home/runner/workspace/ai-agent
+printf 'DISPLAY=%s\n' "${DISPLAY:-}"
+command -v xvfb-run || true
+command -v chromium || true
