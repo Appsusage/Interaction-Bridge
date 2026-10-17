@@ -1,0 +1,20 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+node --input-type=module <<'NODE'
+import WebSocket from 'ws';
+const ws=new WebSocket('ws://127.0.0.1:3000/browser/live');
+const timer=setTimeout(()=>{console.log('WS_TIMEOUT');ws.close();},5000);
+ws.on('open',()=>console.log('WS_OPEN'));
+ws.on('message',raw=>{
+ const m=JSON.parse(raw.toString());
+ console.log('WS_MESSAGE',JSON.stringify(m).slice(0,3000));
+ if(m.type==='sessions'){clearTimeout(timer);ws.close();}
+});
+ws.on('error',e=>{clearTimeout(timer);console.log('WS_ERROR',e.message)});
+NODE
+printf '%s\n' '=== CHATGPT LIVE PROCESS / PROFILE ==='
+ps -ef | grep -E 'node backend/server.js|chromium|supervisor-router' | grep -v grep | head -n 40
+printf '%s\n' '=== PROFILE FILES ==='
+ls -ld .chatgpt-profile 2>&1
+printf '%s\n' '=== AUDIO FLAGS / INSTALLED SUPPORT ==='
+grep -RniE 'getUserMedia|RTCPeerConnection|AudioContext|captureStream|audio-output|use-fake-device-for-media-stream|use-fake-ui-for-media-stream' backend frontend --exclude-dir=node_modules | head -n 120
