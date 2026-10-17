@@ -1,5 +1,0 @@
-set +e
-BASE=http://127.0.0.1:3000
-KEY=${BROWSER_API_KEY:-}
-SID=1792241456256-v95pmtm84w
-curl -sS --max-time 20 -X POST "$BASE/browser/type" -H 'Content-Type: application/json' -H "x-browser-key: $KEY" --data "{\"sessionId\":\"$SID\",\"selector\":\"[contenteditable='true']\",\"text\":\"第二个问题：如果一个 AI Agent 主要依靠本地规则系统、经验库、上下文记忆和工具执行，只有遇到复杂任务时才调用外部大语言模型，你建议它如何设计与 ChatGPT 这类外部 AI 的协作协议，才能避免意图失真、重复调用和错误传播？请给出可落地的流程与消息格式。\"}"
