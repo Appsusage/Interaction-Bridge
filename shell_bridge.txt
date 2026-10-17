@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent && set -eu
+KEY="${BROWSER_API_KEY:-}"
+test -n "$KEY"
+SESSION_ID='1792211391529-s2y2p73y89n'
+node --input-type=module <<'NODE'
+import { getBrowserPage } from './backend/extension/browser/browser_service.js';
+const page = getBrowserPage('1792211391529-s2y2p73y89n');
+const b64 = (await page.screenshot({type:'jpeg',quality:35,scale:'css'})).toString('base64');
+console.log('CHATGPT_SCREENSHOT_BASE64_BEGIN');
+console.log(b64);
+console.log('CHATGPT_SCREENSHOT_BASE64_END');
+NODE
