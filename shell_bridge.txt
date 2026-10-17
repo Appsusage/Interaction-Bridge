@@ -1,0 +1,8 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+printf '\n=== chatgpt_live.js ===\n'
+sed -n '1,240p' backend/extension/browser/chatgpt_live.js
+printf '\n=== browser_live.js ===\n'
+sed -n '1,200p' backend/extension/browser/browser_live.js
+printf '\n=== prompt/context loading references ===\n'
+grep -RniE 'core_behavior\.md|profile\.md|readFile.*prompt|extension/browser|chatgpt_live' backend/ai_core.js backend/server.js backend/extension 2>/dev/null | head -100
