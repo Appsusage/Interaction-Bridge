@@ -1,0 +1,12 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+printf '\n=== ROOT ===\n'
+pwd
+printf '\n=== PACKAGE ===\n'
+cat package.json 2>/dev/null | head -160
+printf '\n=== FRONTEND FILES ===\n'
+find . -maxdepth 5 -type f \( -name '*.jsx' -o -name '*.tsx' -o -name '*.vue' -o -name '*.html' -o -name '*.css' -o -name '*.js' \) 2>/dev/null | grep -Ei 'frontend|client|public|chat|browser|server' | head -160
+printf '\n=== CHAT/API REFERENCES ===\n'
+grep -RInE 'browser/read|browser/type|browser/click|/chat|chatMessages|messages\.map|contenteditable|marked|markdown|react-markdown|prism|highlight' backend frontend public src client 2>/dev/null | head -220
+printf '\n=== PROMPT PATHS ===\n'
+find . -maxdepth 7 -type f -path '*Static_Prompt*' 2>/dev/null | head -100
