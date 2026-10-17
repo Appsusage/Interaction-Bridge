@@ -1,0 +1,20 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log('ERROR: missing BROWSER_API_KEY');process.exit(2)}
+const sessions=[
+'1792238056497-o1su66ekwd',
+'1792238667522-tpip2qzw2v',
+'1792241456256-v95pmtm84w',
+'1792242456084-wsq132mokhc'
+];
+for(const sessionId of sessions){
+ try{
+  const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'Content-Type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId})});
+  const d=await r.json();
+  console.log('SESSION_CHECK',sessionId,'HTTP',r.status,'URL',d.url||'', 'TITLE',d.title||'', 'TEXT_CHARS',(d.text||'').length,'ERROR',d.error||'');
+ }catch(e){console.log('SESSION_CHECK',sessionId,'ERROR',e.message)}
+}
+console.log('NOTE: each successful read emits a matching completed browser activity event to clear stale busy state for that session.');
+NODE
