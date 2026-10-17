@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== STARTUP MODE ==='
+cat package.json | sed -n '1,160p'
+printf '%s\n' '=== BROWSER LAUNCH AND SESSION REGISTRY ==='
+sed -n '1,190p' backend/extension/browser/browser_service.js
+printf '%s\n' '=== RUNNING SERVER PROCESS ==='
+ps -eo pid,ppid,lstart,args | grep -E '[n]ode .*backend/server.js|[n]pm start|[n]odemon|[n]ode --watch' || true
+printf '%s\n' '=== LIVE SESSION CHECK ==='
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY,id='1792213313864-sycp4thv6gc';
+if(!key){console.log('key_present=false');process.exit(0)}
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:id})});
+const j=await r.json().catch(()=>({}));
+console.log(JSON.stringify({http:r.status,url:j.url,title:j.title,loginVisible:/Log in|Sign up for free/i.test(j.text||''),text:(j.text||'').slice(0,500)}));
+NODE
+printf '%s\n' '=== CHECK WHETHER LIVE SERVER HAS NEW INPUT HANDLER (READ-ONLY FILE CONFIRMATION) ==='
+grep -nE 'user-text|user-key' backend/extension/browser/browser_live.js
+printf '%s\n' '=== END ==='
