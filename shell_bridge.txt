@@ -1,0 +1,8 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+echo '=== ROUTE DEFINITIONS ==='
+sed -n '1280,1335p' backend/server.js
+echo '=== BROWSER SERVICE FILES ==='
+ls backend/extension/browser
+echo '=== TYPE AND CLICK IMPLEMENTATION ==='
+grep -n 'async function\|export async\|typeText\|click' backend/extension/browser/browser_service.js | head -100
