@@ -1,0 +1,79 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/browser/chatgpt_live.js")
+backup=Path(str(p)+".before-login-safety")
+if not backup.exists(): backup.write_text(p.read_text())
+s=p.read_text()
+s=s.replace('const getLoginEmail = () => process.env.CHATGPT_LOGIN_EMAIL || "frankii@robotomail.co";',
+            'const getLoginEmail = () => String(process.env.CHATGPT_LOGIN_EMAIL || "").trim();',1)
+old='''    await wait(1200);
+
+    const emailField = page.locator('input[type="email"]').first();
+    if (await emailField.count()) {
+      await emailField.fill(getLoginEmail(), { timeout: 10000 });
+      const continueButton = page.getByRole("button", { name: /^continue$/i }).first();
+      if (await continueButton.count()) await continueButton.click({ timeout: 10000 });
+      await wait(1500);
+    }
+
+    const text = await pageText(page);'''
+new='''    await wait(1200);
+
+    const title = await page.title().catch(() => "");
+    const text = await pageText(page);
+    if (/just a moment|verify you are human|security check|unusual activity/i.test(title + " " + text)) {
+      emitStatus("waiting", { step: "security-check", note: "ChatGPT 正在显示安全检查页面；不会绕过检查，请用户在实时浏览器中正常完成。" });
+      return;
+    }
+
+    const emailField = page.locator('input[type="email"]').first();
+    const loginEmail = getLoginEmail();
+    if (loginEmail && await emailField.count()) {
+      await emailField.fill(loginEmail, { timeout: 10000 });
+      const continueButton = page.getByRole("button", { name: /^continue$/i }).first();
+      if (await continueButton.count()) await continueButton.click({ timeout: 10000 });
+      await wait(1500);
+    } else if (!loginEmail && await emailField.count()) {
+      emitStatus("waiting", { step: "manual-login", note: "未配置 CHATGPT_LOGIN_EMAIL；请用户在实时浏览器输入自己的 ChatGPT 账号，不会代填其他邮箱。" });
+      return;
+    }
+
+    const textAfterLoginCheck = await pageText(page);'''
+if old not in s: raise SystemExit("login flow insertion marker missing")
+s=s.replace(old,new,1)
+s=s.replace('''    if (/Check your inbox|verification code|Enter the code/i.test(text) || /email-verification/i.test(page.url())) {''',
+            '''    if (/Check your inbox|verification code|Enter the code/i.test(textAfterLoginCheck) || /email-verification/i.test(page.url())) {''',1)
+s=s.replace('''    if (/captcha|verify you are human|security check|unusual activity/i.test(text)) {''',
+            '''    if (/captcha|verify you are human|security check|unusual activity/i.test(textAfterLoginCheck)) {''',1)
+old='''      const text = await pageText(page);
+      if (/captcha|verify you are human|security check|unusual activity/i.test(text)) {
+        emitStatus("waiting", { step: "security-check", note: "遇到安全验证，停止自动操作，等待用户在网页中完成。" });
+      }'''
+new='''      const title = await page.title().catch(() => "");
+      const text = await pageText(page);
+      if (/just a moment|captcha|verify you are human|security check|unusual activity/i.test(title + " " + text)) {
+        emitStatus("waiting", { step: "security-check", note: "ChatGPT 正在显示安全检查页面；不会绕过检查，请用户在实时浏览器中正常完成。" });
+      }'''
+if old not in s: raise SystemExit("monitor security marker missing")
+s=s.replace(old,new,1)
+p.write_text(s)
+PY
+node --check backend/extension/browser/chatgpt_live.js
+echo '=== LOGIN SAFETY CHECK ==='
+grep -nE 'getLoginEmail|just a moment|manual-login|textAfterLoginCheck' backend/extension/browser/chatgpt_live.js
+echo '=== RESTART SERVER ==='
+for pid in $(ps -eo pid,args | awk '$3=="backend/server.js" {print $1}'); do kill -KILL "$pid" 2>/dev/null || true; done
+for i in $(seq 1 10); do
+  if ! curl -fsS --max-time 1 http://127.0.0.1:3000/health >/dev/null 2>&1; then echo 'PORT_CLOSED'; break; fi
+  sleep 1
+done
+if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/dev/null 2>&1; then echo 'PORT_STILL_OPEN'; ps -eo pid,ppid,args | grep -E '[b]ackend/server.js'; exit 3; fi
+nohup npm start >/tmp/ai-agent-server.log 2>&1 </dev/null &
+echo "START_PID=$!"
+for i in $(seq 1 30); do
+  sleep 1
+  if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/tmp/ai-health.txt 2>/dev/null; then echo "HEALTH_OK_AFTER=\${i}s"; cat /tmp/ai-health.txt; break; fi
+done
+tail -n 50 /tmp/ai-agent-server.log
