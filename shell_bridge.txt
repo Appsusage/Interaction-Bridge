@@ -1,0 +1,15 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== IGNORE FILES ==='
+find .. -maxdepth 2 -name .gitignore -print
+printf '%s\n' '=== MAIL / ROBOTOMAIL IMPLEMENTATION FILES ==='
+find backend -maxdepth 4 -type f | grep -Ei 'mail|robot|email|inbox|bridge' | head -n 100 || true
+printf '%s\n' '=== ENVIRONMENT VARIABLE NAMES ONLY (NO VALUES) ==='
+node --input-type=module <<'NODE'
+const names=Object.keys(process.env).filter(k=>/(MAIL|EMAIL|ROBOT|IMAP|SMTP|BROWSER|OPENAI)/i.test(k)).sort();
+console.log(names.join('\n') || '(none)');
+NODE
+printf '%s\n' '=== SERVER IMPORT / STARTUP REGION ==='
+sed -n '35,75p' backend/server.js
+sed -n '1330,1385p' backend/server.js
+printf '%s\n' '=== TOP-LEVEL IGNORE CONTENT IF PRESENT ==='
+if [ -f .gitignore ]; then cat .gitignore; else echo '(no root .gitignore)'; fi
