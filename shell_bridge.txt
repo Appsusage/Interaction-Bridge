@@ -1,3 +1,0 @@
-cat /tmp/ai-agent-headed-browser.log 2>/dev/null | tail -50
-ps -p 7090 -o pid=,state=,etime=,args= || true
-ps -p 7753 -o pid=,state=,etime=,args= || true
