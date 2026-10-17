@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent && set -eu
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY;
+const id='1792212658322-dd6rha96yv5';
+await new Promise(r=>setTimeout(r,18000));
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:id})});
+const t=await r.text();
+console.log('HTTP='+r.status);
+console.log(t.slice(0,5000));
+NODE
