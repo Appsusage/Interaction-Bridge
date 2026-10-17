@@ -1,0 +1,5 @@
+set +e
+BASE=http://127.0.0.1:3000
+KEY=${BROWSER_API_KEY:-}
+SID=1792241456256-v95pmtm84w
+curl -sS --max-time 20 -X POST "$BASE/browser/type" -H 'Content-Type: application/json' -H "x-browser-key: $KEY" --data "{\"sessionId\":\"$SID\",\"selector\":\"[contenteditable='true']\",\"text\":\"你好！请介绍一下你自己，并说明你认为 AI 与 AI 之间应该如何有效地互动交流？\"}"
