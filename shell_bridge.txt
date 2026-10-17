@@ -1,0 +1,13 @@
+set +e
+cd /home/runner/workspace/ai-agent || exit 2
+printf '\n=== WS SERVER PROTOCOL ===\n'
+sed -n '1,210p' backend/extension/browser/browser_live.js
+printf '\n=== ACTIVE SESSION LIST ===\n'
+node --input-type=module <<'NODE'
+import WebSocket from 'ws';
+const ws=new WebSocket('ws://127.0.0.1:3000/browser/live');
+const timer=setTimeout(()=>{console.log('WS_TIMEOUT');ws.close();process.exit(0)},8000);
+ws.on('open',()=>console.log('WS_OPEN'));
+ws.on('message',d=>{let m;try{m=JSON.parse(d.toString())}catch{return};if(m.type==='sessions'){console.log('SESSIONS',JSON.stringify(m.sessions));clearTimeout(timer);ws.close();process.exit(0)} else if(m.type==='status') console.log('STATUS',JSON.stringify(m));});
+ws.on('error',e=>{console.log('WS_ERROR',e.message);clearTimeout(timer);process.exit(1)});
+NODE
