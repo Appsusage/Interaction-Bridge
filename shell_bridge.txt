@@ -1,6 +1,0 @@
-set +e
-BASE=http://127.0.0.1:3000
-KEY=${BROWSER_API_KEY:-}
-SID=1792241456256-v95pmtm84w
-PAYLOAD=$(printf '{"sessionId":"%s"}' "$SID")
-curl -sS --max-time 30 "$BASE/browser/read" -H 'Content-Type: application/json' -H "x-browser-key: $KEY" --data "$PAYLOAD"
