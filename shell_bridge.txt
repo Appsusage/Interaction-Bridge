@@ -1,5 +1,0 @@
-set +e
-BASE=http://127.0.0.1:3000
-KEY=${BROWSER_API_KEY:-}
-SID=1792241456256-v95pmtm84w
-curl -sS --max-time 25 -X POST "$BASE/browser/type" -H 'Content-Type: application/json' -H "x-browser-key: $KEY" --data "{\"sessionId\":\"$SID\",\"selector\":\"[contenteditable='true']\",\"text\":\"第三个问题：我要把网页 ChatGPT 互动能力真正交给本地 ai-agent。请给出一个可执行的工程方案：它每次准备和 ChatGPT 聊天时，必须先检查并复用现有 Playwright 浏览器会话和登录状态；仅当确认原会话无法恢复时才考虑新建；发送问题后轮询读取真实回答；避免重复发送；把操作步骤、会话 ID 持久化、失败恢复规则写进项目文件，让 AI 以后无需用户重复解释就能照做。请结合 Node.js + Playwright + Shell Bridge，给出文件组织、伪代码和验收测试。\"}"
