@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; sed -n '1,155p' backend/extension/browser/chatgpt_live.js; echo '=== CHECK CURRENT PROFILE PATH ==='; grep -nE 'profileDir|CHATGPT_HOME|addInitScript' backend/extension/browser/chatgpt_live.js
