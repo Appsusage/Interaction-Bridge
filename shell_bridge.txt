@@ -1,3 +1,0 @@
-set +e
-cd /home/runner/workspace/ai-agent || exit 2
-grep -n 'system_prompts' backend/ai_core.js backend/server.js ai_core.js 2>/dev/null || true
