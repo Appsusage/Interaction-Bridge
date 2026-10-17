@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n '205,330p' frontend/browser-live-viewer.js && sed -n '1,100p' backend/extension/browser/browser_live.js && sed -n '70,170p' backend/extension/browser/chatgpt_live.js
