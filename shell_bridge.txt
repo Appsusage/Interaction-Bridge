@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== READ-ONLY BROWSER DIAGNOSTICS ==='
+printf '%s\n' '--- readPage implementation ---'
+grep -n 'export async function readPage' backend/extension/browser/browser_service.js
+sed -n '185,260p' backend/extension/browser/browser_service.js
+printf '%s\n' '--- browser API route handlers ---'
+sed -n '1270,1355p' backend/server.js
+printf '%s\n' '--- browser process / display ---'
+ps -eo pid,ppid,args | grep -E '[c]hromium|[c]hrome|[n]ode backend/server.js' | head -n 30
+printf 'DISPLAY_PRESENT='; test -n "${DISPLAY:-}" && echo yes || echo no
+printf '%s\n' '--- session read, same session only ---'
+node --input-type=module <<'NODE'
+const key=process.env.BROWSER_API_KEY;
+const id='1792211817777-t3hfcfr7wco';
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:id})});
+const j=await r.json();
+console.log(JSON.stringify({status:r.status,url:j.url,title:j.title,text:j.text,hasKey:!!key}));
+NODE
