@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent; sed -n '1,180p' backend/extension/browser/browser_live.js; echo '=== VIEWER START / MESSAGE HANDLER ==='; sed -n '1,235p' frontend/browser-live-viewer.js
