@@ -1,0 +1,31 @@
+set -e
+cd /home/runner/workspace/ai-agent
+echo '=== STOP OLD SERVER PID 110 ==='
+if kill -0 110 2>/dev/null; then kill -TERM 110; fi
+for i in $(seq 1 15); do
+  if ! kill -0 110 2>/dev/null; then echo "OLD_SERVER_STOPPED_AFTER=\${i}s"; break; fi
+  sleep 1
+done
+echo '=== CHECK PORT ==='
+if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/tmp/ai-health.txt 2>/dev/null; then
+  echo 'PORT_STILL_SERVING'
+  cat /tmp/ai-health.txt
+  ps -eo pid,ppid,etime,args | grep -E '[b]ackend/server.js'
+else
+  echo 'PORT_CLOSED_STARTING_SERVER'
+  nohup npm start >/tmp/ai-agent-server.log 2>&1 </dev/null &
+  echo "START_PID=$!"
+  for i in $(seq 1 30); do
+    sleep 1
+    if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/tmp/ai-health.txt 2>/dev/null; then
+      echo "HEALTH_OK_AFTER=\${i}s"
+      cat /tmp/ai-health.txt
+      break
+    fi
+  done
+fi
+sleep 2
+echo '=== FINAL PROCESSES ==='
+ps -eo pid,ppid,etime,args | grep -E '[b]ackend/server.js|[s]upervisor-router.js'
+echo '=== LOG ==='
+tail -n 100 /tmp/ai-agent-server.log 2>/dev/null || true
