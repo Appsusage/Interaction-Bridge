@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent; sed -n '135,285p' backend/extension/browser/chatgpt_live.js; echo '=== CONFIG KEYS ONLY (values hidden) ==='; node --input-type=module <<'NODE'
+for (const k of ['CHATGPT_LOGIN_EMAIL','CHATGPT_LOGIN_PASSWORD','CHATGPT_PROFILE_DIR','CHATGPT_BROWSER_HEADLESS','BROWSER_API_KEY']) console.log(k, process.env[k] ? 'SET' : 'NOT_SET');
+NODE
