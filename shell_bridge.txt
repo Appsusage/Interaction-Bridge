@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== ROBOTOMAIL POLLING LOOP AND MESSAGE LIST SHAPE ==='
-grep -n -A 65 -B 10 'getInboundMessages\|startRobotomailAdapter\|saveInboundMessage' backend/bridge/mail/robotomail_adapter.js
-printf '%s\n' '=== BROWSER PROFILE IGNORE CHECK ==='
-git check-ignore -v .chatgpt-profile 2>/dev/null || true
