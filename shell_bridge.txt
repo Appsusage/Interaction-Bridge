@@ -1,8 +1,0 @@
-set +e
-cd /home/runner/workspace/ai-agent || exit 2
-cat >> backend/system_prompts/Static_Prompt/core_behavior.md <<'EOF'
-
-## Mandatory ChatGPT browser-session reuse
-Before any web ChatGPT interaction, follow `backend/extension/browser/CHATGPT_SESSION_PLAYBOOK.md`. First read the saved Playwright session and reuse it. Do not create a new session or restart login unless existing-session recovery is confirmed impossible. After sending, poll and read the actual assistant response before reporting success; after timeout, inspect the page before retrying to prevent duplicates. If login/CAPTCHA/security verification appears, stop and wait for the user; never bypass it.
-EOF
-printf 'CORE_BEHAVIOR_RULE_APPENDED\n'
