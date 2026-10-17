@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import WebSocket from "ws";
+const ws=new WebSocket("ws://127.0.0.1:3000/browser/live");
+const timer=setTimeout(()=>{console.log("TIMEOUT");ws.close();},5000);
+ws.on("message",async raw=>{
+ let m;try{m=JSON.parse(raw.toString())}catch{return}
+ if(m.type!=="sessions")return;
+ clearTimeout(timer);
+ console.log("SESSIONS",JSON.stringify(m.sessions));
+ for(const s of m.sessions||[]){
+  if(!/chatgpt\.com/i.test(s.url||""))continue;
+  const r=await fetch("http://127.0.0.1:3000/browser/read",{method:"POST",headers:{"content-type":"application/json","x-browser-key":process.env.BROWSER_API_KEY},body:JSON.stringify({sessionId:s.sessionId})});
+  const j=await r.json().catch(()=>({}));
+  console.log("SESSION_PAGE",JSON.stringify({id:s.sessionId,url:j.url,title:j.title,text:String(j.text||"").slice(0,400)}));
+ }
+ ws.close();
+});
+NODE
