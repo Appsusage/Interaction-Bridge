@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-pwd
-ls -ld .chatgpt-profile
