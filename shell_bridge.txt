@@ -1,0 +1,45 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+if [ -z "${BROWSER_API_KEY:-}" ]; then
+  printf 'BLOCKED: BROWSER_API_KEY is not available in Shell Bridge environment; server was not restarted.\n'
+  exit 0
+fi
+pid="$(ps -eo pid,args | awk '$NF=="backend/server.js" && /node/ {print $1; exit}')"
+if [ -n "$pid" ]; then
+  kill "$pid" || true
+  for i in $(seq 1 15); do
+    if ! kill -0 "$pid" 2>/dev/null; then break; fi
+    sleep 1
+  done
+fi
+if curl -fsS --max-time 2 http://127.0.0.1:3000/health >/dev/null 2>&1; then
+  printf 'Existing backend still responds after stop request; refusing to launch a duplicate server.\n'
+else
+  nohup node backend/server.js >/dev/null 2>&1 </dev/null &
+  for i in $(seq 1 20); do
+    if curl -fsS --max-time 2 http://127.0.0.1:3000/health >/dev/null 2>&1; then break; fi
+    sleep 1
+  done
+fi
+curl -fsS --max-time 3 http://127.0.0.1:3000/health >/dev/null
+node --input-type=module <<'JS'
+const key = process.env.BROWSER_API_KEY;
+const headers = {'content-type':'application/json','x-browser-key':key};
+const created = await fetch('http://127.0.0.1:3000/browser/session', {
+  method:'POST', headers,
+  body:JSON.stringify({persistent:true,headless:false,displayPolicy:'foreground',importance:100,requiresUserAction:true})
+});
+const session = await created.json();
+if (!created.ok || !session.sessionId) {
+  console.log(JSON.stringify({stage:'create_session',status:created.status,error:session.error||'session creation failed'}));
+  process.exit(0);
+}
+const opened = await fetch('http://127.0.0.1:3000/browser/open', {
+  method:'POST', headers,
+  body:JSON.stringify({sessionId:session.sessionId,url:'https://mail.google.com/',displayPolicy:'foreground',importance:100,requiresUserAction:true})
+});
+const page = await opened.json();
+console.log(JSON.stringify({stage:'gmail_opened',createStatus:created.status,openStatus:opened.status,sessionId:session.sessionId,persistent:session.persistent===true,url:page.url||null,title:page.title||null,error:page.error||null}));
+JS
+printf '\nPersistent Gmail profile location: /home/runner/workspace/ai-agent/.gmail-profile\n'
+printf 'Credentials, verification codes, cookies and profile data were not printed.\n'
