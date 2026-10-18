@@ -1,0 +1,68 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/browser/browser_service.js")
+s=p.read_text()
+if 'import path from "node:path";' not in s:
+    s=s.replace('import { EventEmitter } from "node:events";','import { EventEmitter } from "node:events";\nimport path from "node:path";')
+old='''export async function createBrowserSession(options = {}) {
+  const browser = await launchBrowser({ headless: options.headless ?? true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const sessionId = registerBrowserSession({ browser, context, page, options });
+  return { sessionId };
+}'''
+new='''export async function createBrowserSession(options = {}) {
+  let browser = null;
+  let context;
+  let page;
+  if (options.persistent === true) {
+    const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/repl/tools/bin/chromium";
+    const profileDir = path.resolve(process.cwd(), ".gmail-profile");
+    context = await chromium.launchPersistentContext(profileDir, {
+      headless: options.headless ?? false,
+      executablePath
+    });
+    page = context.pages()[0] || await context.newPage();
+  } else {
+    browser = await launchBrowser({ headless: options.headless ?? true });
+    context = await browser.newContext();
+    page = await context.newPage();
+  }
+  const sessionId = registerBrowserSession({ browser, context, page, options });
+  return { sessionId, persistent: options.persistent === true };
+}'''
+if old not in s:
+    if 'launchPersistentContext(profileDir' not in s:
+        raise SystemExit("Expected function not found; stopped safely.")
+else:
+    backup=Path("backend/extension/browser/browser_service.js.bak-gmail-persistent-20261018")
+    if not backup.exists(): backup.write_text(s)
+    p.write_text(s.replace(old,new))
+PY
+node --check backend/extension/browser/browser_service.js
+printf 'SOURCE_PATCHED\n'
+printf '\n=== Stop/restart backend ===\n'
+pid="$(ps -eo pid,args | awk '$NF=="backend/server.js" && /node/ {print $1; exit}')"
+if [ -z "$pid" ]; then printf 'NO_BACKEND_PID\n'; exit 1; fi
+kill "$pid" || true
+for i in $(seq 1 20); do
+  newpid="$(ps -eo pid,args | awk '$NF=="backend/server.js" && /node/ {print $1; exit}')"
+  if [ -n "$newpid" ] && [ "$newpid" != "$pid" ] && curl -fsS --max-time 2 http://127.0.0.1:3000/health >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+printf 'old_pid=%s new_pid=%s\n' "$pid" "${newpid:-none}"
+if [ -z "${BROWSER_API_KEY:-}" ]; then printf 'BROWSER_API_KEY_NOT_AVAILABLE\n'; exit 0; fi
+node --input-type=module <<'JS'
+const key=process.env.BROWSER_API_KEY;
+const headers={'content-type':'application/json','x-browser-key':key};
+const created=await fetch('http://127.0.0.1:3000/browser/session',{method:'POST',headers,body:JSON.stringify({persistent:true,headless:false,displayPolicy:'foreground',importance:100,requiresUserAction:true})});
+const session=await created.json();
+if(!created.ok||!session.sessionId){console.log(JSON.stringify({stage:'create',status:created.status,error:session.error||'no session id'}));process.exit(0)}
+const opened=await fetch('http://127.0.0.1:3000/browser/open',{method:'POST',headers,body:JSON.stringify({sessionId:session.sessionId,url:'https://mail.google.com/',displayPolicy:'foreground',importance:100,requiresUserAction:true})});
+const page=await opened.json();
+console.log(JSON.stringify({stage:'gmail',createStatus:created.status,openStatus:opened.status,sessionId:session.sessionId,persistent:session.persistent===true,url:page.url||null,title:page.title||null,error:page.error||null}));
+JS
+printf '\n=== Profile directory exists ===\n'
+test -d .gmail-profile && echo PROFILE_EXISTS || echo PROFILE_MISSING
