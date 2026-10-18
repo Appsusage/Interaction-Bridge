@@ -1,0 +1,8 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '=== Backend process ===\n'
+ps -eo pid,ppid,args | grep -E '[n]ode .*backend/server\.js|[n]pm start|[n]odemon' || true
+printf '\n=== Health endpoint ===\n'
+curl -sS --max-time 3 -o /dev/null -w 'HTTP %{http_code}\n' http://127.0.0.1:3000/health || true
+printf '\n=== Persistent profile directory status (metadata only) ===\n'
+if [ -d .gmail-profile ]; then printf 'EXISTS\n'; else printf 'NOT_CREATED\n'; fi
