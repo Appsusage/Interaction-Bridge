@@ -1,0 +1,6 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '=== browser live UI handlers ===\n'
+grep -nE 'browser/live|session-created|type === "sessions"|type==="sessions"|browserSession|attach' frontend/app.js | head -120
+printf '\n=== nearby websocket/session logic ===\n'
+grep -nE 'WebSocket\(|new WebSocket|browserLive|browser-live|sessionId' frontend/app.js | tail -120
