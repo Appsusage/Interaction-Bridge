@@ -1,0 +1,13 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '=== frontend files ===\n'
+find frontend -maxdepth 3 -type f | sort | head -120
+printf '\n=== all frontend references to browser live ===\n'
+grep -RInE 'browser/live|session-created|screencast|browser live|实时浏览器' frontend 2>/dev/null | head -160 || true
+printf '\n=== current ChatGPT session page ===\n'
+node --input-type=module <<'JS'
+const key=process.env.BROWSER_API_KEY;
+const s='1792325144157-v29c4n25o0f';
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:s})});
+console.log('HTTP',r.status,(await r.text()).slice(0,1500));
+JS
