@@ -1,0 +1,11 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '=== server process tree ===\n'
+ps -o pid,ppid,pgid,sid,etime,args -p 110
+ppid=$(ps -o ppid= -p 110 | tr -d ' ')
+[ -n "$ppid" ] && ps -o pid,ppid,pgid,sid,etime,args -p "$ppid" || true
+printf '\n=== relevant package scripts ===\n'
+node -e "const p=require('./package.json'); console.log(JSON.stringify(p.scripts,null,2))"
+printf '\n=== backup and syntax ===\n'
+ls -l backend/extension/browser/chatgpt_live.js backend/extension/browser/chatgpt_live.js.bak-login-detection-20261018
+node --check backend/extension/browser/chatgpt_live.js
