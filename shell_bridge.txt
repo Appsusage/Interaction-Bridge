@@ -1,0 +1,18 @@
+# Restart ai-agent server so the corrected ChatGPT login detector is loaded
+set -eu
+cd /home/runner/workspace/ai-agent
+oldpid=$(pgrep -f '^/nix/store/.*/bin/node backend/server.js$' | head -1 || true)
+if [ -z "$oldpid" ]; then echo 'SERVER_PID_NOT_FOUND'; exit 1; fi
+echo "SERVER_PID_BEFORE=$oldpid"
+kill -TERM "$oldpid"
+for i in $(seq 1 12); do
+  sleep 1
+  if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/tmp/ai-health-check.$$ 2>/dev/null; then
+    echo "HEALTH_RESPONDED_AFTER_STOP attempt=$i body=$(cat /tmp/ai-health-check.$$)"
+    newpid=$(pgrep -f '^/nix/store/.*/bin/node backend/server.js$' | head -1 || true)
+    echo "SERVER_PID_AFTER=$newpid"
+    rm -f /tmp/ai-health-check.$$
+    exit 0
+  fi
+done
+echo 'AUTO_RESTART_NOT_DETECTED'
