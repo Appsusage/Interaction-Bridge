@@ -1,0 +1,19 @@
+# Open official ChatGPT login page in the existing chatgpt_live browser session
+set -eu
+cd /home/runner/workspace/ai-agent
+if [ -z "${BROWSER_API_KEY:-}" ]; then echo 'BROWSER_API_KEY_NOT_AVAILABLE'; exit 1; fi
+node --input-type=module <<'JS'
+const key=process.env.BROWSER_API_KEY;
+const sessionId='1792324521450-modzwokg49e';
+const open=await fetch('http://127.0.0.1:3000/browser/open',{
+ method:'POST',headers:{'content-type':'application/json','x-browser-key':key},
+ body:JSON.stringify({sessionId,url:'https://chatgpt.com/auth/login'})
+});
+console.log('OPEN_STATUS',open.status,await open.text());
+await new Promise(r=>setTimeout(r,2500));
+const read=await fetch('http://127.0.0.1:3000/browser/read',{
+ method:'POST',headers:{'content-type':'application/json','x-browser-key':key},
+ body:JSON.stringify({sessionId})
+});
+console.log('READ_STATUS',read.status,(await read.text()).slice(0,5000));
+JS
