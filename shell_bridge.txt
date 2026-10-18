@@ -1,0 +1,32 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+p=Path('frontend/app.js')
+s=p.read_text()
+old='''    // Avoid a rapid restart loop while the browser is idle. If this browser ends a
+    // continuous session after recognizing speech, recover once after a cooldown.
+    if (finalText.trim()) {
+      voiceRestartTimer = setTimeout(() => {
+        voiceRestartTimer = null;
+        if (!window.__aiVoiceModeActive || window.__aiVoiceSpeaking) return;
+        finalText = "";
+        startRecognition();
+      }, 1200);
+    }'''
+new='''    // Keep listening for the entire voice mode, including when the browser ends
+    // a session during silence. Only the microphone button disables voice mode.
+    // Use a cooldown to avoid a tight restart loop and preserve pending transcript.
+    if (voiceRestartTimer) clearTimeout(voiceRestartTimer);
+    voiceRestartTimer = setTimeout(() => {
+      voiceRestartTimer = null;
+      if (!window.__aiVoiceModeActive || window.__aiVoiceSpeaking ||
+          window.__aiSpeechRecognition !== recognition || voiceRecognitionRunning) return;
+      startRecognition();
+    }, 1000);'''
+if old not in s:
+  print('PATCH_NOT_APPLIED: expected onend block not found')
+  raise SystemExit(2)
+s=s.replace(old,new,1)
+p.write_text(s)
+print('PATCH_APPLIED: onend restarts after silence as well as speech')
+PY
+node --check frontend/app.js && git diff --check -- frontend/app.js && git diff -- frontend/app.js
