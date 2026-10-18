@@ -1,0 +1,26 @@
+# Read live browser session metadata through the app's existing local WebSocket
+set -eu
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'JS'
+import WebSocket from 'ws';
+const ws = new WebSocket('ws://127.0.0.1:3000/browser/live');
+const timeout = setTimeout(()=>{console.log('WS_TIMEOUT'); ws.close(); process.exit(0)}, 8000);
+ws.on('open',()=>console.log('WS_CONNECTED'));
+ws.on('message',raw=>{
+  let m; try{m=JSON.parse(raw.toString())}catch{return}
+  if(m.type==='sessions'){
+    console.log('SESSIONS',JSON.stringify(m.sessions));
+    const s=(m.sessions||[]).find(x=>String(x.url||'').includes('chatgpt.com')) || (m.sessions||[])[0];
+    if(s?.sessionId) ws.send(JSON.stringify({type:'attach',sessionId:s.sessionId}));
+    else {clearTimeout(timeout);ws.close();}
+  } else if(m.type==='status'){
+    console.log('LIVE_STATUS',JSON.stringify(m));
+    clearTimeout(timeout);ws.close();
+  } else if(m.type==='error'){
+    console.log('LIVE_ERROR',JSON.stringify(m));clearTimeout(timeout);ws.close();
+  } else if(m.type==='navigation'){
+    console.log('NAVIGATION',JSON.stringify({url:m.url}));
+  }
+});
+ws.on('close',()=>{clearTimeout(timeout);process.exit(0)});
+JS
