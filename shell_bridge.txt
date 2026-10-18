@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && node --check frontend/app.js && grep -n -A35 -B12 -E 'recognition\.onend|recognition\.onresult|recognition\.continuous|function startRecognition|const startRecognition|function toggleVoice|function startVoice' frontend/app.js
