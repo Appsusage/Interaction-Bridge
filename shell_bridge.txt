@@ -1,4 +1,0 @@
-set -eu
-cd /home/runner/workspace/ai-agent
-grep -nE 'export async function createBrowserSession|function createBrowserSession|export function registerBrowserSession|export async function openPage|export async function readPage' backend/extension/browser/browser_service.js
-sed -n '1,220p' backend/extension/browser/browser_service.js
