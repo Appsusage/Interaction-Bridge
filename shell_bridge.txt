@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && grep -n -A55 -B15 -E 'function speakAIReply|voiceFloatButton|voice-active|SpeechSynthesisUtterance|speechSynthesis' frontend/app.js frontend/index.html frontend/*.html 2>/dev/null | head -260
