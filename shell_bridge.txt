@@ -1,0 +1,104 @@
+cd /home/runner/workspace/ai-agent && set -eu
+python3 - <<'PY'
+from pathlib import Path
+p = Path('frontend/app.js')
+s = p.read_text()
+old = '''function speakAIReply(text) {
+  if (!window.__aiVoiceModeActive || !text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  const recognition = window.__aiSpeechRecognition;
+  window.__aiVoiceSpeaking = true;
+  if (recognition) { try { recognition.stop(); } catch {} }
+  try { window.speechSynthesis.cancel(); } catch {}
+  const utterance = new SpeechSynthesisUtterance(String(text));
+  utterance.lang = "zh-CN";
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  const resume = () => {
+    if (!window.__aiVoiceModeActive) { window.__aiVoiceSpeaking = false; return; }
+    window.__aiVoiceSpeaking = false;
+    if (typeof window.__aiStartVoiceRecognition === "function") window.__aiStartVoiceRecognition();
+  };
+  utterance.onend = resume;
+  utterance.onerror = resume;
+  window.speechSynthesis.speak(utterance);
+}'''
+new = '''async function speakAIReply(text) {
+  if (!window.__aiVoiceModeActive || !text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  const synthesis = window.speechSynthesis;
+  const recognition = window.__aiSpeechRecognition;
+  const status = document.getElementById("serverStatus");
+  window.__aiVoiceSpeaking = true;
+  if (recognition) { try { recognition.stop(); } catch {} }
+  try { synthesis.cancel(); } catch {}
+
+  // Android/Chromium may populate installed TTS voices asynchronously.
+  let voices = synthesis.getVoices();
+  if (!voices.length) {
+    await new Promise(resolve => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        synthesis.removeEventListener?.("voiceschanged", finish);
+        resolve();
+      };
+      const timer = setTimeout(finish, 1500);
+      synthesis.addEventListener?.("voiceschanged", finish, { once: true });
+    });
+    voices = synthesis.getVoices();
+  }
+
+  const chineseVoices = voices.filter(v => /^zh([_-]|$)/i.test(String(v.lang || "")));
+  const voice = chineseVoices.find(v => /^zh[-_]CN$/i.test(v.lang))
+    || chineseVoices.find(v => /^zh[-_]Hans/i.test(v.lang))
+    || chineseVoices.find(v => /^zh[-_]TW$/i.test(v.lang))
+    || chineseVoices[0];
+
+  const resume = () => {
+    if (!window.__aiVoiceModeActive) { window.__aiVoiceSpeaking = false; return; }
+    window.__aiVoiceSpeaking = false;
+    if (typeof window.__aiStartVoiceRecognition === "function") window.__aiStartVoiceRecognition();
+  };
+
+  if (!voice) {
+    window.__aiVoiceSpeaking = false;
+    if (status) {
+      status.textContent = "设备未提供中文 TTS 语音。请在 Android「文字转语音输出」中安装/启用中文语音后重试。";
+      status.style.color = "#ffb347";
+    }
+    if (window.__aiVoiceModeActive && typeof window.__aiStartVoiceRecognition === "function") {
+      window.__aiStartVoiceRecognition();
+    }
+    console.error("[Voice TTS] No installed Chinese speech synthesis voice found.", voices.map(v => ({ name: v.name, lang: v.lang })));
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(String(text));
+  utterance.voice = voice;
+  utterance.lang = voice.lang || "zh-CN";
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+  utterance.onend = resume;
+  utterance.onerror = event => {
+    if (status) {
+      status.textContent = "中文语音播报失败：" + (event.error || "TTS error");
+      status.style.color = "#ff7777";
+    }
+    resume();
+  };
+  if (status) {
+    status.textContent = "中文语音播报中：" + (voice.name || voice.lang);
+    status.style.color = "#00b889";
+  }
+  synthesis.speak(utterance);
+}'''
+if old not in s:
+    raise SystemExit('ERROR: expected speakAIReply function did not match; no files changed')
+p.write_text(s.replace(old, new, 1))
+print('Updated speakAIReply: Chinese voice selection, async voice loading, explicit missing-voice status, full playback volume.')
+PY
+node --check frontend/app.js
+git diff --check -- frontend/app.js
+git diff -- frontend/app.js | sed -n '1,180p'
