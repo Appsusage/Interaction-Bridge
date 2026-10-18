@@ -1,0 +1,16 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '=== Active server process ===\n'
+ps -eo pid,ppid,args | grep -E '[n]ode .*backend/server\.js'
+printf '\n=== Source persistent branch ===\n'
+grep -nA18 'export async function createBrowserSession' backend/extension/browser/browser_service.js
+printf '\n=== Gmail profile metadata ===\n'
+if [ -d .gmail-profile ]; then printf 'PROFILE_EXISTS\n'; else printf 'PROFILE_MISSING\n'; fi
+node --input-type=module <<'JS'
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log('BROWSER_API_KEY_NOT_AVAILABLE');process.exit(0)}
+const sessionId='1792327062810-wvjbm2woosl';
+const r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId})});
+const d=await r.json();
+console.log(JSON.stringify({status:r.status,url:d.url||null,title:d.title||null,text:String(d.text||'').slice(0,650),error:d.error||null}));
+JS
