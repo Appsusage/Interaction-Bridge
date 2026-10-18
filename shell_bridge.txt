@@ -1,5 +1,0 @@
-set -eu
-cd /home/runner/workspace/ai-agent
-sed -n '1,28p' backend/extension/browser/browser_service.js
-sed -n '165,185p' backend/extension/browser/browser_service.js
-sed -n '1,25p' backend/extension/browser/browser_service.js
