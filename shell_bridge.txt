@@ -1,5 +1,0 @@
-# Check browser read endpoint contract and query current ChatGPT page state without exposing API keys
-set -eu
-cd /home/runner/workspace/ai-agent
-sed -n '1260,1358p' backend/server.js
-grep -nE 'function requireBrowserKey|const requireBrowserKey|BROWSER_API_KEY|X-Browser-Key|x-browser-key' backend/server.js | head -50
