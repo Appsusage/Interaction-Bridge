@@ -1,9 +1,0 @@
-set -eu
-cd /home/runner/workspace/ai-agent
-printf '=== launchBrowser/createBrowserSession implementation ===\n'
-sed -n '20,65p' backend/extension/browser/browser_service.js
-sed -n '145,170p' backend/extension/browser/browser_service.js
-printf '\n=== Browser API route request shapes ===\n'
-sed -n '1275,1315p' backend/server.js
-printf '\n=== Browser dependencies / profile configuration names only ===\n'
-grep -nE 'PLAYWRIGHT|BROWSER_PROFILE|PROFILE_DIR|launchPersistentContext|chromium.launch|headless:' backend/extension/browser/browser_service.js backend/server.js | head -100 || true
