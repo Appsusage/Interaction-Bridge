@@ -1,0 +1,18 @@
+# Read ChatGPT page through authorized local browser API; never print the API key
+set -eu
+cd /home/runner/workspace/ai-agent
+if [ -z "${BROWSER_API_KEY:-}" ]; then
+  echo "BROWSER_API_KEY_NOT_AVAILABLE_IN_SHELL_BRIDGE_ENV"
+else
+  node --input-type=module <<'JS'
+const key=process.env.BROWSER_API_KEY;
+const r=await fetch('http://127.0.0.1:3000/browser/read',{
+ method:'POST',
+ headers:{'content-type':'application/json','x-browser-key':key},
+ body:JSON.stringify({sessionId:'1792324521450-modzwokg49e'})
+});
+console.log('HTTP_STATUS',r.status);
+const t=await r.text();
+console.log(t.slice(0,10000));
+JS
+fi
