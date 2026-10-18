@@ -1,0 +1,10 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '=== Browser service session API (source only) ===\n'
+grep -nE 'export (async )?function|export const|launchPersistentContext|create.*Session|sessionId' backend/extension/browser/browser_service.js | head -100 || true
+printf '\n=== Browser server routes ===\n'
+grep -nE 'browser/(open|read|session|sessions|live)|createBrowserSession|browser_service' backend/server.js | head -140 || true
+printf '\n=== ChatGPT live session code ===\n'
+grep -nE 'export (async )?function|launchPersistentContext|CHATGPT_PROFILE_DIR|sessionId|goto\(' backend/extension/browser/chatgpt_live.js | head -120 || true
+printf '\n=== Gmail browser page: create separate persistent session only if supported ===\n'
+printf 'No credentials, codes, cookies, or storage state will be printed. Do not bypass CAPTCHA/MFA/security checks.\n'
