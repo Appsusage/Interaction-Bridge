@@ -1,0 +1,35 @@
+# Force-restart the stuck Node server and reload patched chatgpt_live.js
+set -eu
+cd /home/runner/workspace/ai-agent
+echo '=== current browser processes ==='
+ps -eo pid,ppid,args | grep -E '[c]hromium.*user-data-dir=/home/runner/workspace/ai-agent/.chatgpt-profile' | head -8 || true
+echo '=== stopping stale server ==='
+kill -KILL 110 2>/dev/null || true
+for i in $(seq 1 10); do
+  if ! kill -0 110 2>/dev/null; then break; fi
+  sleep 1
+done
+echo '=== starting patched server ==='
+nohup node backend/server.js >/tmp/ai-agent-server-restart.log 2>&1 </dev/null &
+newpid=$!
+echo "NEW_SERVER_PID=$newpid"
+for i in $(seq 1 20); do
+  sleep 1
+  if curl -fsS --max-time 1 http://127.0.0.1:3000/health >/tmp/ai-agent-health.$$ 2>/dev/null; then
+    echo "HEALTH_OK attempt=$i body=$(cat /tmp/ai-agent-health.$$)"
+    rm -f /tmp/ai-agent-health.$$
+    break
+  fi
+done
+printf '\n=== server processes ===\n'
+pgrep -af 'node backend/server.js' || true
+printf '\n=== startup log ===\n'
+tail -35 /tmp/ai-agent-server-restart.log || true
+printf '\n=== current live sessions ===\n'
+node --input-type=module <<'JS'
+import WebSocket from 'ws';
+const ws=new WebSocket('ws://127.0.0.1:3000/browser/live');
+const t=setTimeout(()=>{console.log('WS_TIMEOUT');ws.close()},7000);
+ws.on('message',d=>{const m=JSON.parse(d.toString());if(m.type==='sessions'){console.log(JSON.stringify(m.sessions));clearTimeout(t);ws.close()}});
+ws.on('error',e=>{console.log('WS_ERROR',e.message);clearTimeout(t)});
+JS
