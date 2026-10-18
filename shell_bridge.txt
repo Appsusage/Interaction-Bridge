@@ -1,0 +1,11 @@
+# Inspect chatgpt_live startup and live session state (do not print secrets/cookies)
+set -eu
+cd /home/runner/workspace/ai-agent
+printf '\n=== chatgpt_live.js (1-380) ===\n'
+sed -n '1,380p' backend/extension/browser/chatgpt_live.js
+printf '\n=== active node/server/browser processes ===\n'
+ps -eo pid,etime,args | grep -E '[n]ode backend/server.js|[c]hrom(e|ium)' | head -50 || true
+printf '\n=== local health ===\n'
+curl -sS --max-time 3 http://127.0.0.1:3000/health || true
+printf '\n\n=== chatgpt_live route references ===\n'
+grep -RInE 'chatgpt_live|reconnectBrowserLive|browser-live|browser/live|live.*status' backend/server.js backend/extension/browser 2>/dev/null | head -100 || true
