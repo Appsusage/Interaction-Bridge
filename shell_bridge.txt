@@ -1,0 +1,21 @@
+# Continue polling until ChatGPT is authenticated; user must complete the email verification themselves
+set -eu
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'JS'
+const key=process.env.BROWSER_API_KEY, sessionId='1792325144157-v29c4n25o0f';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+for(let i=1;i<=24;i++){
+ let r,d;
+ try{r=await fetch('http://127.0.0.1:3000/browser/read',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId})});d=await r.json()}
+ catch(e){console.log('POLL',i,'READ_ERROR',e.message);await sleep(5000);continue}
+ const u=String(d.url||''),t=String(d.title||''),b=String(d.text||'');
+ const verification=/email-verification|Check your inbox|verification code|Enter the code/i.test(u+' '+t+' '+b);
+ const security=/just a moment|captcha|verify you are human|security check|unusual activity/i.test(u+' '+t+' '+b);
+ const signedOut=/Log in to get answers|Log in or sign up|Sign up for free|Continue with Google|Enter your email/i.test(b);
+ const ok=!verification&&!security&&!signedOut&&/chatgpt\.com/.test(u)&&/What can I help with|What’s on the agenda|Upgrade/i.test(b);
+ console.log('POLL',i,JSON.stringify({http:r.status,url:u,title:t,verification,security,signedOut,loggedIn:ok}));
+ if(ok){console.log('TARGET_LOGIN_CONFIRMED');process.exit(0)}
+ await sleep(5000);
+}
+console.log('POLL_WINDOW_ENDED_STILL_WAITING');
+JS
