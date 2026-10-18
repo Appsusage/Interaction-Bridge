@@ -1,2 +1,0 @@
-# Shell Bridge connectivity probe
-printf 'SHELL_BRIDGE_CONNECTIVITY_TEST_OK\n'
