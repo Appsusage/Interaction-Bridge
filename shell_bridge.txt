@@ -1,0 +1,5 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+sed -n '130,270p' frontend/browser-live-viewer.js
+printf '\n=== viewer styles for hidden/minimized state ===\n'
+grep -nE 'hidden|display:none|\.blv-root|blv-min|blv-hide|blv-open|blv-viewer' frontend/browser-live-viewer.css | head -100
