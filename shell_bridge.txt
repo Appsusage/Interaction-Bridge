@@ -1,0 +1,23 @@
+cd /home/runner/workspace/ai-agent && set -eu
+python3 - <<'PY'
+from pathlib import Path
+p = Path("frontend/browser-live-viewer.js")
+s = p.read_text()
+old = '''  root.querySelector(".blv-send-enter").addEventListener("click", () => {
+    if (interactionEnabled() && ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:"user-key",sessionId:selected,key:"Enter",code:"Enter",keyCode:13}));
+  });'''
+new = '''  root.querySelector(".blv-send-enter").addEventListener("click", () => {
+    if (!interactionEnabled() || !ws || ws.readyState !== WebSocket.OPEN) return;
+    const key = {type:"user-key",sessionId:selected,key:"Enter",code:"Enter",keyCode:13};
+    ws.send(JSON.stringify({...key,eventType:"down"}));
+    ws.send(JSON.stringify({...key,eventType:"up"}));
+    log.textContent = "操作状态：已向当前网页输入框发送 Enter／确定";
+  });'''
+assert s.count(old) == 1, "Enter button handler mismatch"
+p.write_text(s.replace(old, new))
+print("Updated Enter button to send both keyDown and keyUp for the selected page session.")
+PY
+node --check frontend/browser-live-viewer.js
+git diff --check
+printf '%s\n' '=== Enter button updated ==='
+grep -n -A9 -B2 'blv-send-enter").addEventListener' frontend/browser-live-viewer.js
