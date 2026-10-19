@@ -1,0 +1,25 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+p=Path('frontend/backend-console-viewer.css')
+s=p.read_text()
+repls={
+'color:#e8edf5;background:rgba(12,17,25,.46);border:1px solid #536176':'color:#00ff41;background:rgba(0,8,2,.46);border:1px solid #00a82b',
+'box-shadow:0 10px 32px rgba(0,0,0,.38);font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace':'box-shadow:0 0 14px rgba(0,255,65,.18),0 10px 32px rgba(0,0,0,.55);font:12px/1.45 "Courier New",Consolas,monospace;text-shadow:0 0 4px rgba(0,255,65,.24)',
+'background:#1b2635;border-bottom:1px solid #3b485a':'background:rgba(0,20,5,.96);border-bottom:1px solid #007f20',
+'color:#b8c5d6;font-size:11px':'color:#00cc35;font-size:11px',
+'border:1px solid #526176;border-radius:5px;background:#263449;color:#f0f4fa':'border:1px solid #008f26;border-radius:5px;background:#001a06;color:#00ff41',
+'color:#e8edf5;background:transparent;font:inherit;font-weight:700':'color:#00ff41;background:transparent;font:inherit;font-weight:700',
+'color:#704214':'color:#00ff41',
+'#backend-console-viewer .bcv-parser-text{color:#00e5ff;font-weight:700}':'#backend-console-viewer .bcv-parser-text{color:#39ff14;font-weight:700;text-shadow:0 0 6px rgba(57,255,20,.55)}',
+'border-top:1px solid #303d4f;color:#98a8bc':'border-top:1px solid #006b1b;color:#00a82b',
+'border:1px solid #526176;border-right:0;border-radius:9px 0 0 9px;background:rgba(19,29,43,.9)':'border:1px solid #00c832;border-right:0;border-radius:9px 0 0 9px;background:rgba(0,14,3,.94)',
+'color:#dce7f5;font:700 12px system-ui,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.35)':'color:#00ff41;font:700 12px "Courier New",monospace;text-shadow:0 0 5px rgba(0,255,65,.65);box-shadow:0 0 10px rgba(0,255,65,.22),0 3px 12px rgba(0,0,0,.5)'
+}
+for old,new in repls.items():
+    if old not in s:
+        print('NOTE not found:',old)
+    else:
+        s=s.replace(old,new)
+p.write_text(s)
+PY
+node --check frontend/backend-console-viewer.js && git diff --check && grep -oE '#backend-console-viewer\{[^}]*\}|#backend-console-viewer \.bcv-head\{[^}]*\}|#backend-console-viewer \.bcv-output\{[^}]*\}|#backend-console-viewer \.bcv-stdout\{[^}]*\}|#backend-console-viewer \.bcv-parser-text\{[^}]*\}|#backendConsoleFloatButton\.bcv-edge-tab\{[^}]*\}' frontend/backend-console-viewer.css
