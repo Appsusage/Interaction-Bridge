@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent && set -eu
+grep -Rni -A24 -B16 -E '清空|clear' frontend --include='*.js' --include='*.html' --include='*.css' | head -500
