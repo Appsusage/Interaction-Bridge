@@ -1,0 +1,8 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== frontend clear button + websocket message handling ==='
+sed -n '1,45p' frontend/browser-live-viewer.js
+sed -n '285,335p' frontend/browser-live-viewer.js
+printf '%s\n' '=== backend browser message handlers ==='
+grep -Rni -A18 -B12 -E 'user-text|user-key|user-clear|clear-input|clearInput|insertText|Input\.dispatchKeyEvent|Runtime\.evaluate' backend/extension/browser --include='*.js' | head -700
+printf '%s\n' '=== browser-related files with clear labels ==='
+grep -Rni -A10 -B10 -E '清空|blv-clear-text|user-text' backend/extension/browser browser capabilities frontend --include='*.js' --include='*.html' --include='*.css' 2>/dev/null | head -700 || true
