@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-rg -n 'express.static|frontend|app.use\(|sendFile|__dirname' backend/server.js | head -80
-sed -n '1,100p' backend/server.js
