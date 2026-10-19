@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== server scripts ==='
+node -e 'const p=require("./package.json"); console.log(JSON.stringify(p.scripts,null,2))'
+printf '%s\n' '=== running ai-agent server processes ==='
+ps -eo pid,ppid,args | grep -E '[n]ode .*backend/server.js|[n]pm start|[n]ode --watch' || true
+printf '%s\n' '=== viewer script integration ==='
+grep -R -n -E 'browser-live-viewer\.js|attachBrowserLive' backend frontend --exclude='*.bak*' | head -100
+printf '%s\n' '=== final relevant code ==='
+grep -n -A28 -B3 'user-clear-page' backend/extension/browser/browser_live.js
+grep -n -A28 -B3 'clearClickTimer' frontend/browser-live-viewer.js
+grep -n -A4 -B2 'page-input-clear-result' frontend/browser-live-viewer.js
