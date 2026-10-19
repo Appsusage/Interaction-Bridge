@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n '1,260p' frontend/backend-console-viewer.js && printf '\n--- PARSER DISPLAY REFERENCES ---\n' && grep -RniE 'Parser Result|parserResult|parser-result|parser_result' frontend backend --include='*.js' --include='*.css' | head -100
