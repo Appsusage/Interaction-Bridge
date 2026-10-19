@@ -1,0 +1,20 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+cat >> frontend/backend-console-viewer.css <<'EOF'
+/* Rest at the screen edge; reveal the tab on hover, focus, or touch activation. */
+#backendConsoleFloatButton.bcv-edge-tab{transform:translateX(-65%);transition:transform .18s ease,background .18s ease}
+#backendConsoleFloatButton.bcv-edge-tab:hover,#backendConsoleFloatButton.bcv-edge-tab:focus-visible{transform:translateX(0)}
+EOF
+cat >> frontend/style.css <<'EOF'
+/* The original right-edge dock rests tucked against the edge and reveals on interaction. */
+.float-menu:not(.open) .dock-toggle{transform:translateX(65%);transition:transform .18s ease}
+.float-menu:not(.open):hover .dock-toggle,
+.float-menu:not(.open):focus-within .dock-toggle{transform:translateX(0)}
+EOF
+node --check frontend/backend-console-viewer.js
+git diff --check
+grep -q 'transform:translateX(-65%)' frontend/backend-console-viewer.css
+grep -q 'transform:translateX(65%)' frontend/style.css
+curl --max-time 4 -sS -o /dev/null -w 'console_css_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.css
+curl --max-time 4 -sS -o /dev/null -w 'index_http=%{http_code}\n' http://127.0.0.1:3000/
+echo 'edge_auto_hide_checks=PASS'
