@@ -1,0 +1,82 @@
+cd /home/runner/workspace/ai-agent
+set -eu
+python3 - <<'PY'
+from pathlib import Path
+
+# Remove only the incorrect gesture UI inserted in the previous task.
+p = Path("frontend/index.html")
+s = p.read_text()
+block = '''<!-- 手势召唤：固定设置窗与宠宝 -->
+<section id="gestureSettingsPanel" class="gesture-overlay" role="dialog" aria-modal="true" aria-label="固定设置" hidden>
+  <div class="gesture-panel">
+    <header><strong>固定设置</strong><button type="button" class="gesture-close" data-gesture-close="settings" aria-label="关闭设置">×</button></header>
+    <div class="gesture-setting-actions">
+      <button type="button" onclick="document.getElementById('bgInput').click()">🖼️ 更换背景</button>
+      <button type="button" onclick="document.getElementById('avatarInput').click()">🐻 更换头像</button>
+      <button type="button" onclick="reconnectServer()">🔗 重新连接</button>
+      <button type="button" onclick="toggleVoice()">🎤 语音输入</button>
+      <button type="button" onclick="toggleBrowserViewer()">🌐 实时浏览器</button>
+    </div>
+  </div>
+</section>
+<section id="gesturePetPanel" class="gesture-overlay gesture-pet-overlay" role="dialog" aria-modal="true" aria-label="宠宝" hidden>
+  <div class="gesture-pet-card">
+    <button type="button" class="gesture-close" data-gesture-close="pet" aria-label="收起宠宝">×</button>
+    <div class="gesture-pet-face" aria-hidden="true">🐻</div>
+    <strong>宠宝来啦！</strong>
+    <p>我在这里陪着你。</p>
+  </div>
+</section>
+<div id="gestureMagnifier" class="gesture-magnifier" aria-hidden="true" hidden>
+  <div id="gestureMagnifierContent" class="gesture-magnifier-content"></div>
+</div>
+
+'''
+if block not in s:
+    raise SystemExit("STOP: incorrect HTML block anchor not found; no further files changed")
+p.write_text(s.replace(block, "", 1))
+print("PASS: removed only the incorrect gesture panels from index.html")
+
+p = Path("frontend/app.js")
+s = p.read_text()
+handler = '''  mainFloat.addEventListener("click", () => {
+    if (Date.now() < (window.__floatGestureClickBlockUntil || 0)) return;
+    setFloatMenuOpen(false);
+  });'''
+original = '''  mainFloat.addEventListener("click", () => setFloatMenuOpen(false));'''
+gesture_start = '''// Main floating-ball press/drag gestures: up=settings, left=outer dock, down=pet,
+'''
+gesture_end = '''})();
+
+'''
+if handler not in s or gesture_start not in s:
+    raise SystemExit("STOP: incorrect app.js anchors not found; index.html was already restored")
+start = s.index(gesture_start)
+end = s.index(gesture_end, start) + len(gesture_end)
+s = s.replace(handler, original, 1)
+s = s[:start] + s[end:]
+p.write_text(s)
+print("PASS: restored original click handler and removed incorrect gesture logic from app.js")
+
+p = Path("frontend/style.css")
+s = p.read_text()
+marker = '/* Floating-ball gesture destinations and magnifier lens. */'
+if marker not in s:
+    raise SystemExit("STOP: incorrect CSS block anchor not found; index.html/app.js were restored")
+s = s[:s.index(marker)].rstrip() + "\n"
+p.write_text(s)
+print("PASS: removed only the incorrect gesture CSS tail; preserved preceding dock styling")
+PY
+printf '%s\n' '=== VALIDATION ==='
+node --check frontend/app.js
+git diff --check -- frontend/index.html frontend/app.js frontend/style.css
+printf '%s\n' '=== REMAINING GESTURE MARKERS (should be none) ==='
+if rg -n 'gestureSettingsPanel|gesturePetPanel|gestureMagnifier|__floatGestureClickBlockUntil|Main floating-ball press/drag gestures|Gesture-first collapsed state' frontend/index.html frontend/app.js frontend/style.css; then
+  echo 'FAIL: incorrect gesture code remains'
+  exit 2
+else
+  echo 'PASS: incorrect gesture code removed'
+fi
+printf '%s\n' '=== CURRENT TARGET DIFF SUMMARY ==='
+git diff --stat -- frontend/index.html frontend/app.js frontend/style.css
+exit 0
