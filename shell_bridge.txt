@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-sed -n '180,300p' frontend/index.html
-rg -n -i '设置|settings|preference|configuration|openSettings|showSettings' frontend || true
