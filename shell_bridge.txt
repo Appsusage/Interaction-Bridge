@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== candidate browser/extension directories ==='
+find . -path './node_modules' -prune -o -path './.git' -prune -o -type d \( -iname '*browser*' -o -iname '*extension*' -o -iname '*ai-agent*' \) -print | sort | head -300
+printf '%s\n' '=== browser-related files ==='
+find . -path './node_modules' -prune -o -path './.git' -prune -o -type f \( -iname '*browser*' -o -iname '*viewer*' -o -iname '*webview*' \) -print | sort | head -300
+printf '%s\n' '=== clear labels and nearby input handlers in project code ==='
+grep -Rni -A22 -B16 -E '清空|clear.?button|clearInput|clearChat|clear.*input' backend frontend extension browser --include='*.js' --include='*.mjs' --include='*.html' --include='*.css' --include='*.ts' 2>/dev/null | head -900 || true
