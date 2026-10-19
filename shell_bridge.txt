@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-cd /home/runner/workspace/ai-agent
-printf '\n=== CSS Console rules ===\n'
-grep -nE 'backend-console-viewer|bcv-minimized|bcv-head|bcv-foot|backend-console-shell-drawer' frontend/backend-console-viewer.css
-printf '\n=== JS labels/minimize/activity ===\n'
-grep -nEi '暂停活动|继续显示|pause|resume|minimi|minimize|active|activity|bcv-minimized|button' frontend/backend-console-viewer.js
