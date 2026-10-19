@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+for name,start,end in (("frontend/browser-live-viewer.js",290,360),("frontend/browser-live-viewer.js",430,500)):
+ p=Path(name); lines=p.read_text().splitlines()
+ print("\n---",name,start,end,"---")
+ for i in range(start-1,min(end,len(lines))): print(f"{i+1}: {lines[i]}")
+PY
