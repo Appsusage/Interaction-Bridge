@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== RESTART CHECK LOG ==='
+cat /tmp/ai-agent-shell-float-restart-check.log 2>/dev/null || echo 'restart check log not present'
+printf '%s\n' '=== CURRENT PROCESS TABLE ==='
+ps -eo pid,ppid,etime,args | grep -E '[n]ode .*backend/server.js|[n]ode .*bridge/shell/server.js|[n]ode .*github_adaptor.js'
+printf '%s\n' '=== FRONTEND STATIC ASSETS ==='
+curl -sS -o /dev/null -w 'shell-float.js HTTP %{http_code}\n' "http://127.0.0.1:${PORT:-3000}/shell-float.js"
+printf '%s\n' '=== CURRENT SHELL FLOAT STATE ==='
+if [ -f frontend/shell-float-state.json ]; then cat frontend/shell-float-state.json; else echo 'state file not present'; fi
