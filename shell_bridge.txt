@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -RniE 'parser.?result|parserResult|parse.*result|"text"' backend frontend --include='*.js' --include='*.css' | head -100
