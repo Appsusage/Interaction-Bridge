@@ -1,0 +1,44 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+PID=3663
+printf '%s\n' '=== REQUEST GRACEFUL STOP ==='
+if kill -0 "$PID" 2>/dev/null; then
+  kill -INT "$PID" 2>/dev/null || true
+  for i in $(seq 1 5); do
+    if ! kill -0 "$PID" 2>/dev/null; then break; fi
+    sleep 1
+  done
+fi
+if kill -0 "$PID" 2>/dev/null; then
+  echo 'Graceful stop did not exit; force-restarting only the ai-agent server process.'
+  kill -KILL "$PID"
+  for i in $(seq 1 5); do
+    if ! kill -0 "$PID" 2>/dev/null; then break; fi
+    sleep 1
+  done
+fi
+printf '%s\n' '=== START SERVER ==='
+nohup node backend/server.js >/tmp/ai-agent-console-viewer-startup.log 2>&1 &
+NEW_PID=$!
+echo "started_pid=$NEW_PID"
+for i in $(seq 1 25); do
+  if curl -fsS --max-time 2 http://127.0.0.1:3000/health >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+printf '%s\n' '=== ACTIVE SERVER ==='
+ps -eo pid,ppid,stat,args | grep -E '[n]ode backend/server.js' || true
+printf '%s\n' '=== HTTP ASSETS ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
+curl -sS -o /dev/null -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.js
+curl -sS -o /dev/null -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.css
+printf '%s\n' '=== WEBSOCKET TEST ==='
+node --input-type=module <<'JS'
+import WebSocket from 'ws';
+const ws = new WebSocket('ws://127.0.0.1:3000/backend-console/live');
+const timer = setTimeout(() => { console.log('websocket_timeout'); ws.terminate(); process.exitCode=2; }, 5000);
+ws.on('open', () => { console.log('websocket_open'); ws.close(); clearTimeout(timer); });
+ws.on('unexpected-response', (_req, res) => { console.log('websocket_http_status=' + res.statusCode); clearTimeout(timer); process.exitCode=1; });
+ws.on('error', e => { console.log('websocket_error=' + e.message); clearTimeout(timer); process.exitCode=1; });
+JS
+printf '%s\n' '=== STARTUP ERRORS ==='
+grep -E 'Error|ERR_|running on port|Console' /tmp/ai-agent-console-viewer-startup.log | tail -30 || true
