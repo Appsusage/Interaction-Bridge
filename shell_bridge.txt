@@ -1,0 +1,15 @@
+cd /home/runner/workspace/ai-agent
+printf '%s\n' '=== LOCATION ==='
+pwd
+printf '%s\n' '=== GIT STATUS ==='
+git status --short
+printf '%s\n' '=== PACKAGE ==='
+cat package.json
+printf '%s\n' '=== SERVER LOGGING / ROUTES ==='
+grep -nE 'console\.(log|error|warn|info)|createServer|express\(|app\.listen|listen\(|/chat|WebSocket|ws' backend/server.js || true
+printf '%s\n' '=== FRONTEND FILES ==='
+find frontend -maxdepth 1 -type f -printf '%f\n' | sort
+printf '%s\n' '=== FRONTEND ENTRY REFERENCES ==='
+grep -nE 'script|stylesheet|fetch\(|WebSocket|EventSource|browser-live-viewer' frontend/index.html frontend/app.js frontend/style.css 2>/dev/null | head -100 || true
+printf '%s\n' '=== SERVER TOP ==='
+sed -n '1,220p' backend/server.js
