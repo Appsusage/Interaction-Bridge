@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -u
+cd /home/runner/workspace/ai-agent || exit 2
+printf '%s\n' '=== SHELL FLOAT DIAGNOSTIC ==='
+printf '%s\n' '-- expected files --'
+for f in frontend/index.html frontend/shell-float.js frontend/shell-float-state.json bridge/shell/shell_float.js bridge/shell/server.js; do
+  if [ -f "$f" ]; then printf 'EXISTS %s (%s bytes)\n' "$f" "$(wc -c < "$f")"; else printf 'MISSING %s\n' "$f"; fi
+done
+printf '%s\n' '-- index references --'
+grep -nEi 'shell.float|shell_float|shell-float|shell-float-state' frontend/index.html frontend/*.js frontend/*.css 2>/dev/null | head -100 || true
+printf '%s\n' '-- shell float source --'
+if [ -f frontend/shell-float.js ]; then sed -n '1,260p' frontend/shell-float.js; fi
+if [ -f bridge/shell/shell_float.js ]; then sed -n '1,260p' bridge/shell/shell_float.js; fi
+printf '%s\n' '-- state file --'
+if [ -f frontend/shell-float-state.json ]; then cat frontend/shell-float-state.json; else echo 'STATE FILE MISSING'; fi
+printf '%s\n' '-- process list --'
+ps -eo pid,etime,args | grep -E 'bridge/shell/server.js|shell_float.js|shell-float|backend/server.js' | grep -v grep || true
+printf '%s\n' '-- local HTTP probes --'
+for url in http://127.0.0.1:3000/ http://127.0.0.1:3000/shell-float.js http://127.0.0.1:3000/shell-float-state.json; do
+  printf '%s => ' "$url"
+  curl -sS -o /tmp/shell_float_probe.$$ -w 'HTTP %{http_code} content-type=%{content_type} bytes=%{size_download}\n' --max-time 3 "$url" 2>&1 || true
+  head -c 160 /tmp/shell_float_probe.$$ 2>/dev/null; printf '\n'
+done
+rm -f /tmp/shell_float_probe.$$
+printf '%s\n' '=== CONSOLE MINIMIZE HEIGHT PATCH ==='
+python3 - <<'PY'
+from pathlib import Path
+import sys
+p=Path('frontend/backend-console-viewer.css')
+if not p.is_file():
+    print('ERROR: Console CSS missing; height patch not applied.')
+    sys.exit(3)
+s=p.read_text()
+marker='/* ChatGPT update: Console width, transparency and one-third minimize */'
+if marker not in s:
+    print('ERROR: expected Console override marker missing; height patch not applied.')
+    sys.exit(4)
+head, tail=s.split(marker,1)
+old=tail
+tail=tail.replace('height: min(14vh, 140px);','height: min(14vh, 160px);',1)
+tail=tail.replace('min-height: 100px;','min-height: 120px;',1)
+tail=tail.replace('height: min(12vh, 120px);','height: min(12vh, 140px);',1)
+tail=tail.replace('min-height: 90px;','min-height: 110px;',1)
+if tail == old:
+    print('ERROR: no expected height values changed.')
+    sys.exit(5)
+p.write_text(head+marker+tail)
+print('UPDATED frontend/backend-console-viewer.css')
+print('Desktop minimized max height: 140px -> 160px; minimum 100px -> 120px.')
+print('Mobile minimized max height: 120px -> 140px; minimum 90px -> 110px.')
+PY
+printf '%s\n' '=== CONSOLE VALIDATION ==='
+git diff --check -- frontend/backend-console-viewer.css frontend/backend-console-viewer.js
+printf '%s\n' '=== FINAL MINIMIZE RULES ==='
+grep -A24 -n 'ChatGPT update: Console width' frontend/backend-console-viewer.css
