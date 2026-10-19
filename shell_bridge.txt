@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent
+set +e
+printf '%s\n' '=== FIND APP-WIDE SETTINGS / PET TARGETS ==='
+rg -n -i -C 2 'settings.?modal|setting.?modal|openSettings|showSettings|settingsModal|固定设置|设置窗|设置面板|settings-panel|settings-drawer|宠宝|companion|mascot|pet' --glob '!node_modules/**' --glob '!*.lock' --glob '!package-lock.json' . | head -n 500
+printf '%s\n' '=== SCRIPT / STYLE LOAD ORDER ==='
+rg -n 'app.js|style.css|shell-float|backend-console-viewer|<script|stylesheet' frontend/index.html
+printf '%s\n' '=== FILES AROUND FLOATING / SETTINGS ==='
+find frontend -maxdepth 2 -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' \) | sort | head -n 160
+printf '%s\n' '=== EXIT ==='
+exit 0
