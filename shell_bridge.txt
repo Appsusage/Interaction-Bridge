@@ -1,0 +1,195 @@
+cd /home/runner/workspace/ai-agent
+set -eu
+python3 - <<'PY'
+from pathlib import Path
+
+# Make the gesture pass the actual release coordinates to Pet Limbo.
+p = Path("frontend/app.js")
+s = p.read_text()
+s2 = s.replace("function runGesture(kind) {", "function runGesture(kind, releaseX, releaseY) {", 1)
+s2 = s2.replace("if (window.AICortexPetLimbo) window.AICortexPetLimbo.spawnFrom(ball);", "if (window.AICortexPetLimbo) window.AICortexPetLimbo.spawnFrom(ball, releaseX, releaseY);", 1)
+s2 = s2.replace("if (done.kind) { event.preventDefault(); runGesture(done.kind); }", "if (done.kind) { event.preventDefault(); runGesture(done.kind, event.clientX, event.clientY); }", 1)
+if s2 == s: raise SystemExit("STOP: gesture release-coordinate anchors not found; no changes written")
+if "spawnFrom(ball, releaseX, releaseY)" not in s2 or "runGesture(done.kind, event.clientX, event.clientY)" not in s2:
+    raise SystemExit("STOP: release coordinates did not wire through")
+p.write_text(s2)
+
+d = Path("backend/extension/pet/limbo")
+d.mkdir(parents=True, exist_ok=True)
+(d / "pet.js").write_text(r'''// Pet Limbo: blue living orb, release-position landing, gaze, expression and whitespace-aware placement.
+(() => {
+  const personality = {
+    name: "宠宝", mood: "curious", gaze: "forward",
+    lines: ["嘿嘿～", "看我看我！", "我在这里哦。", "发现你啦！", "让我看看。"]
+  };
+  let currentPet = null, idleTimer = null, behaviorTimer = null;
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  function occupiedAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!el || el === document.documentElement || el === document.body) return false;
+    if (el.closest(".limbo-pet, #mainFloat, .gesture-magnifier")) return false;
+    const style = getComputedStyle(el);
+    if (style.visibility === "hidden" || style.display === "none" || Number(style.opacity) < .08) return false;
+    const tag = el.tagName.toLowerCase();
+    return /^(p|span|a|button|input|textarea|select|img|svg|video|canvas|label|h1|h2|h3|li|pre|code|article|section|nav|header|footer)$/.test(tag)
+      || (el.getBoundingClientRect().width > 90 && el.getBoundingClientRect().height > 28);
+  }
+  function findClearLanding(x, y) {
+    const pad = 38;
+    const maxX = Math.max(pad, innerWidth - pad), maxY = Math.max(pad, innerHeight - pad);
+    const baseX = clamp(Number.isFinite(x) ? x : innerWidth / 2, pad, maxX);
+    const baseY = clamp(Number.isFinite(y) ? y : innerHeight / 2, pad, maxY);
+    if (!occupiedAt(baseX, baseY)) return { x: baseX, y: baseY };
+    // Keep close to the user's release point, but prefer nearby visually empty space.
+    const offsets = [
+      [0, -54], [52, 0], [-52, 0], [0, 54], [42, -42], [-42, -42],
+      [42, 42], [-42, 42], [0, -82], [78, 0], [-78, 0], [0, 82],
+      [65, -65], [-65, -65], [65, 65], [-65, 65]
+    ];
+    for (const [dx, dy] of offsets) {
+      const px = clamp(baseX + dx, pad, maxX), py = clamp(baseY + dy, pad, maxY);
+      if (!occupiedAt(px, py)) return { x: px, y: py };
+    }
+    // If the whole area is busy, stay near release point and remain non-blocking.
+    return { x: clamp(baseX + 44, pad, maxX), y: clamp(baseY + 36, pad, maxY) };
+  }
+  function randomBetween(a, b) { return a + Math.random() * (b - a); }
+  function setGaze(orb, direction) {
+    personality.gaze = direction;
+    orb.dataset.gaze = direction;
+    const pupils = orb.querySelectorAll(".limbo-pupil");
+    const poses = {
+      forward: [0, 0], left: [-2.4, 0], right: [2.4, 0],
+      up: [0, -2], down: [0, 2]
+    };
+    const [x, y] = poses[direction] || poses.forward;
+    pupils.forEach(p => { p.style.transform = `translate(${x}px,${y}px)`; });
+    const face = orb.querySelector(".limbo-pet-face");
+    if (face) face.style.transform = direction === "left" ? "rotate(-45deg)" : direction === "right" ? "rotate(45deg)" : "rotate(0deg)";
+  }
+  function animateEntrance(orb, dx, dy, source) {
+    source.classList.remove("pet-source-recoil");
+    void source.offsetWidth;
+    source.classList.add("pet-source-recoil");
+    const frames = [
+      { transform: "translate(0px,0px) scaleX(.82) scaleY(1.22) rotate(-3deg)", offset: 0 },
+      { transform: `translate(${dx * .16}px,${dy * .16}px) scaleX(.9) scaleY(1.14) rotate(3deg)`, offset: .16 },
+      { transform: `translate(${dx * .62}px,${dy * .62}px) scaleX(.84) scaleY(1.18) rotate(-2deg)`, offset: .58 },
+      { transform: `translate(${dx}px,${dy}px) scaleX(1.2) scaleY(.76) rotate(2deg)`, offset: .72 },
+      { transform: `translate(${dx - 5}px,${dy - 13}px) scaleX(.94) scaleY(1.1) rotate(-2deg)`, offset: .84 },
+      { transform: `translate(${dx}px,${dy}px) scaleX(1.06) scaleY(.94) rotate(1deg)`, offset: .93 },
+      { transform: `translate(${dx}px,${dy}px) scaleX(1) scaleY(1) rotate(0deg)`, offset: 1 }
+    ];
+    const animation = orb.animate(frames, { duration: clamp(360 + Math.hypot(dx, dy) * 1.15, 560, 1100), easing: "cubic-bezier(.2,.75,.35,1)", fill: "forwards" });
+    animation.onfinish = () => {
+      if (!orb.isConnected) return;
+      orb.style.left = (orb._landing.x - 29) + "px";
+      orb.style.top = (orb._landing.y - 29) + "px";
+      orb.style.transform = "";
+      orb.classList.add("limbo-pet-idle");
+      animation.cancel();
+    };
+  }
+  function spawnFrom(source, releaseX, releaseY) {
+    if (!source) return;
+    const rect = source.getBoundingClientRect();
+    const landing = findClearLanding(releaseX, releaseY);
+    const startX = rect.left + rect.width / 2, startY = rect.top + rect.height / 2;
+    const orb = document.createElement("div");
+    orb.className = "limbo-pet";
+    orb.setAttribute("role", "button");
+    orb.setAttribute("tabindex", "0");
+    orb.setAttribute("aria-label", "宠宝；点击互动");
+    orb.innerHTML = '<div class="limbo-pet-face"><i class="limbo-eye left"><b class="limbo-pupil"></b></i><i class="limbo-eye right"><b class="limbo-pupil"></b></i><i class="limbo-mouth"></i><i class="limbo-cheek left"></i><i class="limbo-cheek right"></i></div><span class="limbo-pet-word" aria-live="polite">嘿嘿～</span>';
+    orb.style.left = (startX - 29) + "px";
+    orb.style.top = (startY - 29) + "px";
+    orb._landing = landing;
+    orb.style.setProperty("--pet-glow", "1");
+    document.body.appendChild(orb);
+    if (currentPet && currentPet !== orb) currentPet.remove();
+    currentPet = orb;
+    if (idleTimer) clearTimeout(idleTimer);
+    if (behaviorTimer) clearInterval(behaviorTimer);
+    animateEntrance(orb, landing.x - startX, landing.y - startY, source);
+    const word = orb.querySelector(".limbo-pet-word");
+    function beCute() {
+      const action = Math.floor(Math.random() * 8);
+      orb.classList.remove("limbo-pet-wiggle", "limbo-pet-blush", "limbo-pet-bounce");
+      if (action === 0) { setGaze(orb, "left"); }
+      else if (action === 1) { setGaze(orb, "right"); }
+      else if (action === 2) { setGaze(orb, "up"); }
+      else if (action === 3) { setGaze(orb, "down"); }
+      else if (action === 4) { setGaze(orb, "forward"); orb.classList.add("limbo-pet-blush"); }
+      else if (action === 5) { orb.classList.add("limbo-pet-wiggle"); }
+      else if (action === 6) { orb.classList.add("limbo-pet-bounce"); }
+      else { setGaze(orb, "forward"); }
+      personality.mood = action >= 4 ? "playful" : "curious";
+    }
+    function interact() {
+      beCute();
+      if (word) word.textContent = personality.lines[Math.floor(Math.random() * personality.lines.length)];
+    }
+    orb.addEventListener("click", interact);
+    orb.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); interact(); } });
+    idleTimer = setTimeout(() => {
+      if (currentPet === orb && orb.isConnected) {
+        behaviorTimer = setInterval(() => {
+          if (currentPet !== orb || !orb.isConnected) return;
+          beCute();
+          // Drift only a little, and only when the destination is visually clear.
+          const r = orb.getBoundingClientRect();
+          const candidate = findClearLanding(r.left + r.width / 2 + randomBetween(-24, 24), r.top + r.height / 2 + randomBetween(-16, 16));
+          if (Math.hypot(candidate.x - (r.left + r.width / 2), candidate.y - (r.top + r.height / 2)) < 36) {
+            orb.style.left = (candidate.x - 29) + "px";
+            orb.style.top = (candidate.y - 29) + "px";
+          }
+        }, 2800);
+      }
+    }, 900);
+  }
+  window.AICortexPetLimbo = Object.freeze({ spawnFrom, personality, findClearLanding });
+})();
+''')
+(d / "pet.css").write_text(r'''/* Pet Limbo — luminous blue living orb; avoids blocking the screen where possible. */
+.limbo-pet {
+  position:fixed; z-index:2147483002; width:58px; height:58px; border-radius:50%;
+  display:grid; place-items:center;
+  background:radial-gradient(circle at 31% 24%,#f0ffff 0,#8ceeff 19%,#37bce9 48%,#1475d2 78%,#1746a4 100%);
+  border:1px solid rgba(182,249,255,.92);
+  box-shadow:0 0 8px rgba(79,225,255,.95),0 0 20px rgba(31,177,255,.78),0 0 36px rgba(30,119,255,.45),inset -7px -8px 15px rgba(7,47,133,.28),inset 5px 5px 12px rgba(255,255,255,.6);
+  transform-origin:50% 78%; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
+  transition:left 650ms cubic-bezier(.2,.7,.25,1),top 650ms cubic-bezier(.2,.7,.25,1);
+}
+.limbo-pet::before{content:"";position:absolute;inset:5px 9px auto 9px;height:15px;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0));filter:blur(2px);pointer-events:none}
+.limbo-pet-face{position:relative;width:34px;height:25px;transition:transform 240ms cubic-bezier(.2,.8,.2,1)}
+.limbo-eye{position:absolute;top:4px;width:8px;height:10px;border-radius:50%;background:rgba(6,43,94,.95);box-shadow:0 0 5px rgba(0,43,94,.4);overflow:hidden;animation:limbo-blink 4.2s infinite}
+.limbo-eye.left{left:3px}.limbo-eye.right{right:3px}
+.limbo-pupil{position:absolute;left:2px;top:1px;width:4px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 3px #fff}
+.limbo-mouth{position:absolute;left:14px;top:15px;width:7px;height:4px;border-bottom:2px solid #073f82;border-radius:0 0 9px 9px}
+.limbo-cheek{position:absolute;top:15px;width:7px;height:4px;border-radius:50%;background:rgba(255,129,190,.65);opacity:0;filter:blur(.4px);transition:opacity .2s}
+.limbo-cheek.left{left:0}.limbo-cheek.right{right:0}
+.limbo-pet-blush .limbo-cheek{opacity:1}.limbo-pet-word{position:absolute;left:50%;top:-29px;transform:translateX(-50%);white-space:nowrap;padding:4px 8px;border-radius:12px;background:rgba(239,251,255,.94);color:#145b8d;font:12px/1.3 sans-serif;box-shadow:0 0 12px rgba(62,193,255,.22);pointer-events:none}
+.limbo-pet-idle{animation:limbo-breathe 2.1s ease-in-out infinite}
+.limbo-pet-wiggle{animation:limbo-wiggle 560ms ease-in-out}.limbo-pet-bounce{animation:limbo-bounce 520ms cubic-bezier(.2,.8,.3,1)}
+.limbo-pet{touch-action:manipulation}
+.pet-source-recoil{animation:pet-source-pop 300ms cubic-bezier(.2,.8,.3,1) both}
+.gesture-magnifier{position:fixed;z-index:2147483001;width:152px;height:152px;border:3px solid #34495f;border-radius:50%;overflow:hidden;pointer-events:none;background:rgba(255,255,255,.2);box-shadow:0 4px 20px rgba(0,0,0,.3);contain:strict}
+.gesture-magnifier[hidden]{display:none!important}.gesture-magnifier-inner{position:absolute;inset:0;overflow:hidden}.gesture-magnifier-inner>*{position:absolute!important;pointer-events:none!important}
+#mainFloat{touch-action:none;user-select:none;-webkit-user-select:none}
+@keyframes pet-source-pop{0%{transform:scale(1)}35%{transform:scale(.78)}68%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes limbo-breathe{0%,100%{transform:translateY(0) scaleX(1) scaleY(1)}25%{transform:translateY(-1px) rotate(-2deg) scaleX(1.025) scaleY(.98)}50%{transform:translateY(-3px) rotate(0) scaleX(1.04) scaleY(.96)}75%{transform:translateY(-1px) rotate(2deg) scaleX(.98) scaleY(1.02)}}
+@keyframes limbo-wiggle{0%,100%{rotate:0deg;scale:1}22%{rotate:-13deg;scale:1.08 .92}52%{rotate:5deg;scale:.94 1.07}78%{rotate:13deg;scale:1.05 .96}}
+@keyframes limbo-bounce{0%,100%{translate:0 0;scale:1}35%{translate:0 -8px;scale:.92 1.1}68%{translate:0 1px;scale:1.1 .9}}
+@keyframes limbo-blink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.12)}}
+''')
+print("PASS: Pet Limbo now receives pointer-release coordinates and animates from the circle to a clear landing point")
+PY
+node --check frontend/app.js
+node --check backend/extension/pet/limbo/pet.js
+node --check backend/server.js
+git diff --check -- frontend/app.js backend/extension/pet/limbo/pet.js backend/extension/pet/limbo/pet.css
+printf '%s\n' '=== VERIFY REQUIREMENTS ==='
+rg -n 'runGesture\(done.kind, event.clientX, event.clientY\)|spawnFrom\(ball, releaseX, releaseY\)|findClearLanding|pet-source-recoil|limbo-pet-drop|rotate\(-45deg\)|rotate\(45deg\)|#mainFloat' frontend/app.js backend/extension/pet/limbo/pet.js backend/extension/pet/limbo/pet.css
+printf '%s\n' '=== STATUS ==='
+git status --short -- frontend/app.js backend/extension/pet/limbo
+exit 0
