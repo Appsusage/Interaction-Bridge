@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent
+sed -n '1935,2070p' frontend/app.js
