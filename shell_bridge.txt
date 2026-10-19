@@ -1,0 +1,20 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+for name in ("frontend/browser-live-viewer.js", "frontend/browser-live-viewer.css", "frontend/index.html"):
+ p=Path(name)
+ print("\n---", name, "---")
+ if p.exists():
+  lines=p.read_text().splitlines()
+  if name.endswith(".js"):
+   needles=("blv-send-enter","blv-send-tab","blv-clear","textarea","blv-send-text")
+  elif name.endswith(".css"):
+   needles=("blv-send-enter","blv-send-tab","blv-clear","textarea","controls","toolbar")
+  else:
+   needles=("browser-live-viewer","blv-send-enter","blv-send-tab","blv-clear","textarea")
+  selected=set()
+  for i,line in enumerate(lines):
+   if any(n in line for n in needles):
+    selected.update(range(max(0,i-3),min(len(lines),i+5)))
+  for i in sorted(selected):
+   print(f"{i+1}: {lines[i]}")
+PY
