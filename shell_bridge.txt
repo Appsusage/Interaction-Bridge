@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== Enter button current implementation ==='
+grep -n -A8 -B5 'blv-send-enter' frontend/browser-live-viewer.js
+printf '%s\n' '=== key dispatch behavior ==='
+grep -n -A18 -B5 'message.type === "user-key"' backend/extension/browser/browser_live.js
