@@ -1,1 +1,5 @@
-cd /home/runner/workspace/ai-agent && grep -n -i -A15 -B15 '清空' frontend/app.js frontend/index.html frontend/*.css 2>/dev/null | head -400
+cd /home/runner/workspace/ai-agent && set -eu
+printf '%s\n' '=== browser folder inventory ==='
+find browser -maxdepth 3 -type f -print | sort
+printf '%s\n' '=== clear button/input references in browser ==='
+grep -Rni -A30 -B18 -E '清空|clear|input|textarea|button' browser --include='*.js' --include='*.html' --include='*.css' | head -700
