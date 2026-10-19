@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n '1480,1610p' frontend/style.css && printf '\n---VIEWER CSS---\n' && cat frontend/backend-console-viewer.css
