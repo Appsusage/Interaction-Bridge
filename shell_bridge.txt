@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== Message CSS ==='
-grep -n -A80 -B12 -E '^\.message|\.message\.user|\.message\.ai|\.user-panel|\.ai-panel' frontend/style.css
-printf '%s\n' '=== Clear button and input markup ==='
-grep -n -A25 -B15 -E '清空|clear|textarea|input.*id=' frontend/index.html frontend/app.js | head -260
-printf '%s\n' '=== Existing clear handlers ==='
-grep -n -A20 -B12 -E '清空|clear.*(input|textarea)|double|dblclick|click' frontend/app.js | head -260
