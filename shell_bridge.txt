@@ -1,0 +1,47 @@
+cd /home/runner/workspace/ai-agent || exit 1
+set -e
+printf '%s\n' '=== SYNTAX CHECKS ==='
+node --check bridge/shell/server.js
+node --check bridge/shell/shell_float.js
+node --check backend/server.js
+node --check frontend/shell-float.js
+printf '%s\n' '=== ISOLATED STATE MODULE TEST ==='
+TEST_TMP="$(mktemp -d)"
+TMPDIR="$TEST_TMP" node --input-type=module <<'NODE'
+import assert from 'node:assert/strict';
+import { publishShellFloatState, appendShellFloatOutput, readShellFloatState } from './bridge/shell/shell_float.js';
+const start = publishShellFloatState({ event: 'start', taskName: 'SHELL_FLOAT_TEST.txt', status: 'Preparing' });
+assert.equal(start.active, true);
+appendShellFloatOutput('SHELL_FLOAT_TEST.txt', 'command output\n');
+const running = readShellFloatState();
+assert.match(running.output, /command output/);
+const done = publishShellFloatState({ event: 'finish', taskName: 'SHELL_FLOAT_TEST.txt', status: 'saved' });
+assert.equal(done.active, false);
+assert.ok(Number.isFinite(done.finishedAt));
+console.log('STATE_MODULE_TEST_OK', JSON.stringify({startSeq:start.seq, runningSeq:running.seq, finishSeq:done.seq, outputLength:running.output.length}));
+NODE
+rm -rf "$TEST_TMP"
+printf '%s\n' '=== ORDER / INTEGRATION ASSERTIONS ==='
+python3 - <<'PY'
+from pathlib import Path
+s=Path('bridge/shell/server.js').read_text()
+b=Path('backend/server.js').read_text()
+h=Path('frontend/index.html').read_text()
+f=Path('frontend/shell-float.js').read_text()
+start=s.index('publishShellFloatState({ event: "start", taskName')
+move=s.index('await moveFile(', start)
+assert start < move, 'start event must be before inbox->processing move'
+upload=s.index('await dropboxUpload(', s.index('const outboxRawLog'))
+finish=s.index('publishShellFloatState({ event: "finish", taskName, status: "Sxxx.txt')
+assert upload < finish, 'normal finish event must be after Outbox upload'
+assert '/shell-float/state' in b
+assert 'readShellFloatState' in b
+assert 'src="/shell-float.js"' in h
+assert 'setTimeout(hide, Math.max(0, 10000 - (Date.now() - finishedAt)))' in f
+assert 'if (seq === lastSeq) return;' in f
+print('INTEGRATION_ASSERTIONS_OK: start-before-move, finish-after-upload, API, script, 10s close')
+PY
+printf '%s\n' '=== DIFF CHECK ==='
+git diff --check
+printf '%s\n' '=== MODIFIED TARGET FILES ==='
+git status --short -- bridge/shell/server.js bridge/shell/shell_float.js backend/server.js frontend/index.html frontend/shell-float.js
