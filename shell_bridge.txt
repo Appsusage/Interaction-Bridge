@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -RniE 'writeChatLog|Parser Result|console\.(log|info|warn|error).*parser|parserResult' backend --include='*.js' | head -100 && printf '\n--- CSS TAIL ---\n' && tail -35 frontend/style.css
