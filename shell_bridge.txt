@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== browser_live dispatchUserInput context ==='
-sed -n '1,175p' backend/extension/browser/browser_live.js
-printf '%s\n' '=== browser service CDP session creation ==='
-grep -n -A28 -B12 -E 'cdp|Target\.attachToTarget|createBrowserSession|attachToTarget' backend/extension/browser/browser_service.js | head -360
-printf '%s\n' '=== repository state ==='
-git status --short 2>/dev/null || true
