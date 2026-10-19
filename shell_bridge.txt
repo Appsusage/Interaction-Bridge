@@ -1,0 +1,362 @@
+cd /home/runner/workspace/ai-agent
+set -eu
+python3 - <<'PY'
+from pathlib import Path
+
+# 1) Remove the incorrect prior gesture implementation only.
+p = Path("frontend/app.js")
+s = p.read_text()
+start = s.find("// Main floating-ball press/drag gestures:")
+if start >= 0:
+    end_token = "})();"
+    end = s.find(end_token, start)
+    if end < 0:
+        raise SystemExit("STOP: could not find end of previous gesture block")
+    end += len(end_token)
+    s = s[:start] + s[end:]
+p.write_text(s)
+
+# 2) Add the independent global settings hub and the empty future outer-ring shell.
+p = Path("frontend/index.html")
+s = p.read_text()
+if 'id="aiAgentSettingsPanel"' not in s:
+    marker = '<!-- 背景图片 -->'
+    block = '''<!-- Global AI-Agent settings hub: deliberately separate from the five existing quick buttons. -->
+<section id="aiAgentSettingsPanel" class="ai-settings-overlay" role="dialog" aria-modal="true" aria-label="AI-Agent 设置" hidden>
+  <div class="ai-settings-window">
+    <header class="ai-settings-header">
+      <div><small>AI-AGENT</small><h2>系统设置</h2></div>
+      <button type="button" class="ai-settings-close" data-close-ai-settings aria-label="关闭设置">×</button>
+    </header>
+    <p class="ai-settings-intro">集中管理整个 AI-Agent 的行为、模型、记忆、工具与运行配置。这里不复用悬浮按钮的五个快捷功能。</p>
+    <div class="ai-settings-sections">
+      <section><span>01</span><div><strong>行为与回复</strong><p>回复风格、交互方式与任务处理规则</p><em>设置模块入口</em></div></section>
+      <section><span>02</span><div><strong>模型与推理</strong><p>模型选择、路由策略与推理深度</p><em>设置模块入口</em></div></section>
+      <section><span>03</span><div><strong>记忆与学习</strong><p>用户资料、长期记忆与学习规则</p><em>设置模块入口</em></div></section>
+      <section><span>04</span><div><strong>工具与自动化</strong><p>扩展能力、浏览器与自动化任务</p><em>设置模块入口</em></div></section>
+      <section><span>05</span><div><strong>连接与运行</strong><p>服务状态、桥接连接与运行配置</p><em>设置模块入口</em></div></section>
+    </div>
+  </div>
+</section>
+<div id="futureOuterRing" class="future-outer-ring" aria-label="未来扩展功能区" hidden>
+  <svg viewBox="0 0 240 150" aria-hidden="true"><path d="M 12 142 A 108 108 0 0 1 228 142" /></svg>
+  <span>未来扩展功能区</span>
+</div>
+
+'''
+    if marker not in s:
+        raise SystemExit("STOP: HTML insertion anchor not found")
+    s = s.replace(marker, block + marker, 1)
+if 'href="/extension/pet/limbo/pet.css"' not in s:
+    s = s.replace('</head>', '  <link rel="stylesheet" href="/extension/pet/limbo/pet.css">\n</head>', 1)
+if 'src="/extension/pet/limbo/pet.js"' not in s:
+    s = s.replace('</body>', '  <script src="/extension/pet/limbo/pet.js" defer></script>\n</body>', 1)
+p.write_text(s)
+
+# 3) Expose the dedicated extension directory through the existing Express server.
+p = Path("backend/server.js")
+s = p.read_text()
+mount = 'app.use("/extension", express.static(path.join(__dirname, "extension")));'
+if mount not in s:
+    anchor = 'app.use(express.json());'
+    if anchor not in s:
+        raise SystemExit("STOP: server middleware anchor not found")
+    s = s.replace(anchor, anchor + '\n\n' + mount, 1)
+p.write_text(s)
+
+# 4) Add the gesture controller without modifying the existing five button handlers.
+gesture = r'''
+// Independent floating-ball gestures. Existing five quick buttons and their handlers stay untouched.
+(() => {
+  const ball = document.getElementById("mainFloat");
+  const settings = document.getElementById("aiAgentSettingsPanel");
+  const outerRing = document.getElementById("futureOuterRing");
+  if (!ball) return;
+  const threshold = 48;
+  let active = null;
+  let lens = null;
+  let lensClone = null;
+  let suppressClickUntil = 0;
+
+  function closeSettings() { if (settings) settings.hidden = true; }
+  function hideOuterRing() { if (outerRing) outerRing.hidden = true; }
+  function clearLens() {
+    if (lens) lens.hidden = true;
+    if (lensClone) lensClone.remove();
+    lensClone = null;
+  }
+  function ensureLens() {
+    if (lens) return lens;
+    lens = document.createElement("div");
+    lens.className = "gesture-magnifier";
+    lens.hidden = true;
+    lens.setAttribute("aria-hidden", "true");
+    const inner = document.createElement("div");
+    inner.className = "gesture-magnifier-inner";
+    lens.appendChild(inner);
+    document.body.appendChild(lens);
+    return lens;
+  }
+  function showLens(x, y) {
+    const el = ensureLens();
+    el.hidden = false;
+    el.style.left = (x - 76) + "px";
+    el.style.top = (y - 76) + "px";
+    if (!lensClone) {
+      lensClone = document.body.cloneNode(true);
+      lensClone.querySelectorAll("script,style,iframe,video,audio,canvas,#aiAgentSettingsPanel,#futureOuterRing,.gesture-magnifier,.limbo-pet").forEach(n => n.remove());
+      lensClone.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
+      lensClone.style.cssText = "position:absolute!important;left:0!important;top:0!important;width:" + innerWidth + "px!important;max-width:none!important;margin:0!important;transform:scale(1.65)!important;transform-origin:top left!important;pointer-events:none!important;";
+      el.firstElementChild.replaceChildren(lensClone);
+    }
+    lensClone.style.left = (-(x * 1.65 - 76)) + "px";
+    lensClone.style.top = (-(y * 1.65 - 76)) + "px";
+  }
+  function runGesture(kind) {
+    closeSettings();
+    if (kind === "left") {
+      // Empty reserved arc for future features; never opens or moves the existing five buttons.
+      if (outerRing) outerRing.hidden = false;
+    } else if (kind === "up") {
+      hideOuterRing();
+      if (settings) settings.hidden = false;
+    } else if (kind === "down") {
+      hideOuterRing();
+      if (window.AICortexPetLimbo && typeof window.AICortexPetLimbo.spawnFrom === "function") {
+        window.AICortexPetLimbo.spawnFrom(ball);
+      }
+    }
+  }
+
+  ball.addEventListener("pointerdown", event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    active = { id: event.pointerId, x: event.clientX, y: event.clientY, kind: null, moved: false };
+    try { ball.setPointerCapture(event.pointerId); } catch {}
+  });
+  ball.addEventListener("pointermove", event => {
+    if (!active || active.id !== event.pointerId) return;
+    const dx = event.clientX - active.x;
+    const dy = event.clientY - active.y;
+    if (Math.hypot(dx, dy) < 14) return;
+    active.moved = true;
+    if (dx < -threshold && Math.abs(dx) > Math.abs(dy) * 1.15) active.kind = "left";
+    else if (dy < -threshold && Math.abs(dy) > Math.abs(dx) * 1.15) active.kind = "up";
+    else if (dy > threshold && Math.abs(dy) > Math.abs(dx) * 1.15) active.kind = "down";
+    else active.kind = null;
+    if (active.kind) clearLens();
+    else showLens(event.clientX, event.clientY);
+  });
+  function finish(event) {
+    if (!active || (event.pointerId !== undefined && active.id !== event.pointerId)) return;
+    const done = active;
+    active = null;
+    clearLens();
+    if (done.moved) {
+      suppressClickUntil = Date.now() + 500;
+      if (done.kind) {
+        event.preventDefault();
+        runGesture(done.kind);
+      }
+    }
+  }
+  ball.addEventListener("pointerup", finish);
+  ball.addEventListener("pointercancel", finish);
+  ball.addEventListener("lostpointercapture", event => { if (active && active.id === event.pointerId) finish(event); });
+  // Capture-phase guard prevents a gesture-release synthetic click from triggering the old close handler.
+  ball.addEventListener("click", event => {
+    if (Date.now() < suppressClickUntil) { event.preventDefault(); event.stopImmediatePropagation(); }
+  }, true);
+  if (settings) {
+    settings.querySelector("[data-close-ai-settings]")?.addEventListener("click", closeSettings);
+    settings.addEventListener("pointerdown", event => { if (event.target === settings) closeSettings(); });
+  }
+  document.addEventListener("pointerdown", event => {
+    if (outerRing && !outerRing.hidden && !outerRing.contains(event.target) && !ball.contains(event.target)) hideOuterRing();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") { closeSettings(); hideOuterRing(); }
+  });
+})();
+'''
+if "Independent floating-ball gestures." not in s:
+    anchor = 'window.setFloatMenuOpen = setFloatMenuOpen;'
+    if anchor not in s: raise SystemExit("STOP: app.js gesture insertion anchor not found")
+    s = s.replace(anchor, anchor + '\n' + gesture, 1)
+p.write_text(s)
+
+# 5) Pet lives in its own extension development area.
+pet_dir = Path("backend/extension/pet/limbo")
+pet_dir.mkdir(parents=True, exist_ok=True)
+(pet_dir / "pet.js").write_text(r'''// Pet Limbo: independent prototype for 宠宝's personality and movement.
+(() => {
+  const personality = {
+    name: "宠宝",
+    mood: "curious",
+    lines: ["我来啦！", "嘿嘿，我在这里。", "让我看看外面的世界！"]
+  };
+  let currentPet = null;
+  let idleTimer = null;
+
+  function spawnFrom(source) {
+    if (!source) return;
+    const rect = source.getBoundingClientRect();
+    const orb = document.createElement("div");
+    orb.className = "limbo-pet";
+    orb.setAttribute("role", "button");
+    orb.setAttribute("aria-label", "宠宝，点击和我互动");
+    orb.innerHTML = '<div class="limbo-pet-face"><i class="limbo-eye left"></i><i class="limbo-eye right"></i><i class="limbo-mouth"></i></div><span class="limbo-pet-word">我来啦！</span>';
+    orb.style.left = (rect.left + rect.width / 2 - 29) + "px";
+    orb.style.top = (rect.top + rect.height / 2 - 29) + "px";
+    document.body.appendChild(orb);
+
+    if (currentPet && currentPet !== orb) currentPet.remove();
+    currentPet = orb;
+    if (idleTimer) clearTimeout(idleTimer);
+
+    // The ball recoils to its original place while 宠宝 stretches, falls, squashes, then rebounds.
+    source.classList.remove("pet-source-recoil");
+    void source.offsetWidth;
+    source.classList.add("pet-source-recoil");
+    orb.classList.add("limbo-pet-entering");
+    orb.addEventListener("animationend", event => {
+      if (event.animationName === "limbo-pet-drop") {
+        orb.classList.remove("limbo-pet-entering");
+        orb.classList.add("limbo-pet-idle");
+      }
+    });
+    source.addEventListener("animationend", event => {
+      if (event.animationName === "pet-source-pop") source.classList.remove("pet-source-recoil");
+    }, { once: true });
+
+    orb.addEventListener("click", () => {
+      personality.mood = personality.mood === "curious" ? "playful" : "curious";
+      orb.classList.remove("limbo-pet-wiggle");
+      void orb.offsetWidth;
+      orb.classList.add("limbo-pet-wiggle");
+      const word = orb.querySelector(".limbo-pet-word");
+      if (word) word.textContent = personality.lines[Math.floor(Math.random() * personality.lines.length)];
+    });
+    idleTimer = setTimeout(() => {
+      if (currentPet === orb && orb.isConnected) orb.classList.add("limbo-pet-roam");
+    }, 1800);
+  }
+
+  window.AICortexPetLimbo = Object.freeze({ spawnFrom, personality });
+})();
+''')
+(pet_dir / "pet.css").write_text(r'''/* Pet Limbo — the first appearance animation for 宠宝. */
+.limbo-pet {
+  position: fixed; z-index: 2147483002; width: 58px; height: 58px;
+  border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 32% 25%, #fff7d8 0, #ffd98c 48%, #e9a84f 100%);
+  border: 2px solid rgba(133, 87, 36, .55);
+  box-shadow: 0 8px 18px rgba(63, 43, 20, .22), inset -5px -7px 12px rgba(168, 101, 31, .14);
+  transform-origin: 50% 80%; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.limbo-pet-face { position: relative; width: 30px; height: 22px; }
+.limbo-eye { position: absolute; top: 3px; width: 5px; height: 7px; border-radius: 50%; background: #5c402a; animation: limbo-blink 4.1s infinite; }
+.limbo-eye.left { left: 4px; } .limbo-eye.right { right: 4px; }
+.limbo-mouth { position: absolute; left: 12px; top: 12px; width: 7px; height: 4px; border-bottom: 2px solid #87522d; border-radius: 0 0 9px 9px; }
+.limbo-pet-word {
+  position: absolute; left: 50%; top: -31px; transform: translateX(-50%);
+  white-space: nowrap; padding: 4px 8px; border-radius: 12px;
+  background: rgba(255,255,255,.96); color: #684624; font: 12px/1.3 sans-serif;
+  box-shadow: 0 3px 10px rgba(40,30,20,.12);
+}
+.limbo-pet-entering { animation: limbo-pet-drop 720ms cubic-bezier(.2,.75,.35,1) both; }
+.limbo-pet-idle { animation: limbo-breathe 2.2s ease-in-out infinite; }
+.limbo-pet-wiggle { animation: limbo-wiggle 420ms ease-in-out; }
+.limbo-pet-roam { animation: limbo-roam 5s ease-in-out infinite alternate; }
+.pet-source-recoil { animation: pet-source-pop 260ms cubic-bezier(.2,.8,.3,1) both; }
+.gesture-magnifier {
+  position: fixed; z-index: 2147483001; width: 152px; height: 152px;
+  border: 3px solid #34495f; border-radius: 50%; overflow: hidden; pointer-events: none;
+  background: rgba(255,255,255,.2); box-shadow: 0 4px 20px rgba(0,0,0,.3); contain: strict;
+}
+.gesture-magnifier[hidden] { display: none !important; }
+.gesture-magnifier-inner { position: absolute; inset: 0; overflow: hidden; }
+.gesture-magnifier-inner > * { position: absolute !important; pointer-events: none !important; }
+#mainFloat { touch-action: none; user-select: none; -webkit-user-select: none; }
+@keyframes limbo-pet-drop {
+  0% { transform: translateY(0) scaleX(.78) scaleY(1.24); }
+  17% { transform: translateY(24px) scaleX(.9) scaleY(1.12); }
+  58% { transform: translateY(126px) scaleX(.86) scaleY(1.18); }
+  70% { transform: translateY(132px) scaleX(1.24) scaleY(.72); }
+  82% { transform: translateY(112px) scaleX(.92) scaleY(1.1); }
+  92% { transform: translateY(128px) scaleX(1.06) scaleY(.94); }
+  100% { transform: translateY(124px) scaleX(1) scaleY(1); }
+}
+@keyframes pet-source-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(.78); }
+  68% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@keyframes limbo-breathe {
+  0%,100% { transform: translateY(0) scaleX(1) scaleY(1); }
+  50% { transform: translateY(-3px) scaleX(1.035) scaleY(.97); }
+}
+@keyframes limbo-wiggle {
+  0%,100% { rotate: 0deg; scale: 1; }
+  25% { rotate: -12deg; scale: 1.08 .92; }
+  70% { rotate: 10deg; scale: .94 1.07; }
+}
+@keyframes limbo-roam {
+  0% { translate: 0 0; }
+  100% { translate: -36px -8px; }
+}
+@keyframes limbo-blink { 0%,46%,50%,100% { transform: scaleY(1); } 48% { transform: scaleY(.12); } }
+''')
+
+# 6) Style the global settings and future outer-ring shell, without restyling the five buttons.
+p = Path("frontend/style.css")
+s = p.read_text()
+if "/* Independent AI-Agent settings hub" not in s:
+    s += r'''
+
+/* Independent AI-Agent settings hub — separate from the five quick actions. */
+.ai-settings-overlay[hidden], .future-outer-ring[hidden] { display: none !important; }
+.ai-settings-overlay {
+  position: fixed; inset: 0; z-index: 2147482990; display: flex;
+  align-items: center; justify-content: center; padding: 18px;
+  background: rgba(18, 31, 46, .42); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.ai-settings-window {
+  box-sizing: border-box; width: min(620px, calc(100vw - 28px)); max-height: min(82vh, 760px);
+  overflow: auto; padding: 22px; border: 1px solid rgba(80, 111, 143, .35);
+  border-radius: 24px; background: rgba(249, 252, 255, .97); color: #24384d;
+  box-shadow: 0 24px 70px rgba(10, 26, 45, .3);
+}
+.ai-settings-header { display:flex; justify-content:space-between; align-items:center; gap:18px; }
+.ai-settings-header small { letter-spacing:.18em; color:#71869b; font-size:10px; }
+.ai-settings-header h2 { margin:4px 0 0; font-size:25px; }
+.ai-settings-close { flex:0 0 38px; width:38px; height:38px; border:0; border-radius:50%; background:#e9eff5; color:#34495f; font-size:26px; }
+.ai-settings-intro { color:#64788b; line-height:1.6; font-size:13px; }
+.ai-settings-sections { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.ai-settings-sections section { display:flex; gap:12px; min-height:98px; padding:14px; border:1px solid #e1e9f0; border-radius:15px; background:#fff; }
+.ai-settings-sections section > span { color:#8ca0b3; font-size:11px; padding-top:3px; }
+.ai-settings-sections strong { font-size:14px; }
+.ai-settings-sections p { margin:6px 0 8px; color:#6c7f91; font-size:12px; line-height:1.45; }
+.ai-settings-sections em { color:#8b9bad; font-size:10px; font-style:normal; }
+.future-outer-ring { position:fixed; right:0; bottom:calc(45% - 55px); width:244px; height:162px; z-index:2147482998; pointer-events:none; }
+.future-outer-ring svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.future-outer-ring path { fill:none; stroke:rgba(83,123,158,.9); stroke-width:2; stroke-dasharray:4 7; }
+.future-outer-ring span { position:absolute; right:36px; top:14px; padding:5px 9px; border-radius:12px; color:#496983; background:rgba(245,250,255,.9); border:1px solid rgba(83,123,158,.25); font-size:10px; }
+@media (max-width:600px) {
+  .ai-settings-window { padding:17px; border-radius:19px; }
+  .ai-settings-sections { grid-template-columns:1fr; }
+}
+'''
+p.write_text(s)
+print("PASS: installed separate settings hub, future-ring shell, and Pet Limbo entrance prototype")
+PY
+node --check frontend/app.js
+node --check backend/extension/pet/limbo/pet.js
+node --check backend/server.js
+git diff --check -- frontend/index.html frontend/app.js frontend/style.css backend/server.js backend/extension/pet/limbo/pet.js backend/extension/pet/limbo/pet.css
+printf '%s\n' '=== GESTURE/PET MARKERS ==='
+rg -n 'aiAgentSettingsPanel|futureOuterRing|Independent floating-ball gestures|AICortexPetLimbo|limbo-pet-drop|pet-source-pop|/extension' frontend/index.html frontend/app.js frontend/style.css backend/server.js backend/extension/pet/limbo
+printf '%s\n' '=== CHANGE SUMMARY ==='
+git status --short -- frontend/index.html frontend/app.js frontend/style.css backend/server.js backend/extension/pet/limbo
+git diff --stat -- frontend/index.html frontend/app.js frontend/style.css backend/server.js
+exit 0
