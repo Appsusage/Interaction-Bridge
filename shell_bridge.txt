@@ -1,0 +1,87 @@
+cd /home/runner/workspace/ai-agent && set -eu
+python3 - <<'PY'
+from pathlib import Path
+
+backend = Path("backend/extension/browser/browser_live.js")
+frontend = Path("frontend/browser-live-viewer.js")
+b = backend.read_text()
+f = frontend.read_text()
+
+old_branch = '''    if (message.type === "user-click") {
+      await stream.cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, button: "none" });'''
+new_branch = '''    if (message.type === "user-clear-page") {
+      const result = await page.evaluate(() => {
+        const el = document.activeElement;
+        if (!el) return { cleared: false, reason: "当前网页没有聚焦的输入框" };
+        const tag = el.tagName?.toLowerCase();
+        if (tag === "textarea" || (tag === "input" && /^(text|search|email|url|tel|password|number)$/i.test(el.type || "text"))) {
+          const proto = tag === "textarea" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+          if (setter) setter.call(el, "");
+          else el.value = "";
+          el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+          return { cleared: true };
+        }
+        if (el.isContentEditable) {
+          el.textContent = "";
+          el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
+          return { cleared: true };
+        }
+        return { cleared: false, reason: "当前网页聚焦位置不是可编辑的文本输入框" };
+      });
+      send(client, { type: "page-input-clear-result", sessionId, ...result });
+    } else if (message.type === "user-click") {
+      await stream.cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, button: "none" });'''
+assert b.count(old_branch) == 1, "backend insertion point mismatch"
+b = b.replace(old_branch, new_branch)
+old_route = '''message.type === "user-key" || message.type === "user-text") {'''
+new_route = '''message.type === "user-key" || message.type === "user-text" || message.type === "user-clear-page") {'''
+assert b.count(old_route) == 1, "backend websocket route mismatch"
+b = b.replace(old_route, new_route)
+
+old_front = '''      } else if (m.type === "input-rejected") {
+        state.textContent = m.reason || "网页输入被拒绝";'''
+new_front = '''      } else if (m.type === "page-input-clear-result") {
+        log.textContent = m.cleared ? "操作状态：已清空网页当前输入框" : "操作状态：" + (m.reason || "网页当前没有可清空的输入框");
+      } else if (m.type === "input-rejected") {
+        state.textContent = m.reason || "网页输入被拒绝";'''
+assert f.count(old_front) == 1, "frontend result handler insertion point mismatch"
+f = f.replace(old_front, new_front)
+old_clear = '''  root.querySelector(".blv-clear-text").addEventListener("click", () => { textInput.value = ""; });'''
+new_clear = '''  let clearClickTimer = null;
+  root.querySelector(".blv-clear-text").addEventListener("click", () => {
+    if (clearClickTimer !== null) {
+      clearTimeout(clearClickTimer);
+      clearClickTimer = null;
+      textInput.value = "";
+      log.textContent = "操作状态：已清空查看器上方的文本框";
+      return;
+    }
+    clearClickTimer = setTimeout(() => {
+      clearClickTimer = null;
+      if (!interactionEnabled() || !ws || ws.readyState !== WebSocket.OPEN) {
+        log.textContent = "操作状态：请先选择网页会话并开启用户操作";
+        return;
+      }
+      ws.send(JSON.stringify({type:"user-clear-page",sessionId:selected}));
+    }, 320);
+  });'''
+assert f.count(old_clear) == 1, "frontend clear button handler mismatch"
+f = f.replace(old_clear, new_clear)
+
+backend.write_text(b)
+frontend.write_text(f)
+print("Patched only:")
+print(backend)
+print(frontend)
+PY
+printf '%s\n' '=== syntax checks ==='
+node --check backend/extension/browser/browser_live.js
+node --check frontend/browser-live-viewer.js
+printf '%s\n' '=== whitespace check ==='
+git diff --check
+printf '%s\n' '=== focused diff ==='
+git diff -- backend/extension/browser/browser_live.js frontend/browser-live-viewer.js
+printf '%s\n' '=== focused status ==='
+git status --short -- backend/extension/browser/browser_live.js frontend/browser-live-viewer.js
