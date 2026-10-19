@@ -1,0 +1,35 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+printf '%s\n' '=== STOP CURRENT SERVER FOR MODULE RELOAD ==='
+OLD_PID=$(ps -eo pid,args | awk '$0 ~ /node backend\/server\.js/ && $0 !~ /awk/ {print $1; exit}')
+if [ -n "$OLD_PID" ]; then
+  echo "stopping_pid=$OLD_PID"
+  kill -TERM "$OLD_PID"
+  for i in $(seq 1 20); do
+    if ! kill -0 "$OLD_PID" 2>/dev/null; then break; fi
+    sleep 1
+  done
+fi
+sleep 2
+printf '%s\n' '=== SERVER AFTER STOP ==='
+ps -eo pid,ppid,args | grep -E '[n]ode backend/server.js' || true
+if ! curl -fsS --max-time 2 http://127.0.0.1:3000/health >/dev/null 2>&1; then
+  echo 'No server responding on port 3000; starting ai-agent server.'
+  nohup node backend/server.js >/tmp/ai-agent-console-viewer-startup.log 2>&1 &
+  NEW_PID=$!
+  echo "started_pid=$NEW_PID"
+  for i in $(seq 1 20); do
+    if curl -fsS --max-time 2 http://127.0.0.1:3000/health >/dev/null 2>&1; then break; fi
+    sleep 1
+  done
+else
+  echo 'A server is already responding on port 3000; checking its PID.'
+fi
+printf '%s\n' '=== ACTIVE SERVER ==='
+ps -eo pid,ppid,args | grep -E '[n]ode backend/server.js' || true
+printf '%s\n' '=== HTTP ASSETS ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
+curl -sS -o /dev/null -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.js
+curl -sS -o /dev/null -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.css
+printf '%s\n' '=== STARTUP LOG TAIL ==='
+tail -40 /tmp/ai-agent-console-viewer-startup.log 2>/dev/null || true
