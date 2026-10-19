@@ -1,0 +1,11 @@
+cd /home/runner/workspace/ai-agent
+set +e
+printf '%s\n' '=== FLOATING CONTROL INSPECTION ==='
+printf '%s\n' '--- frontend/index.html: floating UI ---'
+sed -n '180,330p' frontend/index.html
+printf '%s\n' '--- frontend/app.js: mainFloat references ---'
+rg -n -C 10 'mainFloat|floatMenu|dockToggle|setFloatMenuOpen|positionFloatDockItems' frontend/app.js
+printf '%s\n' '--- relevant styles and existing settings/pet/magnifier handlers ---'
+rg -n -C 3 'float-menu|float-main|dock-toggle|float-item|mainFloat|dockToggle|floatMenu|setting|pet|宠宝|放大镜|magnif' frontend --glob '*.css' --glob '*.html' --glob '*.js'
+printf '%s\n' '=== INSPECTION EXIT ==='
+exit 0
