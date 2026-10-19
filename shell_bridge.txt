@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== Search exact feature implementations and targets ===' && rg -n -i -C 3 'pet|buddy|mascot|宠|固定设置|settings.?window|settings.?panel|magnif|magnifier|zoom|lens|loupe|放大镜|float.?setting|setting.?float|setFloatMenuOpen|mainFloat|dockToggle' frontend backend --glob '*.js' --glob '*.html' --glob '*.css' --glob '*.json'
