@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '=== Locate circular floating main control and existing gesture/menu handlers ===' && rg -n -i -C 5 'floating|float|半圈|圆形|宠宝|magnif|zoom|pointerdown|pointerup|touchstart|touchend|固定设置|settings' frontend --glob '*.js' --glob '*.html' --glob '*.css'
