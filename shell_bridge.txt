@@ -1,0 +1,61 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+echo '=== IDENTIFY EXACT SERVER PID ==='
+PID=$(ps -eo pid=,args= | awk '$0 ~ /node backend\/server\.js/ && $0 !~ /awk/ {print $1; exit}')
+if [ -n "${PID:-}" ]; then
+  ARGS=$(ps -p "$PID" -o args=)
+  echo "server_pid=$PID args=$ARGS"
+  case "$ARGS" in *"node backend/server.js"*) kill -KILL "$PID" ;; *) echo "Refusing to stop unexpected process"; exit 91 ;; esac
+  for i in $(seq 1 8); do
+    if ! kill -0 "$PID" 2>/dev/null; then break; fi
+    sleep 1
+  done
+fi
+sleep 2
+if ! curl --max-time 2 -fsS http://127.0.0.1:3000/health >/dev/null 2>&1; then
+  echo '=== START SERVER AFTER PATCH ==='
+  nohup node backend/server.js >/tmp/ai-agent-console-viewer-startup.log 2>&1 &
+  echo "launch_pid=$!"
+fi
+for i in $(seq 1 20); do
+  if curl --max-time 2 -fsS http://127.0.0.1:3000/health >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+echo '=== SERVER AND ASSETS ==='
+ps -eo pid,ppid,stat,args | grep -E '[n]ode backend/server.js' || true
+curl --max-time 4 -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health
+curl --max-time 4 -sS -o /dev/null -w 'index_http=%{http_code}\n' http://127.0.0.1:3000/
+curl --max-time 4 -sS -o /dev/null -w 'console_js_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.js
+curl --max-time 4 -sS -o /dev/null -w 'console_css_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.css
+echo '=== TEST BOTH WEBSOCKET PATHS (HARD TIMEOUTS) ==='
+timeout 12s node --input-type=module <<'JS'
+import WebSocket from 'ws';
+async function test(path, expectedType) {
+  await new Promise(resolve => {
+    const ws = new WebSocket('ws://127.0.0.1:3000' + path);
+    let done = false;
+    const finish = (label, code) => {
+      if (done) return;
+      done = true;
+      console.log(path + ' => ' + label);
+      clearTimeout(timer);
+      try { ws.terminate(); } catch {}
+      resolve(code);
+    };
+    const timer = setTimeout(() => finish('timeout', 2), 3500);
+    ws.on('open', () => {});
+    ws.on('message', raw => {
+      let m = {};
+      try { m = JSON.parse(raw.toString()); } catch {}
+      if (m.type === expectedType || (path === '/backend-console/live' && m.type === 'snapshot-start')) finish('open + first message=' + m.type, 0);
+    });
+    ws.on('unexpected-response', (_req, res) => finish('HTTP ' + res.statusCode, 1));
+    ws.on('error', e => finish('error=' + e.message, 1));
+  });
+}
+const a = await test('/backend-console/live', 'status');
+const b = await test('/browser/live', 'sessions');
+process.exit(a || b ? 1 : 0);
+JS
+echo '=== STARTUP LOG ==='
+tail -30 /tmp/ai-agent-console-viewer-startup.log 2>/dev/null || true
