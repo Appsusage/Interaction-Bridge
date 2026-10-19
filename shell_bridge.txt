@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== NODE PROCESSES ==='
-ps -eo pid,ppid,etime,args | grep -E '[n]ode .*backend/server.js|[n]ode .*bridge/shell/server.js|[n]ode .*supervisor-router.js|[n]ode .*bridge_server.js|[n]ode .*github_adaptor.js'
-printf '%s\n' '=== SUPERVISOR ROUTER RELEVANT REFERENCES ==='
-grep -nE 'bridge/shell/server|server.js|restart|spawn|kill|pid|heartbeat' backend/heartbeat/supervisor-router.js | head -180
-printf '%s\n' '=== PACKAGE START COMMAND ==='
-node -p "require('./package.json').scripts.start"
