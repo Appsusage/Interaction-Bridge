@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+p=Path("frontend/app.js")
+s=p.read_text()
+print("gesture_block_present=", "// Main floating-ball press/drag gestures:" in s)
+print("settings_panel_present=", "gestureSettingsPanel" in Path("frontend/index.html").read_text())
+print("gesture_css_present=", "Floating-ball gesture destinations" in Path("frontend/style.css").read_text())
+PY
