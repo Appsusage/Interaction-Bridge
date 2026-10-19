@@ -1,0 +1,50 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+echo '=== FINAL STATIC VALIDATION ==='
+node --check backend/console_live.js
+node --check backend/extension/browser/browser_live.js
+node --check backend/server.js
+node --check frontend/backend-console-viewer.js
+git diff --check
+grep -q 'root.classList.add("bcv-hidden")' frontend/backend-console-viewer.js
+grep -q 'backendConsoleFloatButton' frontend/backend-console-viewer.js
+grep -q 'top:27.5%' frontend/backend-console-viewer.css
+grep -q 'z-index:2147483000' frontend/backend-console-viewer.css
+grep -q 'top:27.5%' frontend/style.css
+echo 'static_checks=PASS'
+echo '=== FINAL HTTP CHECKS ==='
+for pair in '/health health' '/ index' '/backend-console-viewer.js console_js' '/backend-console-viewer.css console_css'; do
+  set -- $pair
+  code=$(curl --max-time 4 -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$1")
+  echo "$2=$code"
+  [ "$code" = 200 ]
+done
+echo '=== FINAL WEBSOCKET MESSAGE CHECK ==='
+timeout 10s node --input-type=module <<'JS'
+import WebSocket from 'ws';
+async function verify(path, expected) {
+  await new Promise((resolve, reject) => {
+    const ws = new WebSocket('ws://127.0.0.1:3000' + path);
+    const seen = new Set();
+    const timer = setTimeout(() => { ws.terminate(); reject(new Error(path + ' timeout; received=' + [...seen].join(','))); }, 3500);
+    ws.on('message', raw => {
+      let m;
+      try { m = JSON.parse(raw.toString()); } catch { return; }
+      if (expected.includes(m.type)) seen.add(m.type);
+      if (expected.every(type => seen.has(type))) {
+        clearTimeout(timer);
+        console.log(path + ' messages=' + [...seen].join(','));
+        ws.terminate();
+        resolve();
+      }
+      if (m.type === 'error') { clearTimeout(timer); ws.terminate(); reject(new Error(path + ' error=' + m.message)); }
+    });
+    ws.on('unexpected-response', (_req, res) => { clearTimeout(timer); reject(new Error(path + ' HTTP ' + res.statusCode)); });
+    ws.on('error', e => { clearTimeout(timer); reject(e); });
+  });
+}
+await verify('/backend-console/live', ['snapshot-start','snapshot-end','status']);
+await verify('/browser/live', ['sessions']);
+JS
+echo '=== ACTIVE SERVER ==='
+ps -eo pid,ppid,stat,args | grep -E '[n]ode backend/server.js' || true
