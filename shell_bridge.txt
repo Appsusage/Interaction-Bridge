@@ -1,0 +1,29 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+p = Path("frontend/backend-console-viewer.js")
+s = p.read_text()
+old = '继续显示'
+new = '暂停滚动'
+if old not in s:
+    print("ERROR: expected current initial label text not found; no changes made")
+    raise SystemExit(2)
+# Change only the initial/default button label assignment, not the label used after toggling.
+lines = s.splitlines(True)
+hits = [i for i, line in enumerate(lines) if old in line and any(k in line for k in ("textContent", "innerText", "innerHTML", "button"))]
+if not hits:
+    print("ERROR: could not identify button-label assignment; no changes made")
+    raise SystemExit(3)
+changed = 0
+for i in hits:
+    line = lines[i]
+    if any(k in line for k in ("textContent", "innerText", "innerHTML")):
+        lines[i] = line.replace(old, new)
+        changed += 1
+        break
+if changed != 1:
+    print("ERROR: expected to change exactly one initial button-label assignment; no changes made")
+    raise SystemExit(4)
+p.write_text("".join(lines))
+print("Changed one button label assignment from 继续显示 to 暂停滚动.")
+PY
+node --check frontend/backend-console-viewer.js && git diff --check -- frontend/backend-console-viewer.js && git diff -- frontend/backend-console-viewer.js
