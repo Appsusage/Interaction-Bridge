@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -n 'float-menu' frontend/style.css && grep -n 'bottom:' frontend/style.css && grep -n 'bcv-output' frontend/backend-console-viewer.css
