@@ -1,0 +1,150 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+cp backend/server.js "backend/server.js.bak-console-viewer-$STAMP"
+cp frontend/index.html "frontend/index.html.bak-console-viewer-$STAMP"
+cat > backend/console_live.js <<'EOF'
+import { WebSocketServer } from "ws";
+import { StringDecoder } from "node:string_decoder";
+const MAX_HISTORY_CHARS = 600000;
+const history = [];
+let historyChars = 0;
+let attached = false;
+export function attachBackendConsole(httpServer) {
+  if (attached) return;
+  attached = true;
+  const wss = new WebSocketServer({ server: httpServer, path: "/backend-console/live" });
+  function send(client, payload) { if (client.readyState === 1) client.send(JSON.stringify(payload)); }
+  function record(stream, text) {
+    if (!text) return;
+    const item = { type: "chunk", stream, text };
+    history.push(item); historyChars += text.length;
+    while (historyChars > MAX_HISTORY_CHARS && history.length > 1) historyChars -= history.shift().text.length;
+    const encoded = JSON.stringify(item);
+    for (const client of wss.clients) if (client.readyState === 1) { try { client.send(encoded); } catch {} }
+  }
+  function intercept(streamName, stream) {
+    const originalWrite = stream.write;
+    const decoder = new StringDecoder("utf8");
+    stream.write = function (chunk, encoding, callback) {
+      const result = originalWrite.apply(this, arguments);
+      try {
+        const enc = typeof encoding === "string" ? encoding : "utf8";
+        const buffer = typeof chunk === "string" ? Buffer.from(chunk, enc) :
+          Buffer.isBuffer(chunk) ? chunk :
+          ArrayBuffer.isView(chunk) ? Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength) : Buffer.from(String(chunk));
+        record(streamName, decoder.write(buffer));
+      } catch {}
+      return result;
+    };
+  }
+  intercept("stdout", process.stdout);
+  intercept("stderr", process.stderr);
+  wss.on("connection", (client, request) => {
+    const origin = request.headers.origin, host = request.headers.host;
+    if (origin && host) {
+      try { if (new URL(origin).host !== host) { client.close(1008, "Origin not allowed"); return; } }
+      catch { client.close(1008, "Invalid origin"); return; }
+    }
+    send(client, { type: "snapshot-start" });
+    for (const item of history) send(client, item);
+    send(client, { type: "snapshot-end" });
+    send(client, { type: "status", state: "connected" });
+  });
+  return wss;
+}
+EOF
+cat > frontend/backend-console-viewer.js <<'EOF'
+(() => {
+  if (document.getElementById("backend-console-viewer")) return;
+  const root = document.createElement("section");
+  root.id = "backend-console-viewer";
+  root.setAttribute("aria-label", "后端 Console 原始输出");
+  root.innerHTML = '<header class="bcv-head"><span class="bcv-indicator"></span><strong>后端 Console</strong><span class="bcv-status">连接中…</span><button type="button" class="bcv-pause">暂停滚动</button><button type="button" class="bcv-clear">清空显示</button><button type="button" class="bcv-min" aria-label="最小化">−</button><button type="button" class="bcv-hide" aria-label="隐藏窗口">×</button></header><pre class="bcv-output" aria-live="off"></pre><footer class="bcv-foot">原始 stdout / stderr · 实时传输 · 清除显示不会清除后端日志</footer>';
+  document.body.appendChild(root);
+  const output = root.querySelector(".bcv-output"), status = root.querySelector(".bcv-status"), indicator = root.querySelector(".bcv-indicator"), pauseButton = root.querySelector(".bcv-pause");
+  let ws, paused = false, minimized = false, reconnectTimer, drag = null, queued = [], totalChars = 0;
+  const MAX_DISPLAY_CHARS = 600000;
+  function addChunk(stream, text) {
+    if (!text) return;
+    if (paused) { queued.push({stream,text}); return; }
+    const nearBottom = output.scrollHeight - output.scrollTop - output.clientHeight < 60;
+    const node = document.createElement("span");
+    node.className = stream === "stderr" ? "bcv-stderr" : "bcv-stdout";
+    node.textContent = text;
+    output.appendChild(node); totalChars += text.length;
+    while (totalChars > MAX_DISPLAY_CHARS && output.firstChild) {
+      const first = output.firstChild, length = first.textContent.length, excess = totalChars - MAX_DISPLAY_CHARS;
+      if (length <= excess) { totalChars -= length; first.remove(); }
+      else { first.textContent = first.textContent.slice(excess); totalChars = MAX_DISPLAY_CHARS; }
+    }
+    if (nearBottom) output.scrollTop = output.scrollHeight;
+  }
+  function connect() {
+    clearTimeout(reconnectTimer);
+    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(protocol + "//" + location.host + "/backend-console/live");
+    ws.onopen = () => { status.textContent = "已连接"; indicator.classList.add("bcv-live"); };
+    ws.onclose = () => { status.textContent = "连接中断，重连中…"; indicator.classList.remove("bcv-live"); reconnectTimer = setTimeout(connect, 1500); };
+    ws.onerror = () => { try { ws.close(); } catch {} };
+    ws.onmessage = event => {
+      let m; try { m = JSON.parse(event.data); } catch { return; }
+      if (m.type === "snapshot-start") { output.replaceChildren(); totalChars = 0; }
+      else if (m.type === "snapshot-end") output.scrollTop = output.scrollHeight;
+      else if (m.type === "chunk") addChunk(m.stream, m.text);
+      else if (m.type === "status") status.textContent = "已连接 · 实时";
+    };
+  }
+  pauseButton.addEventListener("click", () => {
+    paused = !paused; pauseButton.textContent = paused ? "继续显示" : "暂停滚动";
+    if (!paused) { const pending = queued; queued = []; for (const item of pending) addChunk(item.stream, item.text); }
+  });
+  root.querySelector(".bcv-clear").addEventListener("click", () => { output.replaceChildren(); totalChars = 0; queued = []; });
+  root.querySelector(".bcv-min").addEventListener("click", () => { minimized = !minimized; root.classList.toggle("bcv-minimized", minimized); root.querySelector(".bcv-min").textContent = minimized ? "□" : "−"; });
+  root.querySelector(".bcv-hide").addEventListener("click", () => root.classList.add("bcv-hidden"));
+  const head = root.querySelector(".bcv-head");
+  head.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; const r = root.getBoundingClientRect(); drag = {x:e.clientX,y:e.clientY,left:r.left,top:r.top}; head.setPointerCapture(e.pointerId); });
+  head.addEventListener("pointermove", e => { if (!drag) return; root.style.left = Math.max(0,Math.min(innerWidth-root.offsetWidth,drag.left+e.clientX-drag.x))+"px"; root.style.top = Math.max(0,Math.min(innerHeight-36,drag.top+e.clientY-drag.y))+"px"; root.style.right="auto"; root.style.bottom="auto"; });
+  head.addEventListener("pointerup", () => { drag = null; });
+  head.addEventListener("pointercancel", () => { drag = null; });
+  window.toggleBackendConsoleViewer = () => { root.classList.toggle("bcv-hidden"); return !root.classList.contains("bcv-hidden"); };
+  connect();
+})();
+EOF
+cat > frontend/backend-console-viewer.css <<'EOF'
+#backend-console-viewer{position:fixed;top:12px;right:12px;width:min(520px,calc(100vw - 24px));height:min(42vh,420px);min-height:150px;z-index:1000000;display:flex;flex-direction:column;overflow:hidden;color:#e8edf5;background:rgba(12,17,25,.96);border:1px solid #536176;border-radius:10px;box-shadow:0 10px 32px rgba(0,0,0,.38);font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}#backend-console-viewer.bcv-hidden{display:none}#backend-console-viewer .bcv-head{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-height:34px;padding:5px 7px;background:#1b2635;border-bottom:1px solid #3b485a;cursor:move;touch-action:none;user-select:none}#backend-console-viewer .bcv-head strong{font-size:12px;white-space:nowrap}#backend-console-viewer .bcv-status{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#b8c5d6;font-size:11px}#backend-console-viewer button{padding:4px 6px;white-space:nowrap;border:1px solid #526176;border-radius:5px;background:#263449;color:#f0f4fa;font:10px system-ui,sans-serif;cursor:pointer}#backend-console-viewer .bcv-indicator{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#d8a24b}#backend-console-viewer .bcv-indicator.bcv-live{background:#3dd598}#backend-console-viewer .bcv-output{display:block;flex:1;min-height:0;overflow:auto;margin:0;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;tab-size:4;color:#e8edf5;background:transparent;font:inherit}#backend-console-viewer .bcv-stderr{color:#ffb1a8}#backend-console-viewer .bcv-stdout{color:#e8edf5}#backend-console-viewer .bcv-foot{padding:4px 8px;border-top:1px solid #303d4f;color:#98a8bc;font:10px system-ui,sans-serif}#backend-console-viewer.bcv-minimized{height:auto;min-height:0;width:min(390px,calc(100vw - 24px))}#backend-console-viewer.bcv-minimized .bcv-output,#backend-console-viewer.bcv-minimized .bcv-foot{display:none}@media(max-width:600px){#backend-console-viewer{top:6px;right:6px;width:calc(100vw - 12px);height:34vh;min-height:135px}#backend-console-viewer .bcv-head{gap:4px;padding:4px}#backend-console-viewer button{font-size:9px;padding:4px}#backend-console-viewer .bcv-foot{font-size:9px}}
+EOF
+python3 - <<'PY'
+from pathlib import Path
+p=Path('frontend/index.html'); s=p.read_text()
+if '/backend-console-viewer.css' not in s:
+ assert s.count('</head>')==1
+ s=s.replace('</head>','  <link rel="stylesheet" href="/backend-console-viewer.css">\n</head>',1)
+if '/backend-console-viewer.js' not in s:
+ assert s.count('</body>')==1
+ s=s.replace('</body>','  <script src="/backend-console-viewer.js" defer></script>\n</body>',1)
+p.write_text(s)
+p=Path('backend/server.js'); s=p.read_text()
+needle='import { attachBrowserLive } from "./extension/browser/browser_live.js";'
+assert s.count(needle)==1
+if 'attachBackendConsole' not in s: s=s.replace(needle,needle+'\nimport { attachBackendConsole } from "./console_live.js";',1)
+needle='attachBrowserLive(httpServer);'
+assert s.count(needle)==1
+if 'attachBackendConsole(httpServer);' not in s: s=s.replace(needle,needle+'\nattachBackendConsole(httpServer);',1)
+p.write_text(s)
+print('Created console stream/viewer and wired it into server + HTML.')
+PY
+node --check backend/console_live.js
+node --check backend/server.js
+node --check frontend/backend-console-viewer.js
+git diff --check
+printf '%s\n' '=== CHANGED FILES ==='
+git status --short backend/server.js frontend/index.html backend/console_live.js frontend/backend-console-viewer.js frontend/backend-console-viewer.css
+printf '%s\n' '=== INTEGRATION MARKERS ==='
+grep -n 'attachBackendConsole\|backend-console-viewer' backend/server.js frontend/index.html
+printf '%s\n' '=== CURRENT SERVER PROCESS ==='
+ps -eo pid,ppid,args | grep -E '[n]ode backend/server.js|[n]pm start' || true
+printf '%s\n' '=== HTTP CHECKS ==='
+curl -sS -o /dev/null -w 'health_http=%{http_code}\n' http://127.0.0.1:3000/health || true
+curl -sS -o /dev/null -w 'viewer_js_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.js || true
+curl -sS -o /dev/null -w 'viewer_css_http=%{http_code}\n' http://127.0.0.1:3000/backend-console-viewer.css || true
