@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+import sys
+css_path = Path("frontend/backend-console-viewer.css")
+js_path = Path("frontend/backend-console-viewer.js")
+if not css_path.is_file() or not js_path.is_file():
+    print("ERROR: Expected Console files missing; no files changed.")
+    sys.exit(2)
+css = css_path.read_text()
+js = js_path.read_text()
+
+# Update only the Console's visual rules; retain button backgrounds and colors.
+marker = "/* ChatGPT update: Console width, transparency and one-third minimize */"
+if marker in css:
+    css = css[:css.index(marker)].rstrip() + "\n"
+css += """
+
+/* ChatGPT update: Console width, transparency and one-third minimize */
+#backend-console-viewer {
+  width: min(480px, calc(100vw - 24px));
+  background-color: rgba(12, 17, 25, 0.24);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+/* Make the top bar glassy too; buttons intentionally keep their current styling. */
+#backend-console-viewer .bcv-head {
+  background: rgba(27, 38, 53, 0.28);
+}
+
+/* Minimize to roughly one-third height instead of collapsing to the title bar. */
+#backend-console-viewer.bcv-minimized {
+  width: min(360px, calc(100vw - 24px));
+  height: min(14vh, 140px);
+  min-height: 100px;
+}
+#backend-console-viewer.bcv-minimized .bcv-output,
+#backend-console-viewer.bcv-minimized .bcv-foot {
+  display: block;
+}
+@media (max-width: 600px) {
+  #backend-console-viewer {
+    width: calc(100vw - 12px);
+  }
+  #backend-console-viewer.bcv-minimized {
+    width: min(320px, calc(100vw - 12px));
+    height: min(12vh, 120px);
+    min-height: 90px;
+  }
+}
+"""
+
+# Start in paused-display state so the initial action button says "继续显示".
+old = "let ws, paused = false, minimized = false, reconnectTimer, drag = null, queued = [], totalChars = 0;"
+new = "let ws, paused = true, minimized = false, reconnectTimer, drag = null, queued = [], totalChars = 0;\n  pauseButton.textContent = \"继续显示\";"
+if old not in js:
+    if new not in js:
+        print("ERROR: Could not find the expected initial pause state; CSS was not written.")
+        sys.exit(3)
+else:
+    js = js.replace(old, new, 1)
+
+css_path.write_text(css)
+js_path.write_text(js)
+print("UPDATED:", css_path)
+print("UPDATED:", js_path)
+print("Console width: 520px -> 480px on desktop; mobile width retained.")
+print("Frame and top bar are more transparent; buttons' existing colors preserved.")
+print("Minimized view retains output/footer and is about one-third height.")
+print("Initial display state is paused; action button reads 继续显示.")
+PY
+node --check frontend/backend-console-viewer.js
+git diff --check -- frontend/backend-console-viewer.css frontend/backend-console-viewer.js
+printf '\n=== Final relevant rules ===\n'
+tail -n 38 frontend/backend-console-viewer.css
+printf '\n=== Initial pause state and toggle ===\n'
+grep -nE 'let ws, paused|pauseButton.textContent|pauseButton.addEventListener' frontend/backend-console-viewer.js
