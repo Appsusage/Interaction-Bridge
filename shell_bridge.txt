@@ -1,0 +1,105 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+p=Path("frontend/browser-live-viewer.js")
+s=p.read_text()
+old='''<div class="blv-type-actions"><button type="submit" class="blv-send-text">发送到网页</button><button type="button" class="blv-send-enter">Enter</button><button type="button" class="blv-send-tab">Tab</button><button type="button" class="blv-clear-text">清空</button></div></form>'''
+new='''<div class="blv-type-actions"><button type="submit" class="blv-send-text">发送到网页</button><button type="button" class="blv-send-enter">Enter</button><button type="button" class="blv-send-tab">Tab</button><button type="button" class="blv-clear-text">清空</button><label class="blv-controls-toggle" title="显示或隐藏网页输入栏"><input type="checkbox" class="blv-controls-checkbox" checked aria-label="显示网页输入栏"></label></div></form>'''
+assert s.count(old)==1, "type actions HTML did not match exactly"
+s=s.replace(old,new)
+s=s.replace('''  const textInput = root.querySelector(".blv-user-text");
+  const typeForm = root.querySelector(".blv-typebar");''','''  const textInput = root.querySelector(".blv-user-text");
+  const typeForm = root.querySelector(".blv-typebar");
+  const controlsToggle = root.querySelector(".blv-controls-checkbox");''')
+s=s.replace('''  let interactionRequested = true, pointerStart = null;''','''  let interactionRequested = true, pointerStart = null;
+  let lastPageInputFocused = false;''')
+s=s.replace('''      tab.addEventListener("click", () => {
+        selected = id;''','''      tab.addEventListener("click", () => {
+        if (selected !== id) lastPageInputFocused = false;
+        selected = id;''')
+s=s.replace('''  function focusSession(id, force = false) {
+    if (!id || !sessions.has(id)) return;
+    selected = id;''','''  function focusSession(id, force = false) {
+    if (!id || !sessions.has(id)) return;
+    if (selected !== id) lastPageInputFocused = false;
+    selected = id;''')
+old='''      } else if (m.type === "audio-answer" && m.sessionId === selected) {'''
+new='''      } else if (m.type === "page-input-focus-result" && m.sessionId === selected) {
+        const focused = m.focused === true;
+        if (focused && !lastPageInputFocused) {
+          controlsToggle.checked = true;
+          typeForm.classList.remove("blv-controls-collapsed");
+        }
+        lastPageInputFocused = focused;
+      } else if (m.type === "audio-answer" && m.sessionId === selected) {'''
+assert s.count(old)==1, "websocket audio handler insertion point mismatch"
+s=s.replace(old,new)
+old='''  root.querySelector(".blv-send-text").addEventListener("click", () => {'''
+new='''  controlsToggle.addEventListener("change", () => {
+    typeForm.classList.toggle("blv-controls-collapsed", !controlsToggle.checked);
+  });
+  root.querySelector(".blv-send-text").addEventListener("click", () => {'''
+assert s.count(old)==1, "send button handler insertion point mismatch"
+s=s.replace(old,new)
+old='''  connect();
+  const dock = document.getElementById("browserFloatButton");'''
+new='''  connect();
+  setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN && selected) {
+      ws.send(JSON.stringify({type:"user-focus-check",sessionId:selected}));
+    }
+  }, 800);
+  const dock = document.getElementById("browserFloatButton");'''
+assert s.count(old)==1, "connect insertion point mismatch"
+s=s.replace(old,new)
+p.write_text(s)
+
+p=Path("frontend/browser-live-viewer.css")
+s=p.read_text()
+s += '''
+#browser-live-viewer .blv-type-actions{align-items:center}
+#browser-live-viewer .blv-controls-toggle{margin-left:auto;display:flex;align-items:center;justify-content:center;min-width:24px;min-height:28px;cursor:pointer}
+#browser-live-viewer .blv-controls-checkbox{width:17px;height:17px;margin:0;accent-color:#54dba4;cursor:pointer}
+#browser-live-viewer .blv-typebar.blv-controls-collapsed .blv-input-label,
+#browser-live-viewer .blv-typebar.blv-controls-collapsed .blv-user-text,
+#browser-live-viewer .blv-typebar.blv-controls-collapsed .blv-type-actions>button{display:none}
+'''
+p.write_text(s)
+
+p=Path("backend/extension/browser/browser_live.js")
+s=p.read_text()
+old='''    if (!sessionId || client._browserLive?.sessionId !== sessionId) return;
+    if (pendingSessions.has(sessionId)) {'''
+new='''    if (!sessionId || client._browserLive?.sessionId !== sessionId) return;
+    if (message.type === "user-focus-check") {
+      const page = getBrowserPage(sessionId);
+      const focused = await page.evaluate(() => {
+        const el = document.activeElement;
+        if (!el) return false;
+        const tag = el.tagName?.toLowerCase();
+        return tag === "textarea" ||
+          (tag === "input" && /^(text|search|email|url|tel|password|number)$/i.test(el.type || "text")) ||
+          el.isContentEditable === true;
+      });
+      send(client, {type:"page-input-focus-result",sessionId,focused});
+      return;
+    }
+    if (pendingSessions.has(sessionId)) {'''
+assert s.count(old)==1, "dispatch input guard insertion point mismatch"
+s=s.replace(old,new)
+old='''message.type === "user-text" || message.type === "user-clear-page") {'''
+new='''message.type === "user-text" || message.type === "user-clear-page" || message.type === "user-focus-check") {'''
+assert s.count(old)==1, "websocket message routing mismatch"
+s=s.replace(old,new)
+p.write_text(s)
+print("Added right-edge checkbox, collapsed input controls when unchecked, and focus-transition auto-expand for webpage text fields.")
+PY
+node --check frontend/browser-live-viewer.js
+node --check backend/extension/browser/browser_live.js
+git diff --check
+printf '%s\n' '=== changed control hooks ==='
+python3 - <<'PY'
+from pathlib import Path
+for name in ("frontend/browser-live-viewer.js","frontend/browser-live-viewer.css","backend/extension/browser/browser_live.js"):
+ s=Path(name).read_text()
+ print(name, "checkbox=", "blv-controls-checkbox" in s, "focus-check=", "user-focus-check" in s, "auto-expand=", "lastPageInputFocused" in s)
+PY
