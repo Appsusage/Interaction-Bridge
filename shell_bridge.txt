@@ -1,0 +1,15 @@
+cd /home/runner/workspace/ai-agent
+for f in backend/bridge/server.js backend/server.js bridge/shell/bridge_server.js bridge/shell/bridge_adaptor.js frontend/backend-console-viewer.js frontend/index.html; do
+  if [ -f "$f" ]; then
+    printf '\n===== %s =====\n' "$f"
+    case "$f" in
+      backend/server.js) sed -n '1,240p' "$f" ;;
+      frontend/index.html) sed -n '180,380p' "$f" ;;
+      *) sed -n '1,360p' "$f" ;;
+    esac
+  else
+    printf '\n===== MISSING: %s =====\n' "$f"
+  fi
+done
+printf '\n===== SERVER ENTRYPOINT REFERENCES =====\n'
+grep -RInE 'backend/bridge/server|bridge/server|bridge/shell/server|Shell Bridge|WebSocketServer|new WebSocket|ws\.clients|broadcast' backend bridge frontend --include='*.js' --include='*.html' 2>/dev/null | head -260
