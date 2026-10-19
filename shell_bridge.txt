@@ -1,0 +1,59 @@
+cd /home/runner/workspace/ai-agent || exit 90
+set -eu
+python3 - <<'PY'
+from pathlib import Path
+p=Path("frontend/backend-console-viewer.js")
+s=p.read_text()
+s=s.replace('''  root.setAttribute("aria-label", "后端 Console 原始输出");
+  root.innerHTML =''','''  root.setAttribute("aria-label", "后端 Console 原始输出");
+  root.classList.add("bcv-hidden");
+  root.innerHTML =''',1)
+s=s.replace('''  document.body.appendChild(root);
+  const output = root.querySelector(".bcv-output"), status = root.querySelector(".bcv-status"), indicator = root.querySelector(".bcv-indicator"), pauseButton = root.querySelector(".bcv-pause");''','''  document.body.appendChild(root);
+  const edgeButton = document.createElement("button");
+  edgeButton.id = "backendConsoleFloatButton";
+  edgeButton.type = "button";
+  edgeButton.className = "bcv-edge-tab";
+  edgeButton.textContent = "C";
+  edgeButton.setAttribute("aria-label", "显示/隐藏后端 Console");
+  edgeButton.title = "显示/隐藏后端 Console";
+  edgeButton.setAttribute("aria-pressed", "false");
+  document.body.appendChild(edgeButton);
+  const output = root.querySelector(".bcv-output"), status = root.querySelector(".bcv-status"), indicator = root.querySelector(".bcv-indicator"), pauseButton = root.querySelector(".bcv-pause");
+  function setVisible(visible) {
+    root.classList.toggle("bcv-hidden", !visible);
+    edgeButton.classList.toggle("active", visible);
+    edgeButton.setAttribute("aria-pressed", String(visible));
+  }
+  edgeButton.addEventListener("click", () => setVisible(root.classList.contains("bcv-hidden")));''',1)
+s=s.replace('''  root.querySelector(".bcv-hide").addEventListener("click", () => root.classList.add("bcv-hidden"));''','''  root.querySelector(".bcv-hide").addEventListener("click", () => setVisible(false));''',1)
+s=s.replace('''  window.toggleBackendConsoleViewer = () => { root.classList.toggle("bcv-hidden"); return !root.classList.contains("bcv-hidden"); };''','''  window.toggleBackendConsoleViewer = () => { setVisible(root.classList.contains("bcv-hidden")); return !root.classList.contains("bcv-hidden"); };''',1)
+p.write_text(s)
+
+p=Path("frontend/backend-console-viewer.css")
+s=p.read_text()
+s += '''
+/* Edge controls stay above ordinary page content; browser fullscreen/top-layer may cover them. */
+#backendConsoleFloatButton.bcv-edge-tab{position:fixed;left:0;top:27.5%;z-index:2147483000;width:23px;height:54px;padding:0;border:1px solid #526176;border-left:0;border-radius:0 9px 9px 0;background:rgba(19,29,43,.9);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);color:#dce7f5;font:700 12px system-ui,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer}
+#backendConsoleFloatButton.bcv-edge-tab.active{background:rgba(43,78,108,.96);border-color:#78b9ef}
+'''
+p.write_text(s)
+
+p=Path("frontend/style.css")
+s=p.read_text()
+s += '''
+/* Keep both edge tabs aligned between the original dock position and the top edge. */
+.float-menu{top:27.5%;bottom:auto!important;z-index:2147483000!important}
+.float-menu.open{top:27.5%;bottom:auto!important;z-index:2147483000!important}
+'''
+p.write_text(s)
+print("Console starts hidden; persistent left-edge reopen button added; both edge controls raised above normal page layers.")
+PY
+node --check frontend/backend-console-viewer.js
+node --check backend/console_live.js
+node --check backend/extension/browser/browser_live.js
+node --check backend/server.js
+git diff --check
+echo '=== EDGE BUTTON CSS / DOCK RULES ==='
+tail -n 8 frontend/backend-console-viewer.css
+tail -n 8 frontend/style.css
