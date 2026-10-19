@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent
+set +e
+node --check frontend/app.js
+NODE_STATUS=$?
+git diff --check -- frontend/index.html frontend/app.js frontend/style.css
+DIFF_STATUS=$?
+printf 'node_check_exit=%s\n' "$NODE_STATUS"
+printf 'diff_check_exit=%s\n' "$DIFF_STATUS"
+printf '%s\n' '--- Required gesture mapping ---'
+rg -n 'type === "left"|type === "up"|type === "down"|showMagnifier\(event.clientX, event.clientY\)' frontend/app.js
+MAP_STATUS=$?
+printf 'gesture_mapping_exit=%s\n' "$MAP_STATUS"
+printf '%s\n' '--- Final changed-file list ---'
+git status --short
+printf '%s\n' '--- Final check summary ---'
+if [ "$NODE_STATUS" -eq 0 ] && [ "$DIFF_STATUS" -eq 0 ] && [ "$MAP_STATUS" -eq 0 ]; then
+  echo 'PASS: JavaScript syntax, whitespace checks, and gesture handlers verified.'
+else
+  echo 'FAIL: one or more checks failed.'
+fi
+exit 0
