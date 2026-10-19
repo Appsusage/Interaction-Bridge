@@ -1,7 +1,0 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== frontend clear button and websocket routing ==='
-grep -n -A30 -B25 -E 'blv-clear-text|user-text|interactionEnabled|addEventListener\("message"|socket.send|selectedSession' frontend/browser-live-viewer.js | head -420
-printf '%s\n' '=== backend websocket message routing ==='
-sed -n '170,285p' backend/extension/browser/browser_live.js
-printf '%s\n' '=== focused-file line counts ==='
-wc -l frontend/browser-live-viewer.js backend/extension/browser/browser_live.js
