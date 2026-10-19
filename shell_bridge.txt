@@ -1,0 +1,24 @@
+cd /home/runner/workspace/ai-agent
+set +e
+python3 - <<'PY'
+from pathlib import Path
+p = Path("frontend/style.css")
+s = p.read_text()
+old = '.gesture-magnifier { position:fixed; width:150px; height:150px; z-index:2147482995;'
+new = '.gesture-magnifier { position:fixed; width:150px; height:150px; z-index:2147483001;'
+if old in s:
+    p.write_text(s.replace(old, new, 1))
+    print("PASS: magnifier lens now renders above the floating circle.")
+elif ' .gesture-magnifier { position:fixed; width:150px; height:150px; z-index:2147483001;' in s or 'z-index:2147483001' in s:
+    print("PASS: magnifier stacking already corrected.")
+else:
+    print("FAIL: magnifier CSS anchor not found.")
+PY
+node --check frontend/app.js
+NODE_STATUS=$?
+git diff --check -- frontend/index.html frontend/app.js frontend/style.css
+DIFF_STATUS=$?
+printf 'node_check_exit=%s\n' "$NODE_STATUS"
+printf 'diff_check_exit=%s\n' "$DIFF_STATUS"
+rg -n 'gestureSettingsPanel|gesturePetPanel|gestureMagnifier|Gesture-first collapsed state|z-index:2147483001|__floatGestureClickBlockUntil' frontend/index.html frontend/app.js frontend/style.css
+exit 0
