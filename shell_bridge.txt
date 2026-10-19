@@ -1,0 +1,26 @@
+cd /home/runner/workspace/ai-agent || exit 1
+# Schedule the Shell Bridge-only restart after this task has had time to write its Outbox result.
+nohup bash -c '
+  sleep 12
+  cd /home/runner/workspace/ai-agent || exit 1
+  OLD_PID=8854
+  kill -TERM "$OLD_PID" 2>/dev/null || true
+  for i in $(seq 1 30); do
+    kill -0 "$OLD_PID" 2>/dev/null || break
+    sleep 0.2
+  done
+  sleep 1
+  if ! ps -eo args | awk '\''$1 ~ /node$/ && $2 == "bridge/shell/server.js" { found=1 } END { exit !found }'\''; then
+    nohup node bridge/shell/server.js >/tmp/ai-agent-shell-bridge-restarted.log 2>&1 </dev/null &
+  fi
+  sleep 3
+  {
+    echo "=== Shell Bridge process ==="
+    ps -eo pid,ppid,etime,args | grep -E "[n]ode .*bridge/shell/server.js"
+    echo "=== Shell Bridge startup log ==="
+    tail -30 /tmp/ai-agent-shell-bridge-restarted.log 2>/dev/null || true
+    echo "=== Backend process unchanged ==="
+    ps -eo pid,ppid,etime,args | grep -E "[n]ode .*backend/server.js"
+  } >/tmp/ai-agent-shell-float-restart-check.log 2>&1
+' >/tmp/ai-agent-shell-float-restart-scheduler.log 2>&1 </dev/null &
+echo "SHELL_BRIDGE_RESTART_SCHEDULED_AFTER_OUTBOX"
