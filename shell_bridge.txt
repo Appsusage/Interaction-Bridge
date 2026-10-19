@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+set +e
+printf '%s\n' '=== HAND GESTURE IMPLEMENTATION RESEARCH ==='
+printf '%s\n' '--- floating dock CSS ---'
+sed -n '1480,1605p' frontend/style.css
+printf '%s\n' '--- settings dialogs and settings launch handlers ---'
+rg -n -i -C 3 'settings.?modal|setting.?modal|openSettings|showSettings|settingsModal|固定设置|设置窗|设置面板|settings-panel|settings-drawer' frontend --glob '*.html' --glob '*.css' --glob '*.js'
+printf '%s\n' '--- pet / companion UI and launch handlers ---'
+rg -n -i -C 3 '宠宝|pet.?[a-z_-]*|companion|mascot|召唤|宠物' frontend --glob '*.html' --glob '*.css' --glob '*.js'
+printf '%s\n' '--- magnifier / zoom handlers ---'
+rg -n -i -C 3 'magnif|放大镜|screen.?zoom|zoom.?screen|loupe' frontend --glob '*.html' --glob '*.css' --glob '*.js'
+printf '%s\n' '=== RESEARCH EXIT ==='
+exit 0
