@@ -1,5 +1,1 @@
-cd /home/runner/workspace/ai-agent && set -eu
-printf '%s\n' '=== Message style markup and CSS ==='
-grep -n -A35 -B20 -E 'classList\.(add|remove|toggle).*\b(user|ai|assistant)|class="[^"]*(user|ai|assistant)[^"]*"|\.user(-message|-chat)?\b|\.ai(-message|-chat)?\b|\.message(-user|-ai)?\b|typeWriter\(' frontend/app.js frontend/index.html frontend/*.css 2>/dev/null | head -420
-printf '%s\n' '=== CSS files ==='
-find frontend -maxdepth 2 -type f -name '*.css' -print
+cd /home/runner/workspace/ai-agent && grep -n -i -A15 -B15 '清空' frontend/app.js frontend/index.html frontend/*.css 2>/dev/null | head -400
