@@ -1,0 +1,40 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+import sys
+server_path = Path('bridge/shell/server.js')
+client_path = Path('frontend/shell-float.js')
+server = server_path.read_text()
+client = client_path.read_text()
+old_upload = '''    await dropboxUpload(
+      outboxPath,
+      logger.get()
+    );
+
+    throw error;'''
+count = server.count(old_upload)
+if count != 2:
+    print(f'ABORT: expected 2 early error Outbox uploads, found {count}')
+    sys.exit(2)
+server = server.replace(old_upload, '''    await dropboxUpload(
+      outboxPath,
+      logger.get()
+    );
+
+    publishShellFloatState({ event: "finish", taskName, status: "已写入 Outbox（异常结果）· 10 秒后关闭" });
+    throw error;''', 2)
+old_finish_guard = 'if (seq === lastSeq && state.event !== "finish") return;'
+if old_finish_guard not in client:
+    print('ABORT: finish poll guard anchor missing'); sys.exit(2)
+client = client.replace(old_finish_guard, 'if (seq === lastSeq) return;', 1)
+server_path.write_text(server, encoding='utf-8')
+client_path.write_text(client, encoding='utf-8')
+print('PATCH_OK: failure Outbox paths also finish the float; repeated finish polls no longer reopen it')
+PY
+STATUS=$?
+if [ "$STATUS" -ne 0 ]; then exit "$STATUS"; fi
+node --check bridge/shell/server.js && node --check bridge/shell/shell_float.js && node --check backend/server.js && node --check frontend/shell-float.js && git diff --check
+printf '\n=== FINAL TARGETED DIFF ===\n'
+git diff -- bridge/shell/server.js backend/server.js frontend/index.html | sed -n '1,240p'
+printf '\n=== NEW FILES ===\n'
+git status --short -- bridge/shell/shell_float.js frontend/shell-float.js
