@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-grep -n -E 'gaze-left-left|gaze-right-left|gaze-near-width|gaze-far-width|gaze-far-opacity' backend/extension/pet/limbo/pet.js
-grep -n 'gaze-far-opacity' backend/extension/pet/limbo/pet.css
-node --check backend/extension/pet/limbo/pet.js
-git diff --check
