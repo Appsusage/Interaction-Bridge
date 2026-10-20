@@ -1,0 +1,12 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo ROUTES
+sed -n '1275,1370p' backend/server.js
+echo CURSOR
+sed -n '1,130p' backend/extension/pet/cursor/index.js
+echo RECOGNITION
+sed -n '1,135p' backend/extension/pet/recognition/index.js
+echo KEY
+sed -n '1,120p' backend/server.js | grep -n -i browser
+echo DONE
