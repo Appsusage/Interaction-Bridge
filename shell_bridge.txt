@@ -1,0 +1,22 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+const base='backend/extension/pet/limbo/';
+const files=['pet.css','limbo.css'];
+const old='.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-eye.left{left:1px;right:auto;top:4px;opacity:1;transform:scaleX(.92)}';
+const replacement='.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-eye.left{left:0px;right:auto;top:4px;opacity:1;transform:scaleX(.92)}';
+let changed=0;
+for(const name of files){
+ const p=base+name;
+ if(!fs.existsSync(p)){console.log('SKIP missing '+p);continue;}
+ let s=fs.readFileSync(p,'utf8');
+ if(s.includes(replacement)){console.log('ALREADY updated '+p);continue;}
+ if(!s.includes(old)){console.log('EXPECTED rule not found in '+p+'; no change to this file');continue;}
+ s=s.replace(old,replacement);
+ fs.writeFileSync(p,s);
+ console.log('UPDATED '+p+' left-eye leftward offset: 1px -> 0px');
+ changed++;
+}
+console.log('FILES_CHANGED='+changed);
+JS
+node --check backend/extension/pet/limbo/pet.js
