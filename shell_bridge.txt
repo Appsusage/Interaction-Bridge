@@ -1,0 +1,22 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== active node server commands ==="
+pgrep -af 'node|npm' | head -n 40
+echo "=== port listener ==="
+ss -ltnp 2>&1 | grep ':3000' || true
+echo "=== server source ==="
+sed -n '50,90p' backend/server.js
+sed -n '1340,1410p' backend/server.js
+echo "=== package start scripts ==="
+node -e "const p=require('./package.json'); console.log(JSON.stringify(p.scripts||{},null,2))" 2>&1
+echo "=== HTTP probes ==="
+for path in / /browser/cursor/status /browser/recognition/inspect; do
+  if [ "$path" = "/" ]; then
+    code=$(curl -sS -o /tmp/pet_probe_body.txt -w '%{http_code}' --max-time 4 "http://127.0.0.1:3000/" 2>&1)
+  else
+    code=$(curl -sS -o /tmp/pet_probe_body.txt -w '%{http_code}' --max-time 4 -X POST "http://127.0.0.1:3000$path" -H 'Content-Type: application/json' --data '{}' 2>&1)
+  fi
+  echo "$path http=$code body=$(head -c 200 /tmp/pet_probe_body.txt 2>/dev/null)"
+done
+echo PET_API_DIAG_COMPLETE
