@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf '%s\n' '--- pet.js lines 60-85 ---' && nl -ba backend/extension/pet/limbo/pet.js | sed -n '60,85p'
