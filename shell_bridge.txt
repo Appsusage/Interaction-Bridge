@@ -1,0 +1,15 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== server processes ==="
+pgrep -af '^node backend/server.js$' || true
+echo "=== HTTP root ==="
+curl -sS -o /tmp/pet_probe_body.txt -w 'GET / http=%{http_code}\n' --max-time 5 http://127.0.0.1:3000/ 2>&1
+echo "=== route probes without browser key (expected auth denial if registered) ==="
+for route in /browser/session /browser/cursor/status /browser/cursor/acquire /browser/recognition/inspect; do
+  code=$(curl -sS -o /tmp/pet_probe_body.txt -w '%{http_code}' --max-time 5 -X POST "http://127.0.0.1:3000$route" -H 'Content-Type: application/json' --data '{}' 2>&1)
+  echo "$route http=$code response=$(head -c 180 /tmp/pet_probe_body.txt 2>/dev/null)"
+done
+echo "=== server source import and endpoint markers ==="
+grep -n -E 'acquirePetCursor|capturePetRecognitionFrame|/browser/cursor/|/browser/recognition/' backend/server.js
+echo PET_POST_RESTART_PROBE_COMPLETE
