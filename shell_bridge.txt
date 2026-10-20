@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '\n=== frontend references to /browser/live and session attach/list ===\n'
-grep -RniE '/browser/live|type: ?"attach"|session-created|type: ?"sessions"|sessionId.*browser' frontend backend --include='*.js' --include='*.html' --include='*.ts' --include='*.jsx' 2>/dev/null | head -240
-printf '\n=== pet cursor/recognition module interface ===\n'
-for f in backend/extension/pet/cursor/index.js backend/extension/pet/recognition/index.js; do echo "--- $f"; nl -ba "$f" | sed -n '1,220p'; done
