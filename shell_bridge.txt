@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n '1,90p' backend/extension/pet/limbo/pet.css && grep -n 'setGaze\|data-gaze' backend/extension/pet/limbo/pet.js
