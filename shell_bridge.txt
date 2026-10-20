@@ -1,0 +1,17 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+import WebSocket from 'ws';
+const port = Number(process.env.PORT || 3000);
+const ws = new WebSocket(`ws://127.0.0.1:${port}/browser/live`);
+const timer = setTimeout(() => { console.log('SESSION_LIST_TIMEOUT'); ws.close(); process.exit(0); }, 5000);
+ws.on('open', () => console.log('WS_CONNECTED'));
+ws.on('message', raw => {
+  let m; try { m = JSON.parse(raw.toString()); } catch { return; }
+  if (m.type === 'sessions') {
+    console.log('BROWSER_LIVE_SESSIONS=' + JSON.stringify(m.sessions || []));
+    clearTimeout(timer); ws.close();
+  } else if (m.type === 'error') console.log('WS_ERROR=' + String(m.message || '').slice(0,300));
+});
+ws.on('error', e => { console.log('WS_CONNECT_ERROR=' + String(e.message || e).slice(0,300)); clearTimeout(timer); process.exit(0); });
+ws.on('close', () => { clearTimeout(timer); process.exit(0); });
+NODE
