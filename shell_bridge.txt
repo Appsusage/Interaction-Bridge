@@ -1,0 +1,10 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== browser route contracts ==="
+grep -n -A7 -B2 -E 'app.post\("/browser/(session|open|read|cursor/acquire|cursor/move|cursor/click|cursor/release|recognition/capture|recognition/inspect|recognition/verify)' backend/server.js
+echo "=== cursor module operations ==="
+sed -n '1,240p' backend/extension/pet/cursor/index.js
+echo "=== recognition module operations ==="
+sed -n '1,220p' backend/extension/pet/recognition/index.js
+echo PET_API_CONTRACTS_READ_COMPLETE
