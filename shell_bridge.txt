@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent || exit 1
+grep -n gaze backend/extension/pet/limbo/pet.css
