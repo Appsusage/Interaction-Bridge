@@ -1,0 +1,18 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== process state ==="
+ps -p 139,748 -o pid,ppid,stat,lstart,args 2>&1
+echo "=== backend restart log ==="
+tail -n 80 /tmp/ai-agent-pet-api-restart.log 2>&1
+echo "=== server port and duplicate checks ==="
+for port in 3000 3001 3002; do
+  code=$(curl -sS -o /tmp/pet_probe_body.txt -w '%{http_code}' --max-time 2 "http://127.0.0.1:$port/" 2>&1)
+  echo "port=$port GET / http=$code body=$(head -c 100 /tmp/pet_probe_body.txt 2>/dev/null)"
+done
+echo "=== runtime route probe on port 3000 ==="
+for route in /browser/session /browser/cursor/status /browser/cursor/acquire; do
+  code=$(curl -sS -o /tmp/pet_probe_body.txt -w '%{http_code}' --max-time 3 -X POST "http://127.0.0.1:3000$route" -H 'Content-Type: application/json' --data '{}' 2>&1)
+  echo "$route http=$code body=$(head -c 150 /tmp/pet_probe_body.txt 2>/dev/null)"
+done
+echo PET_API_PROCESS_CHECK_COMPLETE
