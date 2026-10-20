@@ -1,0 +1,24 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+const files=['backend/extension/pet/limbo/pet.css','backend/extension/pet/limbo/limbo.css'];
+for (const p of files) {
+  if (!fs.existsSync(p)) { console.log('SKIP missing '+p); continue; }
+  let s=fs.readFileSync(p,'utf8');
+  let leftCount=0, rightCount=0;
+  s=s.replace(/([^{}]*data-gaze=["']left["'][^{}]*\.limbo-eye\.left[^{}]*)\{([^{}]*)\}/g,(whole,selector,body)=>{
+    if (!/left\s*:\s*(?:0|1|-1)px\s*;/.test(body)) return whole;
+    const next=body.replace(/left\s*:\s*(?:0|1|-1)px\s*;/,'left:-1px;');
+    if(next!==body){leftCount++; return selector+'{'+next+'}';}
+    return whole;
+  });
+  s=s.replace(/([^{}]*data-gaze=["']right["'][^{}]*\.limbo-eye\.right[^{}]*)\{([^{}]*)\}/g,(whole,selector,body)=>{
+    if (!/right\s*:\s*(?:0|1|-1)px\s*;/.test(body)) return whole;
+    const next=body.replace(/right\s*:\s*(?:0|1|-1)px\s*;/,'right:-1px;');
+    if(next!==body){rightCount++; return selector+'{'+next+'}';}
+    return whole;
+  });
+  if(leftCount+rightCount>0) fs.writeFileSync(p,s);
+  console.log(p+': left-gaze left eye -> left:-1px ('+leftCount+' rule(s)); mirrored right-gaze right eye -> right:-1px ('+rightCount+' rule(s))');
+}
+JS
