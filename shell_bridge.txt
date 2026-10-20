@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '--- newborn CSS rules ---'
-grep -n -E -B2 -A8 'Newborn eye final size|limbo-pet-newborn.*limbo-eye.left|height:22px|top:-3px' backend/extension/pet/limbo/pet.css
-printf '%s\n' '--- newborn timing in pet.js ---'
-grep -n -E -B5 -A8 '12000|12_000|newborn|setTimeout' backend/extension/pet/limbo/pet.js | grep -E -B3 -A5 '12000|12_000|newborn' | head -160
