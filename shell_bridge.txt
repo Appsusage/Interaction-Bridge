@@ -1,1 +1,1 @@
-cd /home/runner/workspace/ai-agent && sed -i '/cheek.right{right:1px;left:auto;opacity:.8}/d; /data-gaze="forward".*limbo-cheek{opacity:1}/d; /Minimal side-gaze blush shift/,$d' backend/extension/pet/limbo/pet.css && git diff --check
+cd /home/runner/workspace/ai-agent && grep -n -B2 -A3 'limbo-cheek\|limbo-pet-blush' backend/extension/pet/limbo/pet.css backend/extension/pet/limbo/pet.js
