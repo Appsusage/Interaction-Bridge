@@ -1,0 +1,78 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/pet/limbo/pet.css")
+s=p.read_text()
+marker="/* Newborn eye final size 16x22 and exploratory forward pupil. */"
+if marker in s:
+    print("PATCH_ALREADY_PRESENT")
+else:
+    s += """
+
+/* Newborn eye final size 16x22 and exploratory forward pupil. */
+.limbo-pet.limbo-pet-newborn .limbo-pet-face .limbo-eye.left{
+  width:16px!important;min-width:16px!important;height:22px!important;
+  top:-3px!important;left:8px!important;right:auto!important;
+  box-sizing:border-box!important;border-radius:50%!important;overflow:hidden!important;
+}
+.limbo-pet.limbo-pet-newborn .limbo-pet-face .limbo-eye.left .limbo-pupil{
+  width:6px!important;height:8px!important;
+  left:var(--newborn-pupil-x,5px)!important;
+  top:var(--newborn-pupil-y,6px)!important;
+  border-radius:50%!important;background:#063b78!important;
+  box-shadow:inset 0 0 1px rgba(0,0,0,.8)!important;
+  transition:left 180ms ease,top 180ms ease!important;
+}
+.limbo-pet.limbo-pet-newborn .limbo-pet-face .limbo-eye.left .limbo-pupil::after{
+  left:1px!important;top:1px!important;width:2px!important;height:2px!important;
+}
+"""
+    p.write_text(s)
+    print("NEWBORN_EYE_16X22_APPLIED")
+PY
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/pet/limbo/pet.js")
+s=p.read_text()
+old='''      const pupilPosition = {
+        left: [1, 4], right: [7, 4], up: [4, 1], down: [4, 8], forward: [4, 4]
+      }[gaze] || [4, 4];
+'''
+new='''      const pupilPosition = {
+        left: [1, 6], right: [9, 6], up: [5, 1], down: [5, 12], forward: [5, 6]
+      }[gaze] || [5, 6];
+'''
+if old not in s:
+    raise SystemExit("PUPIL_POSITION_BLOCK_NOT_FOUND; stopped without changing JS")
+s=s.replace(old,new,1)
+# Add subtle random exploration only while facing forward and only once.
+anchor='''    orb.querySelectorAll(".limbo-pupil").forEach(p => { p.style.transform = ""; });
+'''
+addition='''    orb.querySelectorAll(".limbo-pupil").forEach(p => { p.style.transform = ""; });
+    // A newborn's forward-facing pupil gently explores nearby points.
+    if (orb.classList.contains("limbo-pet-newborn") && gaze === "forward") {
+      if (orb._newbornExploreTimer) clearTimeout(orb._newbornExploreTimer);
+      const explore = () => {
+        if (!orb.isConnected || !orb.classList.contains("limbo-pet-newborn") || orb.dataset.gaze !== "forward") return;
+        const x = 2 + Math.floor(Math.random() * 7);
+        const y = 2 + Math.floor(Math.random() * 12);
+        orb.style.setProperty("--newborn-pupil-x", x + "px");
+        orb.style.setProperty("--newborn-pupil-y", y + "px");
+        orb._newbornExploreTimer = setTimeout(explore, 650 + Math.floor(Math.random() * 900));
+      };
+      orb._newbornExploreTimer = setTimeout(explore, 450);
+    } else if (orb._newbornExploreTimer) {
+      clearTimeout(orb._newbornExploreTimer);
+      orb._newbornExploreTimer = null;
+    }
+'''
+if "A newborn's forward-facing pupil gently explores nearby points." not in s:
+    if anchor not in s: raise SystemExit("SET_GAZE_INSERTION_ANCHOR_NOT_FOUND")
+    s=s.replace(anchor,addition,1)
+    p.write_text(s)
+    print("FORWARD_PUPIL_EXPLORATION_APPLIED")
+else:
+    print("EXPLORATION_ALREADY_PRESENT")
+PY
+node --check backend/extension/pet/limbo/pet.js || exit 22
+git diff --check || exit 21
