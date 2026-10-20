@@ -1,0 +1,35 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+jp = Path('backend/extension/pet/limbo/pet.js')
+cp = Path('backend/extension/pet/limbo/limbo.css')
+js = jp.read_text(); css = cp.read_text()
+old_js = '''    orb.style.setProperty("--gaze-strength", String(strength));
+    orb.style.setProperty("--gaze-left-left", gaze === "left" ? `${Math.max(0, 3 - 10 * strength)}px` : gaze === "right" ? `${3 + 9 * strength}px` : "3px");
+    orb.style.setProperty("--gaze-right-left", gaze === "left" ? `${23 - 9 * strength}px` : gaze === "right" ? `${26 - Math.max(0, 3 - 10 * strength)}px` : "23px");
+    orb.style.setProperty("--gaze-near-width", `${Math.max(5, 8 - 3 * strength)}px`);
+    orb.style.setProperty("--gaze-far-width", `${Math.min(9, 8 + strength)}px`);'''
+new_js = '''    orb.style.setProperty("--gaze-strength", String(strength));
+    // Mirror the complete left-looking eye boxes across the 34px face.
+    const nearWidth = Math.max(5, 8 - 3 * strength);
+    const farWidth = Math.min(9, 8 + strength);
+    const leftPoseLeftEyeX = Math.max(0, 3 - 10 * strength);
+    const leftPoseRightEyeX = 23 - 9 * strength;
+    const rightPoseLeftEyeX = 34 - (leftPoseRightEyeX + farWidth);
+    const rightPoseRightEyeX = 34 - (leftPoseLeftEyeX + nearWidth);
+    orb.style.setProperty("--gaze-left-left", `${(gaze === "left" ? leftPoseLeftEyeX : gaze === "right" ? rightPoseLeftEyeX : 3).toFixed(2)}px`);
+    orb.style.setProperty("--gaze-right-left", `${(gaze === "left" ? leftPoseRightEyeX : gaze === "right" ? rightPoseRightEyeX : 23).toFixed(2)}px`);
+    orb.style.setProperty("--gaze-near-width", `${nearWidth}px`);
+    orb.style.setProperty("--gaze-far-width", `${farWidth}px`);'''
+old1 = '.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-eye.left{left:0px;right:auto;top:1px;opacity:1;transform:scaleX(.95)transform:scaleX(.95);}'
+new1 = '.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-eye.left{left:0px;right:auto;top:1px;opacity:1;transform:scaleX(.95)}'
+old2 = '.limbo-pet[data-gaze="right"] .limbo-pet-face .limbo-eye.right{left:25px;right:auto;top:4px;opacity:1;transform:scaleX(.92)}'
+new2 = '.limbo-pet[data-gaze="right"] .limbo-pet-face .limbo-eye.right{left:25px;right:auto;top:1px;opacity:1;transform:scaleX(.95)}'
+if old_js not in js or old1 not in css or old2 not in css:
+    raise SystemExit('STOP: one or more expected source blocks differ; no files changed')
+js = js.replace(old_js, new_js, 1)
+css = css.replace(old1, new1, 1).replace(old2, new2, 1)
+jp.write_text(js); cp.write_text(css)
+print('UPDATED pet.js and limbo.css; pet.css left unchanged because its static eye positions and face rotation are already mirrored.')
+PY
+status=$?; if [ "$status" -ne 0 ]; then exit "$status"; fi
+printf '\n=== changed code ===\n' && grep -n -A 13 -B 2 'leftPoseLeftEyeX' backend/extension/pet/limbo/pet.js && grep -n -E 'data-gaze="(left|right)".*limbo-eye\.(left|right)' backend/extension/pet/limbo/limbo.css | tail -8 && printf '\n=== hashes ===\n' && sha256sum backend/extension/pet/limbo/pet.js backend/extension/pet/limbo/pet.css backend/extension/pet/limbo/limbo.css
