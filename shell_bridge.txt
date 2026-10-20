@@ -1,0 +1,27 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "=== restart stale backend PID 139 ==="
+ps -p 139 -o pid,args
+kill -TERM 139 2>/dev/null
+sleep 2
+if kill -0 139 2>/dev/null; then
+  echo "PID 139 still alive after TERM"
+else
+  echo "Old backend process stopped"
+fi
+echo "=== start current backend source ==="
+nohup node backend/server.js >/tmp/ai-agent-pet-api-restart.log 2>&1 &
+newpid=$!
+echo "new_pid=$newpid"
+sleep 3
+echo "=== verify backend process and log ==="
+ps -p "$newpid" -o pid,ppid,args 2>&1
+tail -n 30 /tmp/ai-agent-pet-api-restart.log 2>/dev/null || true
+echo "=== route probes (401 means route exists and auth middleware blocked request) ==="
+for route in /browser/session /browser/cursor/status /browser/recognition/inspect; do
+  code=$(curl -sS -o /tmp/pet_probe_body.txt -w '%{http_code}' --max-time 5 -X POST "http://127.0.0.1:3000$route" -H 'Content-Type: application/json' --data '{}' 2>&1)
+  printf '%s http=%s body=' "$route" "$code"
+  head -c 180 /tmp/pet_probe_body.txt 2>/dev/null; echo
+done
+echo PET_API_RESTART_VERIFICATION_COMPLETE
