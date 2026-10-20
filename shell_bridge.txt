@@ -1,0 +1,32 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+const files=['backend/extension/pet/limbo/pet.css','backend/extension/pet/limbo/limbo.css'];
+for (const p of files) {
+  if (!fs.existsSync(p)) { console.log('SKIP missing '+p); continue; }
+  let s=fs.readFileSync(p,'utf8');
+  let edits=0;
+  // Gaze-left: move the left eye farther left, and set horizontal compression to 95%.
+  s=s.replace(/([^{}]*data-gaze=["']left["'][^{}]*\.limbo-eye\.left[^{}]*)\{([^{}]*)\}/g,(whole,selector,body)=>{
+    let next=body;
+    if (/left\s*:\s*-?\d+(?:\.\d+)?px\s*;/.test(next)) next=next.replace(/left\s*:\s*-?\d+(?:\.\d+)?px\s*;/,'left:-5px;');
+    else return whole;
+    if (/transform\s*:\s*scaleX\([^)]*\)\s*;/.test(next)) next=next.replace(/transform\s*:\s*scaleX\([^)]*\)\s*;/,'transform:scaleX(.95);');
+    else next += 'transform:scaleX(.95);';
+    if(next!==body) edits++;
+    return selector+'{'+next+'}';
+  });
+  // Mirrored gaze-right: the right eye gets the matching -5px inward/outward offset and same 95% width.
+  s=s.replace(/([^{}]*data-gaze=["']right["'][^{}]*\.limbo-eye\.right[^{}]*)\{([^{}]*)\}/g,(whole,selector,body)=>{
+    let next=body;
+    if (/right\s*:\s*-?\d+(?:\.\d+)?px\s*;/.test(next)) next=next.replace(/right\s*:\s*-?\d+(?:\.\d+)?px\s*;/,'right:-5px;');
+    else return whole;
+    if (/transform\s*:\s*scaleX\([^)]*\)\s*;/.test(next)) next=next.replace(/transform\s*:\s*scaleX\([^)]*\)\s*;/,'transform:scaleX(.95);');
+    else next += 'transform:scaleX(.95);';
+    if(next!==body) edits++;
+    return selector+'{'+next+'}';
+  });
+  if(edits) fs.writeFileSync(p,s);
+  console.log(p+': updated '+edits+' mirrored gaze rule(s); compression target 5% (scaleX(.95)).');
+}
+JS
