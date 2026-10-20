@@ -1,7 +1,34 @@
 cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '--- ALL cheek rules ---'
-grep -n -E -B1 -A3 'limbo-cheek\.(left|right)|data-gaze="(left|right)"' backend/extension/pet/limbo/pet.css
-printf '%s\n' '--- gaze logic ---'
-grep -n -E -B4 -A12 'function setGaze|dataset.gaze|gaze === "left"|gaze === "right"' backend/extension/pet/limbo/pet.js | head -180
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/pet/limbo/pet.css")
+s=p.read_text()
+marker="/* Final newborn blush alignment for the 19x25 eye. */"
+if marker not in s:
+    s += """
 
-printf '%s\\n' 'AUDIT_S1167_DONE'
+/* Final newborn blush alignment for the 19x25 eye. */
+.limbo-pet.limbo-pet-newborn[data-gaze="left"] .limbo-pet-face .limbo-cheek.left{
+  left:0!important;right:auto!important;top:22px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="left"] .limbo-pet-face .limbo-cheek.right{
+  left:12px!important;right:auto!important;top:22px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="right"] .limbo-pet-face .limbo-cheek.left{
+  left:14px!important;right:auto!important;top:22px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="right"] .limbo-pet-face .limbo-cheek.right{
+  left:26px!important;right:auto!important;top:22px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="forward"] .limbo-pet-face .limbo-cheek.left{
+  left:4px!important;right:auto!important;top:22px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="forward"] .limbo-pet-face .limbo-cheek.right{
+  left:20px!important;right:auto!important;top:22px!important;
+}
+"""
+p.write_text(s)
+print("NEWBORN_BLUSH_ALIGNED_TO_EYE_BOTTOM")
+PY
+git diff --check || exit 21
+grep -n -A24 'Final newborn blush alignment' backend/extension/pet/limbo/pet.css
