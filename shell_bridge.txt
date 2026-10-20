@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n '55,105p' backend/extension/pet/limbo/pet.css && sed -n '215,305p' backend/extension/pet/limbo/pet.css && grep -n 'limbo-pet-blush\|blush' backend/extension/pet/limbo/pet.js
