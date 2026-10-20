@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -i '/cheek.left{opacity:.7}/d' backend/extension/pet/limbo/pet.css
