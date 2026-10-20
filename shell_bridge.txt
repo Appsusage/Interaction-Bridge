@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+const files=['backend/extension/pet/limbo/pet.css','backend/extension/pet/limbo/limbo.css'];
+for(const p of files){
+ if(!fs.existsSync(p)){console.log('SKIP missing '+p);continue;}
+ let s=fs.readFileSync(p,'utf8'), edits=0;
+ // For gaze-left only, reset the left eye's horizontal left offset to 0px; leave top/scale and other eye untouched.
+ s=s.replace(/([^{}]*data-gaze=["']left["'][^{}]*\.limbo-eye\.left[^{}]*)\{([^{}]*)\}/g,(whole,selector,body)=>{
+   if(!/left\s*:\s*-?\d+(?:\.\d+)?px\s*;/.test(body)) return whole;
+   const next=body.replace(/left\s*:\s*-?\d+(?:\.\d+)?px\s*;/,'left:0px;');
+   if(next!==body){edits++;return selector+'{'+next+'}';}
+   return whole;
+ });
+ if(edits) fs.writeFileSync(p,s);
+ console.log(p+': reset gaze-left left-eye horizontal offset to 0px; rules changed='+edits);
+}
+JS
