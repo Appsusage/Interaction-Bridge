@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -i '/data-gaze="left".*limbo-cheek.right{opacity:.7}/d' backend/extension/pet/limbo/pet.css
