@@ -1,0 +1,18 @@
+#!/bin/sh
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo '=== browser_service.js ==='
+sed -n '1,210p' backend/extension/browser/browser_service.js
+echo '=== pet.js ==='
+sed -n '1,280p' backend/extension/pet/limbo/pet.js
+echo '=== browser_live.js input handler ==='
+sed -n '125,215p' backend/extension/browser/browser_live.js
+echo '=== server imports ==='
+sed -n '1,100p' backend/server.js
+echo '=== server browser route references ==='
+grep -n -E 'createBrowserSession|listBrowserSessions|getBrowserPage|attachBrowserLive|browser-sessions|browser/session|/browser' backend/server.js | head -n 160
+echo '=== frontend references ==='
+grep -n -E 'pet/limbo/pet|browser.*session|sessionId|browser-live|browserLive' frontend/index.html frontend/app.js | head -n 160
+echo '=== mapper quick test ==='
+node --input-type=module -e "import('./backend/extension/pet/recognition/coordinate_mapper.js').then(m=>{console.log(JSON.stringify(m.mapImagePointToViewport({x:50,y:25},{width:100,height:50},{width:200,height:100})));console.log(JSON.stringify(m.mapImageBoxToViewport({x:10,y:5,width:20,height:10},{width:100,height:50},{width:200,height:100})))})"
+echo INSPECTION_COMPLETE
