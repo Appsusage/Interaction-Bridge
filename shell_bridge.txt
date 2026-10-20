@@ -1,0 +1,28 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+const base = `http://127.0.0.1:${Number(process.env.PORT || 3000)}`;
+const key = process.env.BROWSER_API_KEY;
+if (!key) { console.log('NO_BROWSER_API_KEY_IN_SHELL_ENV'); process.exit(0); }
+const sessionId = '1792536679004-rcu24fqamq9';
+async function post(path, body) {
+  const r = await fetch(base + path, {method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify(body)});
+  let data; try { data=await r.json(); } catch { data={}; }
+  return {status:r.status,data};
+}
+const inspect=await post('/browser/recognition/inspect',{sessionId});
+console.log('LIVE_INSPECT_STATUS='+inspect.status);
+if (inspect.status===200) console.log('LIVE_PAGE_SUMMARY='+JSON.stringify({url:inspect.data.url,title:inspect.data.title,viewport:inspect.data.viewport,candidateCount:inspect.data.candidates?.length,challengeDetected:inspect.data.challengeDetected,bodyTextChars:inspect.data.text?.length}));
+const capture=await post('/browser/recognition/capture',{sessionId,quality:45});
+console.log('LIVE_CAPTURE_STATUS='+capture.status);
+if (capture.status===200) console.log('LIVE_CAPTURE_META='+JSON.stringify({mimeType:capture.data.mimeType,viewport:capture.data.viewport,base64Length:capture.data.image?.length}));
+const acquire=await post('/browser/cursor/acquire',{sessionId});
+console.log('LIVE_CURSOR_ACQUIRE_STATUS='+acquire.status+' DATA='+JSON.stringify(acquire.data));
+if (acquire.status===200) {
+  const status=await post('/browser/cursor/status',{sessionId});
+  console.log('LIVE_CURSOR_STATUS='+status.status+' DATA='+JSON.stringify(status.data));
+  const move=await post('/browser/cursor/move',{sessionId,x:Math.max(0,(inspect.data?.viewport?.width||1)-3),y:3});
+  console.log('LIVE_CURSOR_HOVER_MOVE='+move.status+' DATA='+JSON.stringify(move.data));
+  const release=await post('/browser/cursor/release',{sessionId});
+  console.log('LIVE_CURSOR_RELEASE='+release.status+' DATA='+JSON.stringify(release.data));
+}
+NODE
