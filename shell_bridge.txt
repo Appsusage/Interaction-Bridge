@@ -1,0 +1,47 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/pet/limbo/pet.css")
+s=p.read_text()
+marker="/* Align blush with each eye's actual gaze pose and raised eye height. */"
+if marker in s:
+    print("PATCH_ALREADY_PRESENT")
+else:
+    s += """
+
+/* Align blush with each eye's actual gaze pose and raised eye height. */
+.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-cheek.left{
+  left:0!important;right:auto!important;top:11px!important;
+}
+.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-cheek.right{
+  left:12px!important;right:auto!important;top:15px!important;
+}
+.limbo-pet[data-gaze="right"] .limbo-pet-face .limbo-cheek.left{
+  left:14px!important;right:auto!important;top:15px!important;
+}
+.limbo-pet[data-gaze="right"] .limbo-pet-face .limbo-cheek.right{
+  left:26px!important;right:auto!important;top:11px!important;
+}
+/* Forward gaze keeps both blush marks under their normal eye positions. */
+.limbo-pet[data-gaze="forward"] .limbo-pet-face .limbo-cheek.left{
+  left:0!important;right:auto!important;top:15px!important;
+}
+.limbo-pet[data-gaze="forward"] .limbo-pet-face .limbo-cheek.right{
+  left:auto!important;right:0!important;top:15px!important;
+}
+/* Newborn eye is raised, so its single visible blush must be raised too. */
+.limbo-pet.limbo-pet-newborn[data-gaze="left"] .limbo-pet-face .limbo-cheek.left{
+  left:0!important;top:11px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="right"] .limbo-pet-face .limbo-cheek.left{
+  left:18px!important;top:11px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="forward"] .limbo-pet-face .limbo-cheek.left{
+  left:8px!important;top:14px!important;
+}
+"""
+    p.write_text(s)
+    print("BLUSH_ALIGNMENT_PATCH_APPLIED")
+PY
+git diff --check || exit 21
+grep -n -A35 'Align blush with each eye' backend/extension/pet/limbo/pet.css
