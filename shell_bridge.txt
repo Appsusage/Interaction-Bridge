@@ -1,4 +1,0 @@
-S1211
-from: ChatGPT
-to: shell
-message: Read-only inspect the browser integration in /home/runner/workspace/ai-agent. Check backend/extension/browser/browser_live.js if present and browser-related routes/references in backend/server.js. Report whether the existing user browser session is managed there, how its session state/ID can be accessed, whether there is a session-list or existing-session endpoint, and the next safe validation step. Include exact paths and line numbers. Do not edit files, start/stop/reload the server, or expose secrets. Send findings to Shell Bridge Outbox.
