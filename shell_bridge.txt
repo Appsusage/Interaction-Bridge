@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+const files=['backend/extension/pet/limbo/pet.css','backend/extension/pet/limbo/limbo.css','backend/extension/pet/limbo/pet.js'];
+for(const p of files){
+ console.log('\n===== '+p+' =====');
+ if(!fs.existsSync(p)){console.log('MISSING');continue;}
+ const lines=fs.readFileSync(p,'utf8').split(/\r?\n/);
+ for(let i=0;i<lines.length;i++){
+   if(/data-gaze|data-pose|limbo-eye|setGaze|scaleX|rotateY|translateX|translateY/.test(lines[i])){
+     const start=Math.max(0,i-1),end=Math.min(lines.length-1,i+1);
+     console.log((start+1)+'-'+(end+1)+': '+lines.slice(start,end+1).join('\n'));
+   }
+ }
+}
+JS
