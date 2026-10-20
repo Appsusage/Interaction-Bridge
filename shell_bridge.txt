@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '--- ALL cheek rules ---'
+grep -n -E -B1 -A3 'limbo-cheek\.(left|right)|data-gaze="(left|right)"' backend/extension/pet/limbo/pet.css
+printf '%s\n' '--- gaze logic ---'
+grep -n -E -B4 -A12 'function setGaze|dataset.gaze|gaze === "left"|gaze === "right"' backend/extension/pet/limbo/pet.js | head -180
