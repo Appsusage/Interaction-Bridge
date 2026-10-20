@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -n -B1 -A2 'limbo-cheek\|limbo-pet-blush' backend/extension/pet/limbo/pet.css && git diff --check -- backend/extension/pet/limbo/pet.css && git diff -- backend/extension/pet/limbo/pet.css
