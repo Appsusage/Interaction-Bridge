@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '\n=== server browser routes (1290-1335, 1390-1410) ===\n'
-nl -ba backend/server.js | sed -n '1290,1335p;1390,1410p'
-printf '\n=== browser_service session registry and lifecycle ===\n'
-grep -nE 'sessions|sessionId|createBrowserSession|listBrowserSessions|getBrowserPage|closeBrowserSession|session-created|session-closed|headless|persistent|launch' backend/extension/browser/browser_service.js | head -200
-printf '\n=== browser_service beginning and registry functions ===\n'
-nl -ba backend/extension/browser/browser_service.js | sed -n '1,230p'
-printf '\n=== server startup live attach ===\n'
-grep -nE 'attachBrowserLive|server\.listen|http\.createServer' backend/server.js | tail -30
