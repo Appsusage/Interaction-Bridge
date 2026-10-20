@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-sed -n '1,130p' backend/extension/pet/limbo/pet.css
-sed -n '45,100p' backend/extension/pet/limbo/pet.js
