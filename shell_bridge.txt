@@ -1,2 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-grep -n -E 'limbo-pet-newborn|limbo-pet-growing|limbo-cheek|limbo-pet-blush|setGaze\(' backend/extension/pet/limbo/pet.js backend/extension/pet/limbo/pet.css
