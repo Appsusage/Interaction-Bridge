@@ -3,32 +3,27 @@ python3 - <<'PY'
 from pathlib import Path
 p=Path("backend/extension/pet/limbo/pet.css")
 s=p.read_text()
-marker="/* Final newborn blush alignment for the 19x25 eye. */"
+marker="/* Minimal side-gaze blush shift: keep the forward position and move only the far cheek 4px. */"
 if marker not in s:
     s += """
 
-/* Final newborn blush alignment for the 19x25 eye. */
-.limbo-pet.limbo-pet-newborn[data-gaze="left"] .limbo-pet-face .limbo-cheek.left{
-  left:0!important;right:auto!important;top:22px!important;
+/* Minimal side-gaze blush shift: keep the forward position and move only the far cheek 4px. */
+.limbo-pet[data-gaze="left"] .limbo-pet-face .limbo-cheek.right{
+  left:auto!important;right:4px!important;top:15px!important;
 }
+.limbo-pet[data-gaze="right"] .limbo-pet-face .limbo-cheek.left{
+  left:4px!important;right:auto!important;top:15px!important;
+}
+/* Keep newborn blush close to its forward-gaze baseline; only shift the far cheek horizontally. */
 .limbo-pet.limbo-pet-newborn[data-gaze="left"] .limbo-pet-face .limbo-cheek.right{
-  left:12px!important;right:auto!important;top:22px!important;
+  left:auto!important;right:4px!important;top:14px!important;
 }
 .limbo-pet.limbo-pet-newborn[data-gaze="right"] .limbo-pet-face .limbo-cheek.left{
-  left:14px!important;right:auto!important;top:22px!important;
-}
-.limbo-pet.limbo-pet-newborn[data-gaze="right"] .limbo-pet-face .limbo-cheek.right{
-  left:26px!important;right:auto!important;top:22px!important;
-}
-.limbo-pet.limbo-pet-newborn[data-gaze="forward"] .limbo-pet-face .limbo-cheek.left{
-  left:4px!important;right:auto!important;top:22px!important;
-}
-.limbo-pet.limbo-pet-newborn[data-gaze="forward"] .limbo-pet-face .limbo-cheek.right{
-  left:20px!important;right:auto!important;top:22px!important;
+  left:4px!important;right:auto!important;top:14px!important;
 }
 """
 p.write_text(s)
-print("NEWBORN_BLUSH_ALIGNED_TO_EYE_BOTTOM")
+print("MINIMAL_BLUSH_SHIFT_APPLIED")
 PY
 git diff --check || exit 21
-grep -n -A24 'Final newborn blush alignment' backend/extension/pet/limbo/pet.css
+grep -n -A15 'Minimal side-gaze blush shift' backend/extension/pet/limbo/pet.css
