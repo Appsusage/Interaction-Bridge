@@ -1,0 +1,44 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/pet/limbo/pet.css")
+s=p.read_text()
+s += """
+
+/* Final newborn-eye geometry: one eye is at least 3x normal and follows gaze. */
+.limbo-pet.limbo-pet-newborn .limbo-pet-face .limbo-eye.left{
+  width:24px!important;min-width:24px!important;height:30px!important;
+  top:-2px!important;left:5px!important;right:auto!important;
+  border-radius:50%!important;box-sizing:border-box!important;
+  transform:none!important;transform-origin:50% 50%!important;
+  background:radial-gradient(ellipse at 35% 28%,#b8f4ff 0%,#42cfff 32%,#129ce8 72%,#0874c6 100%)!important;
+  border:2px solid rgba(224,252,255,.98)!important;
+  box-shadow:0 0 5px rgba(66,207,255,.72),inset 0 0 2px rgba(255,255,255,.55)!important;
+  overflow:hidden!important;
+}
+.limbo-pet.limbo-pet-newborn .limbo-pet-face .limbo-eye.left .limbo-pupil{
+  left:7px!important;top:7px!important;width:10px!important;height:13px!important;
+  border-radius:50%!important;background:#063b78!important;
+  box-shadow:inset 0 0 1px rgba(0,0,0,.8)!important;
+}
+.limbo-pet.limbo-pet-newborn .limbo-pet-face .limbo-eye.left .limbo-pupil::after{
+  left:2px!important;top:2px!important;width:3px!important;height:3px!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="left"] .limbo-pet-face .limbo-eye.left{
+  left:0!important;top:-2px!important;transform:rotate(-8deg) scaleX(.78)!important;
+  transform-origin:50% 50%!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="right"] .limbo-pet-face .limbo-eye.left{
+  left:10px!important;top:-2px!important;transform:rotate(8deg) scaleX(.78)!important;
+  transform-origin:50% 50%!important;
+}
+.limbo-pet.limbo-pet-newborn[data-gaze="forward"] .limbo-pet-face .limbo-eye.left{
+  left:5px!important;top:-2px!important;transform:none!important;
+}
+"""
+p.write_text(s)
+print("NEWBORN_EYE_3X_AND_GAZE_CSS_APPLIED")
+PY
+node --check backend/extension/pet/limbo/pet.js || exit 22
+git diff --check || exit 21
+grep -n -A34 'Final newborn-eye geometry' backend/extension/pet/limbo/pet.css
