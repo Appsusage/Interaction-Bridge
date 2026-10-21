@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== PET MOVEMENT AND AUTONOMY LOGIC (lines 1-245) ==='
-sed -n '1,245p' backend/extension/pet/limbo/pet.js
