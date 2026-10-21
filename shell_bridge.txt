@@ -1,0 +1,26 @@
+#!/bin/bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 1
+echo "TASK=pet_follow_settle_measurement"
+echo "=== relevant pet CSS motion ==="
+grep -n -E 'transition:.*(left|top)|\.limbo-pet \{|limbo-breathe|transform:' backend/extension/pet/limbo/pet.css | head -60
+echo "=== four-way follow test with transition settling ==="
+node --input-type=module <<'NODE'
+import {createBrowserSession,getBrowserPage,closeBrowserSession} from './backend/extension/browser/browser_service.js';
+import cursor from './backend/extension/pet/cursor/index.js';
+const o={moves:[]};let id;
+try{
+ const s=await createBrowserSession({headless:true});id=s.sessionId;const p=getBrowserPage(id);
+ await p.setViewportSize({width:1280,height:800});await p.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded',timeout:15000});await p.waitForTimeout(800);
+ await p.evaluate(()=>window.AICortexPetLimbo.spawnFrom(document.body,640,400));await p.waitForTimeout(1200);
+ o.acquire=await cursor.acquireControl(id);
+ for(const t of [{dir:'right',x:900,y:400},{dir:'down',x:640,y:600},{dir:'left',x:350,y:400},{dir:'up',x:640,y:200}]){
+  const response=await cursor.moveTo(id,t.x,t.y);await p.waitForTimeout(750);
+  const actual=await p.evaluate(()=>{const e=document.querySelector('.limbo-pet');if(!e)return null;const r=e.getBoundingClientRect();return {center:{x:r.left+r.width/2,y:r.top+r.height/2},inline:{left:e.style.left,top:e.style.top},gaze:e.dataset.gaze,transition:getComputedStyle(e).transition}});
+  o.moves.push({target:t,response,actual,match:!!actual&&Math.abs(actual.center.x-t.x)<4&&Math.abs(actual.center.y-t.y)<4});
+ }
+ o.pass=o.moves.length===4&&o.moves.every(m=>m.match);
+}catch(e){o.error=String(e?.stack||e)}
+finally{try{if(id){o.release=await cursor.releaseControl(id);await closeBrowserSession(id);o.closed=true}}catch(e){o.cleanupError=String(e)}}
+console.log(JSON.stringify(o));
+NODE
