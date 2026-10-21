@@ -1,0 +1,13 @@
+#!/bin/bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 1
+echo "TASK=pet_live_test_preflight_audit"
+echo "=== browser service session creation ==="
+grep -n -A45 -B8 'async function createBrowserSession\|function createBrowserSession\|const createBrowserSession' backend/extension/browser/browser_service.js | head -100
+echo "=== pet script loading / spawn hooks in frontend ==="
+grep -n -i -E 'pet/limbo/pet.js|AICortexPetLimbo|spawnFrom|limbo-pet|pointerdown|drag' frontend/index.html | head -100
+echo "=== pet script exported API and spawn call sites ==="
+grep -n -A12 -B8 'AICortexPetLimbo\|function spawnFrom\|spawnFrom(' backend/extension/pet/limbo/pet.js | head -120
+echo "=== local server health only ==="
+curl -sS -o /dev/null -w 'HTTP_STATUS=%{http_code}\n' --max-time 3 http://127.0.0.1:3000/ 
+echo "No browser action performed; no secrets printed."
