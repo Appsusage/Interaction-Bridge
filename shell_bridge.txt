@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== PET IMPLEMENTATION FILES ==='
-find frontend backend/extension -type f \( -name 'pet.js' -o -name 'pet.css' -o -name 'limbo.css' \) -print 2>/dev/null | sort
-printf '%s\n' '=== CURSOR / PET INTEGRATION REFERENCES ==='
-grep -RniE 'acquireControl|moveTo\(|pointAt\(|releaseControl|browser/cursor|pet/cursor' backend frontend --include='*.js' --include='*.html' 2>/dev/null | head -120
