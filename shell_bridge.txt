@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== PET CURSOR / GESTURE FILES ==='
-find backend/extension/pet/cursor backend/extension/pet/recognition -maxdepth 2 -type f -print 2>/dev/null | sort
-printf '%s\n' '=== GESTURE HANDLERS IN RELEVANT PET MODULES ==='
-grep -RniE 'gesture|swipe|direction|pointer|mousemove|cursor|recognition' backend/extension/pet/cursor backend/extension/pet/recognition --include='*.js' 2>/dev/null | head -100
