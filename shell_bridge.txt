@@ -1,0 +1,50 @@
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+
+echo "=== READ-ONLY MIGRATION INTEGRATION AUDIT ==="
+echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "project_root=$PWD"
+
+echo
+echo "=== TARGET MIGRATION FILES ==="
+for f in backend/migration/migration_knowledge.md backend/migration/migration_rules.md backend/migration/environment_requirements.json backend/migration/migration_manager.js backend/migration/environment_analyzer.js backend/migration/dependency_manager.js backend/migration/config_manager.js backend/migration/migration_executor.js backend/migration/health_checker.js backend/migration/migration_history.json; do
+  if [ -f "$f" ]; then printf 'PRESENT %s bytes=%s\n' "$f" "$(wc -c < "$f")"; else printf 'MISSING %s\n' "$f"; fi
+done
+
+echo
+echo "=== ROOT MANIFESTS / LOCKFILES ==="
+for f in package.json package-lock.json npm-shrinkwrap.json pnpm-lock.yaml yarn.lock .nvmrc; do
+  if [ -f "$f" ]; then printf '\n--- %s ---\n' "$f"; if [ "$f" = package.json ] || [ "$f" = .nvmrc ]; then sed -n '1,220p' "$f"; else ls -lh "$f"; fi; fi
+done
+
+echo
+echo "=== BACKEND TOP LEVEL ==="
+find backend -maxdepth 2 -type f ! -path 'backend/migration/*' ! -name '*.log' ! -name '*.map' | sort | sed -n '1,220p'
+
+echo
+echo "=== PROMPT MASTER / AICORTEX CANDIDATE FILES ==="
+find backend/extension -maxdepth 5 -type f \( -iname '*prompt*' -o -iname '*cortex*' -o -iname '*router*' -o -iname '*intent*' -o -iname '*experience*' -o -iname '*memory*' -o -iname '*server*' -o -iname '*config*' \) 2>/dev/null | sort | sed -n '1,220p'
+
+echo
+echo "=== ENTRYPOINT IMPORT / ROUTE REFERENCES ==="
+for f in backend/server.js backend/ai_core.js backend/ai_router.js backend/intent.js backend/extension/AICortex/adapter.js backend/extension/AICortex/prompt_master/adapter.js; do
+  if [ -f "$f" ]; then printf '\n--- %s ---\n' "$f"; grep -nE '^(import |export |const .*require|app\.(get|post|put|delete)|router\.(get|post|put|delete)|process\.env|listen\()' "$f" | sed -n '1,180p' || true; fi
+done
+
+echo
+echo "=== MIGRATION MODULE EXPORTS ==="
+for f in backend/migration/*.js; do
+  [ -f "$f" ] || continue
+  printf '\n--- %s ---\n' "$f"
+  grep -nE '^(import |export |async function|function |const [A-Za-z0-9_]+ =)' "$f" | sed -n '1,140p' || true
+done
+
+echo
+echo "=== SAFE VALIDATION ==="
+node -e "const p=require('./package.json'); console.log(JSON.stringify({name:p.name,type:p.type,scripts:p.scripts,engines:p.engines,dependencies:Object.keys(p.dependencies||{}),devDependencies:Object.keys(p.devDependencies||{})},null,2))"
+node -e "JSON.parse(require('fs').readFileSync('backend/migration/environment_requirements.json','utf8')); JSON.parse(require('fs').readFileSync('backend/migration/migration_history.json','utf8')); console.log('migration JSON valid')"
+for f in backend/migration/*.js; do node --check "$f"; done
+echo "All migration JavaScript syntax checks passed."
+echo
+echo "=== END AUDIT: NO FILES MODIFIED ==="
