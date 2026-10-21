@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+cat > backend/migration/migration_history.js <<'EOF'
+import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const DEFAULT_FILE = fileURLToPath(new URL('./migration_history.json', import.meta.url));
+const MAX_ENTRIES = 200;
+
+function cleanText(value, limit = 300) {
+  return String(value ?? '').replace(/[\r\n\t]+/g, ' ').slice(0, limit);
+}
+
+export async function readMigrationHistory(options = {}) {
+  const filePath = resolve(options.filePath ?? DEFAULT_FILE);
+  let raw;
+  try {
+    raw = await readFile(filePath, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return { schema_version: 1, entries: [], note: 'Only append verified migration events. Never store secret values.' };
+    }
+    throw error;
+  }
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('Migration history JSON is invalid.');
+  }
+  if (!data || data.schema_version !== 1 || !Array.isArray(data.entries)) {
+    throw new Error('Migration history schema is invalid.');
+  }
+  return data;
+}
+
+export async function appendMigrationHistory(event, options = {}) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) {
+    throw new TypeError('Migration history event must be an object.');
+  }
+  const filePath = resolve(options.filePath ?? DEFAULT_FILE);
+  const history = await readMigrationHistory({ filePath });
+  const results = Array.isArray(event.results) ? event.results : [];
+  const entry = {
+    planId: typeof event.planId === 'string' ? cleanText(event.planId, 100) : null,
+    status: cleanText(event.status || 'unknown', 40),
+    startedAt: cleanText(event.startedAt, 40),
+    completedAt: cleanText(event.completedAt, 40),
+    executed: event.executed === true,
+    reason: event.reason ? cleanText(event.reason, 300) : null,
+    results: results.slice(0, 100).map(item => ({
+      id: cleanText(item.id, 100),
+      kind: cleanText(item.kind, 40),
+      status: cleanText(item.status, 40),
+      ...(item.error ? { error: cleanText(item.error, 300) } : {})
+    }))
+  };
+  history.entries.push(entry);
+  history.entries = history.entries.slice(-MAX_ENTRIES);
+  history.note = 'Only append verified migration events. Never store secret values.';
+  await mkdir(dirname(filePath), { recursive: true });
+  const tempPath = filePath + '.tmp';
+  await writeFile(tempPath, JSON.stringify(history, null, 2) + '\n', { mode: 0o600 });
+  await rename(tempPath, filePath);
+  return entry;
+}
+EOF
+python3 - <<'PY'
+from pathlib import Path
+p=Path('backend/migration/migration_manager.js')
+s=p.read_text()
+s=s.replace("import { executeMigrationPlan } from './migration_executor.js';", "import { executeMigrationPlan } from './migration_executor.js';\nimport { appendMigrationHistory } from './migration_history.js';")
+old="""export async function executeMigration(plan, options = {}) {
+  return executeMigrationPlan(plan, options);
+}
+"""
+new="""export async function executeMigration(plan, options = {}) {
+  const startedAt = new Date().toISOString();
+  let result;
+  try {
+    result = await executeMigrationPlan(plan, options);
+  } catch (error) {
+    const completedAt = new Date().toISOString();
+    await appendMigrationHistory({
+      planId: typeof plan?.id === 'string' ? plan.id : null,
+      status: 'rejected',
+      startedAt,
+      completedAt,
+      executed: false,
+      reason: error instanceof Error ? error.message : String(error)
+    }, { filePath: options.historyFile });
+    throw error;
+  }
+  const completedAt = new Date().toISOString();
+  await appendMigrationHistory({
+    planId: result.planId,
+    status: result.status,
+    startedAt,
+    completedAt,
+    executed: result.executed === true,
+    reason: result.reason,
+    results: result.results ?? []
+  }, { filePath: options.historyFile });
+  return { ...result, startedAt, completedAt };
+}
+"""
+assert old in s
+p.write_text(s.replace(old,new,1))
+PY
+cat > backend/migration/tests/migration_history.test.js <<'EOF'
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { executeMigration } from '../migration_manager.js';
+import { readMigrationHistory, appendMigrationHistory } from '../migration_history.js';
+import { executeMigrationPlan } from '../migration_executor.js';
+
+async function withTempHistory(fn) {
+  const dir = await mkdtemp(join(tmpdir(), 'migration-history-'));
+  const filePath = join(dir, 'history.json');
+  try { await fn(filePath); } finally { await rm(dir, { recursive: true, force: true }); }
+}
+
+test('no-argument executor call is a safe not-executed result', async () => {
+  const result = await executeMigrationPlan();
+  assert.equal(result.status, 'not_executed');
+  assert.equal(result.executed, false);
+});
+
+test('manager records dry-run status and timestamps without invoking adapter', async () => {
+  await withTempHistory(async filePath => {
+    let invoked = false;
+    const result = await executeMigration({ id: 'dry', steps: [{ kind: 'inspect' }] }, {
+      historyFile: filePath,
+      adapter: async () => { invoked = true; }
+    });
+    assert.equal(result.status, 'dry_run');
+    assert.equal(invoked, false);
+    assert.ok(result.startedAt && result.completedAt);
+    const history = await readMigrationHistory({ filePath });
+    assert.equal(history.entries.length, 1);
+    assert.equal(history.entries[0].status, 'dry_run');
+    assert.equal(history.entries[0].executed, false);
+  });
+});
+
+test('manager history captures failure reason and skipped steps', async () => {
+  await withTempHistory(async filePath => {
+    const result = await executeMigration({ id: 'failure', steps: [
+      { id: 'first', kind: 'inspect' },
+      { id: 'second', kind: 'health_check' }
+    ] }, {
+      dryRun: false, approved: true, authorized: true, historyFile: filePath,
+      adapter: async step => {
+        if (step.id === 'first') throw new Error('simulated failure');
+      }
+    });
+    assert.equal(result.status, 'failed');
+    const history = await readMigrationHistory({ filePath });
+    assert.equal(history.entries[0].results[0].error, 'simulated failure');
+    assert.equal(history.entries[0].results[1].status, 'skipped');
+  });
+});
+
+test('history rejects malformed JSON and writes bounded sanitized entries', async () => {
+  await withTempHistory(async filePath => {
+    await writeFile(filePath, '{broken');
+    await assert.rejects(readMigrationHistory({ filePath }), /JSON is invalid/);
+    await writeFile(filePath, JSON.stringify({ schema_version: 1, entries: [] }));
+    await appendMigrationHistory({
+      planId: 'p1', status: 'failed', startedAt: 'start', completedAt: 'end',
+      reason: 'line one\nline two', results: [{ id: 'x', kind: 'inspect', status: 'failed', error: 'bad\nthing' }]
+    }, { filePath });
+    const history = await readMigrationHistory({ filePath });
+    assert.equal(history.entries[0].reason, 'line one line two');
+    assert.equal(history.entries[0].results[0].error, 'bad thing');
+    assert.equal(JSON.parse(await readFile(filePath, 'utf8')).schema_version, 1);
+  });
+});
+
+test('manager records plan validation rejection without running adapter', async () => {
+  await withTempHistory(async filePath => {
+    await assert.rejects(executeMigration({ steps: [{ kind: 'shell' }] }, { historyFile: filePath }), /Unsupported migration step/);
+    const history = await readMigrationHistory({ filePath });
+    assert.equal(history.entries[0].status, 'rejected');
+    assert.equal(history.entries[0].executed, false);
+  });
+});
+EOF
+node --test backend/migration/tests/*.test.js
+for f in backend/migration/*.js backend/migration/tests/*.js; do node --check "$f"; done
+node -e "for (const f of ['backend/migration/environment_requirements.json','backend/migration/migration_history.json']) JSON.parse(require('fs').readFileSync(f,'utf8')); console.log('JSON OK')"
+git status --short -- backend/migration
