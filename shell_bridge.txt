@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+const sid='1792542869695-2tpuf2fb3lr';
+const base='http://127.0.0.1:'+(process.env.PORT||3000);
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log('READ_ONLY_INSPECT_BLOCKED: BROWSER_API_KEY unavailable');process.exit(0)}
+try {
+ const r=await fetch(base+'/browser/recognition/inspect',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId:sid})});
+ console.log('INSPECT_HTTP='+r.status);
+ console.log('INSPECT_RESULT='+(await r.text()).slice(0,3000));
+} catch(e) { console.log('INSPECT_ERROR='+String(e.message||e).slice(0,500)); }
+NODE
