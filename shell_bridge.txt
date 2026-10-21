@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -e
-cd /home/runner/workspace/ai-agent
-python3 -c "from pathlib import Path; p=Path('backend/migration/migration_executor.js'); s=p.read_text(); old=\"export async function executeMigrationPlan(plan, options = {}) {\\n  const validation = validateMigrationPlan(plan);\"; new=\"export async function executeMigrationPlan(plan, options = {}) {\\n  if (plan === undefined || plan === null) return { status: 'not_executed', planId: null, createdAt: new Date().toISOString(), executed: false, reason: 'No migration plan was supplied.' };\\n  const validation = validateMigrationPlan(plan);\"; assert old in s, 'executor entry point not found'; p.write_text(s.replace(old,new,1))"
-node --test backend/migration/tests/migration_executor.test.js
-node --input-type=module -e "import assert from 'node:assert/strict'; import {executeMigrationPlan} from './backend/migration/migration_executor.js'; import {executeMigration} from './backend/migration/migration_manager.js'; const r=await executeMigrationPlan(); assert.equal(r.status,'not_executed'); assert.equal(r.executed,false); const d=await executeMigration({id:'smoke',steps:[{kind:'inspect'}]}); assert.equal(d.status,'dry_run'); console.log('compatibility smoke passed')"
-for f in backend/migration/*.js backend/migration/tests/*.js; do node --check "$f"; done
-node -e "for (const f of ['backend/migration/environment_requirements.json','backend/migration/migration_history.json']) JSON.parse(require('fs').readFileSync(f,'utf8')); console.log('JSON OK')"
-git status --short -- backend/migration
