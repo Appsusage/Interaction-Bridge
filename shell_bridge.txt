@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+const sid='1792541831748-yrbm71obm4';
+const base='http://127.0.0.1:'+(process.env.PORT||3000);
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log('READ_ONLY_CAPTURE_BLOCKED: BROWSER_API_KEY is not available');process.exit(0)}
+const headers={'content-type':'application/json','x-browser-key':key};
+for (const [label,path,body] of [
+ ['CAPTURE','/browser/recognition/capture',{sessionId:sid}],
+ ['VERIFY_NO_ACTION','/browser/recognition/verify',{sessionId:sid}]
+]) {
+ try {
+  const r=await fetch(base+path,{method:'POST',headers,body:JSON.stringify(body)});
+  const t=await r.text();
+  console.log(label+'_HTTP='+r.status);
+  console.log(label+'_RESULT='+t.slice(0,3500));
+ } catch(e) { console.log(label+'_ERROR='+String(e.message||e).slice(0,300)); }
+}
+NODE
