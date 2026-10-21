@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== PET JS STRUCTURE ==='
+grep -nE '^(function |async function |const [A-Za-z0-9_]+ =|let [A-Za-z0-9_]+ =|class )|requestAnimationFrame|setInterval|setTimeout|mousemove|pointermove|transform|translate|left:|top:|addEventListener' backend/extension/pet/limbo/pet.js | head -180
+printf '%s\n' '=== PET JS MOVEMENT CONTEXT ==='
+grep -n -C 4 -E 'requestAnimationFrame|pointermove|mousemove|transform|translate|setInterval|setTimeout' backend/extension/pet/limbo/pet.js | head -220
