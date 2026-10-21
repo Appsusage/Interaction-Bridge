@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+printf '\n===== migration_manager.js =====\n'
+sed -n '1,240p' backend/migration/migration_manager.js
+printf '\n===== migration_executor.js =====\n'
+sed -n '1,280p' backend/migration/migration_executor.js
+printf '\n===== migration_history.json =====\n'
+cat backend/migration/migration_history.json
+printf '\n===== migration_executor.test.js =====\n'
+sed -n '1,280p' backend/migration/tests/migration_executor.test.js
+printf '\n===== migration files status =====\n'
+git status --short -- backend/migration
