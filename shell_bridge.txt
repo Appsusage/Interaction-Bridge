@@ -1,0 +1,28 @@
+#!/bin/bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+import {createBrowserSession,getBrowserPage,closeBrowserSession} from './backend/extension/browser/browser_service.js';
+let id;const out={};
+try{
+ const s=await createBrowserSession({headless:false});id=s.sessionId;const p=getBrowserPage(id);
+ await p.setViewportSize({width:900,height:700});await p.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded',timeout:15000});await p.waitForTimeout(1000);
+ out.petApi=await p.evaluate(()=>({exists:!!window.AICortexPetLimbo,keys:window.AICortexPetLimbo?Object.keys(window.AICortexPetLimbo):[],script:[...document.scripts].map(s=>s.src).filter(Boolean)}));
+ await p.evaluate(()=>{
+  window.__gestureTrace=[];
+  for(const type of ['pointerdown','pointermove','pointerup','pointercancel'])document.querySelector('#mainFloat').addEventListener(type,e=>window.__gestureTrace.push({type,x:e.clientX,y:e.clientY,id:e.pointerId,buttons:e.buttons}),true);
+  if(window.AICortexPetLimbo){const original=window.AICortexPetLimbo.spawnFrom;window.AICortexPetLimbo.spawnFrom=function(...args){window.__spawnCalled={args:args.map(a=>a===document.body?'body':a?.id||a?.className||String(a)),stack:new Error().stack};return original.apply(this,args)}}
+ });
+ await p.locator('#dockToggle').click({force:true});await p.waitForTimeout(400);
+ const b=await p.locator('#mainFloat').boundingBox();out.box=b;
+ const sx=b.x+b.width/2,sy=b.y+b.height/2;
+ await p.mouse.move(sx,sy);await p.mouse.down();await p.waitForTimeout(250);await p.mouse.move(sx,sy+120,{steps:12});await p.waitForTimeout(200);await p.mouse.up();await p.waitForTimeout(1000);
+ out.trace=await p.evaluate(()=>window.__gestureTrace);out.spawnCalled=await p.evaluate(()=>window.__spawnCalled||null);
+ out.petCount=await p.locator('.limbo-pet').count();
+ out.apiAfter=await p.evaluate(()=>({exists:!!window.AICortexPetLimbo,keys:window.AICortexPetLimbo?Object.keys(window.AICortexPetLimbo):[]}));
+ out.screen=await p.evaluate(()=>({menu:document.querySelector('#floatMenu')?.className,ball:document.querySelector('#mainFloat')?.className}));
+ await p.screenshot({path:'backend/extension/pet/cursor/gesture_trace_S1263.png'});
+}catch(e){out.error=String(e?.stack||e)}
+finally{try{if(id){await closeBrowserSession(id);out.closed=true}}catch(e){out.cleanupError=String(e)}}
+console.log(JSON.stringify(out));
+NODE
