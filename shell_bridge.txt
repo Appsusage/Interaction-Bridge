@@ -1,0 +1,17 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+const url='ws://127.0.0.1:'+(process.env.PORT||3000)+'/browser/live';
+const WS=globalThis.WebSocket;
+if(!WS){console.log('LIVE_SESSION_QUERY_BLOCKED: WebSocket unavailable in this Node runtime');process.exit(0)}
+const ws=new WS(url); let done=false;
+const finish=(s)=>{if(done)return;done=true;console.log(s);try{ws.close()}catch{}};
+const timer=setTimeout(()=>finish('LIVE_SESSION_QUERY_TIMEOUT'),5000);
+ws.addEventListener('open',()=>{});
+ws.addEventListener('message',ev=>{
+ const raw=String(ev.data);
+ console.log('LIVE_MESSAGE='+raw.slice(0,3000));
+ try {const m=JSON.parse(raw); if(m.type==='sessions'||Array.isArray(m.sessions)){clearTimeout(timer);finish('CURRENT_SESSIONS='+JSON.stringify(m.sessions||m));}}catch{}
+});
+ws.addEventListener('error',()=>{clearTimeout(timer);finish('LIVE_SESSION_QUERY_ERROR')});
+setTimeout(()=>{if(!done){clearTimeout(timer);finish('LIVE_SESSION_QUERY_NO_SESSION_LIST_MESSAGE')}},5500);
+NODE
