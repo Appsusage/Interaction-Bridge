@@ -1,0 +1,20 @@
+#!/bin/bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 1
+echo "TASK=pet_mouse_browser_test_preflight"
+echo "TIME_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "=== server browser routes ==="
+grep -nE 'browser/session|browser/open|browser/read|browser/screenshot|browser/cursor/acquire|browser/recognition/capture|app\.(get|post).*status|app\.(get|post).*move|app\.(get|post).*release' backend/server.js | head -80
+echo "=== cursor module exports ==="
+grep -nE '^(export|module\.exports)|function (acquireControl|moveTo|releaseControl)|AICortexPetLimbo|petControl' backend/extension/pet/cursor/index.js backend/extension/pet/limbo/pet.js | head -100
+echo "=== local service status (no credentials printed) ==="
+node --input-type=module - <<'NODE'
+for (const path of ['/status','/browser/session']) {
+  try {
+    const r = await fetch('http://127.0.0.1:3000'+path, {signal:AbortSignal.timeout(3000)});
+    const body = await r.text();
+    console.log(path, 'HTTP', r.status, 'body-prefix', body.slice(0,700).replace(/(BROWSER_API_KEY|token|secret|password)[^,}\s]*/ig,'[REDACTED]'));
+  } catch(e) { console.log(path, 'ERROR', e.message); }
+}
+NODE
+echo "PREFLIGHT_EXIT=$?"
