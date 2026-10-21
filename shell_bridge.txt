@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-node --input-type=module <<'NODE'
-const base=`http://127.0.0.1:${Number(process.env.PORT||3000)}`; const key=process.env.BROWSER_API_KEY; const sessionId='1792536679004-rcu24fqamq9';
-if(!key){console.log('NO_BROWSER_API_KEY');process.exit(0)}
-const r=await fetch(base+'/browser/recognition/inspect',{method:'POST',headers:{'content-type':'application/json','x-browser-key':key},body:JSON.stringify({sessionId})});
-console.log('HTTP='+r.status);if(!r.ok){console.log((await r.text()).slice(0,300));process.exit(0)}
-const d=await r.json();console.log('PAGE='+JSON.stringify({url:d.url,title:d.title,viewport:d.viewport,challengeDetected:d.challengeDetected}));
-for(const c of d.candidates||[]) console.log(JSON.stringify({index:c.index,tag:c.tag,role:c.role,type:c.type,text:(c.text||'').slice(0,100),rect:c.rect,center:c.center,disabled:c.disabled,obscured:c.obscured}));
-NODE
