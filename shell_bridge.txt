@@ -1,5 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== BROWSER SESSION ROUTES ==='
-grep -n -C 2 'listBrowserSessions\|/browser/sessions\|browser/sessions' backend/server.js
-printf '%s\n' '=== SERVER PROCESS ==='
-ps -eo pid,args | grep '[n]ode backend/server.js' || true
