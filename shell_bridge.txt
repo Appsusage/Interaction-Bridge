@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== CURSOR MOUSE SPEC ==='
-sed -n '1,220p' backend/extension/pet/cursor/CURSOR_MOUSE_SPEC.txt
-printf '%s\n' '=== RECOGNITION SPEC ==='
-sed -n '1,220p' backend/extension/pet/recognition/RECOGNITION_SPEC.txt
-printf '%s\n' '=== CURSOR API EXPORTS ==='
-grep -nE '^(export |export\{|async function |function )|acquire|move|click|scroll|release|status' backend/extension/pet/cursor/index.js
-printf '%s\n' '=== RECOGNITION API EXPORTS ==='
-grep -nE '^(export |export\{|async function |function )|capture|inspect|verify|recognize' backend/extension/pet/recognition/index.js
