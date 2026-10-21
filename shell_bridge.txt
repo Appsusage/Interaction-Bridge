@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent || exit 1
+grep -n 'listBrowserSessions\|session-created\|/browser/' backend/server.js | head -80
