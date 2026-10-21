@@ -1,0 +1,19 @@
+#!/bin/bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 1
+echo "TASK=cursor_export_names_and_retry_local_pet_test"
+echo "=== actual cursor exports ==="
+tail -100 backend/extension/pet/cursor/index.js
+echo "=== run safe local browser smoke + pet spawn only (no cursor yet) ==="
+node --input-type=module <<'NODE'
+import { createBrowserSession,getBrowserPage,closeBrowserSession } from './backend/extension/browser/browser_service.js';
+const o={}; let id;
+try{
+ const s=await createBrowserSession({headless:true});id=s.sessionId;const p=getBrowserPage(id);
+ await p.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded',timeout:15000});await p.waitForTimeout(1200);
+ const pre=await p.evaluate(()=>({title:document.title,api:!!window.AICortexPetLimbo,ball:document.querySelector('#mainFloat')?.getBoundingClientRect().toJSON(),pets:document.querySelectorAll('.limbo-pet').length,viewport:{w:innerWidth,h:innerHeight}}));o.pre=pre;
+ if(pre.api&&pre.ball&&!pre.pets){const x=pre.ball.left+pre.ball.width/2,y=pre.ball.top+pre.ball.height/2;await p.mouse.move(x,y);await p.mouse.down();await p.mouse.move(x,y+90,{steps:8});await p.mouse.up();await p.waitForTimeout(1000);}
+ o.post=await p.evaluate(()=>({petCount:document.querySelectorAll('.limbo-pet').length,rect:document.querySelector('.limbo-pet')?.getBoundingClientRect().toJSON()}));
+}catch(e){o.error=String(e)}finally{try{if(id)await closeBrowserSession(id);o.closed=true}catch(e){o.closeError=String(e)}}
+console.log(JSON.stringify(o));
+NODE
