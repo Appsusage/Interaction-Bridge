@@ -1,0 +1,28 @@
+#!/bin/bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+import {createBrowserSession,getBrowserPage,closeBrowserSession} from './backend/extension/browser/browser_service.js';
+let id;const out={};
+try{
+ const s=await createBrowserSession({headless:false});id=s.sessionId;const p=getBrowserPage(id);
+ await p.setViewportSize({width:900,height:700});
+ await p.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded',timeout:15000});
+ await p.waitForTimeout(900);
+ await p.locator('#dockToggle').click({force:true});await p.waitForTimeout(500);
+ const b=await p.locator('#mainFloat').boundingBox();out.floatBox=b;
+ if(b&&b.width>0&&b.height>0){
+  const sx=b.x+b.width/2,sy=b.y+b.height/2;
+  await p.mouse.move(sx,sy);await p.mouse.down();await p.waitForTimeout(300);
+  await p.mouse.move(sx,sy+115,{steps:15});await p.waitForTimeout(250);
+  await p.mouse.up();await p.waitForTimeout(1600);
+  out.start={x:sx,y:sy};out.release={x:sx,y:sy+115};
+  out.petCount=await p.locator('.limbo-pet').count();
+  out.pet=await p.evaluate(()=>{const e=document.querySelector('.limbo-pet');if(!e)return null;const r=e.getBoundingClientRect();return{center:{x:r.x+r.width/2,y:r.y+r.height/2},gaze:e.dataset.gaze}});
+  await p.screenshot({path:'backend/extension/pet/cursor/visible_down_gesture_S1262.png'});
+ }else out.problem='mainFloat not visible';
+ out.title=await p.title();out.url=p.url();
+}catch(e){out.error=String(e?.stack||e)}
+finally{try{if(id){await closeBrowserSession(id);out.closed=true}}catch(e){out.cleanupError=String(e)}}
+console.log(JSON.stringify(out));
+NODE
