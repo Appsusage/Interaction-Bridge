@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set +e
+cd /home/runner/workspace/ai-agent || exit 90
+echo "S1269 — Migration implementation inspection (NO HEARTBEAT WORK)"
+date -u '+UTC %Y-%m-%dT%H:%M:%SZ'
+echo
+echo '=== Scope / git status ==='
+git status --short -- backend/migration
+echo
+echo '=== Migration files ==='
+find backend/migration -maxdepth 2 -type f -print | sort
+echo
+for f in backend/migration/migration_manager.js backend/migration/migration_executor.js backend/migration/health_checker.js backend/migration/dependency_manager.js backend/migration/config_manager.js backend/migration/environment_analyzer.js backend/migration/environment_requirements.json backend/migration/migration_rules.md backend/migration/migration_knowledge.md; do
+  if [ -f "$f" ]; then
+    echo
+    echo "===== FILE: $f ====="
+    sed -n '1,260p' "$f"
+  else
+    echo
+    echo "===== MISSING: $f ====="
+  fi
+done
+echo
+echo '=== References to migration module outside its folder (bounded) ==='
+grep -RIn --exclude-dir=node_modules --exclude-dir=.git --exclude='*.lock' -E 'migration_manager|executeMigrationPlan|planMigration|validateMigrationPlan|verifyMigration' backend package.json 2>/dev/null | head -160
+echo
+echo '=== Syntax / JSON validation (read-only) ==='
+for f in backend/migration/*.js; do node --check "$f" >/dev/null 2>&1; rc=$?; echo "$rc node --check $f"; done
+node -e "JSON.parse(require('fs').readFileSync('backend/migration/environment_requirements.json','utf8')); JSON.parse(require('fs').readFileSync('backend/migration/migration_history.json','utf8')); console.log('JSON OK')" 2>&1
+echo
+echo 'S1269 inspection complete. No files edited. Heartbeat intentionally not inspected or changed.'
