@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf '%s\n' '=== PET FILES / BACKUPS ==='
+find backend/extension/pet/limbo -maxdepth 1 -type f -name 'pet.js*' -printf '%f\n'
+printf '%s\n' '=== PET CONTROL-RELATED SYMBOLS ==='
+grep -n 'behaviorTimer\|AICortexPetLimbo\|setGaze\|scrollCheckPending' backend/extension/pet/limbo/pet.js
+printf '%s\n' '=== ROUTE IMPLEMENTATION ==='
+sed -n '1350,1405p' backend/server.js
