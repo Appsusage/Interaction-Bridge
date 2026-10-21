@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent || exit 1
+sed -n '1,260p' backend/extension/browser/browser_service.js
+grep -n 'browser/cursor\|browser/recognition\|getBrowserPage' backend/server.js
