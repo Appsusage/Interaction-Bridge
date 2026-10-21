@@ -1,0 +1,20 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+const sid='1792542869695-2tpuf2fb3lr';
+const base='http://127.0.0.1:'+(process.env.PORT||3000);
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log('FOLLOWUP_BLOCKED: BROWSER_API_KEY unavailable');process.exit(0)}
+const headers={'content-type':'application/json','x-browser-key':key};
+for (const [label,path] of [['CAPTURE_AFTER_CURSOR_TEST','/browser/recognition/capture'],['INSPECT_AFTER_CURSOR_TEST','/browser/recognition/inspect']]) {
+ try {
+  const r=await fetch(base+path,{method:'POST',headers,body:JSON.stringify({sessionId:sid})});
+  const raw=await r.text();
+  console.log(label+'_HTTP='+r.status);
+  if(label==='CAPTURE_AFTER_CURSOR_TEST') console.log(label+'_RESULT='+raw.slice(0,900));
+  else {
+   try {const j=JSON.parse(raw); console.log(label+'_SUMMARY='+JSON.stringify({url:j.url,title:j.title,viewport:j.viewport,textLength:(j.text||'').length,candidateCount:j.candidates?.length??j.elements?.length??null,challengeDetected:j.challengeDetected??null,error:j.error??null}));}
+   catch {console.log(label+'_RESULT='+raw.slice(0,900))}
+  }
+ } catch(e){console.log(label+'_ERROR='+String(e.message||e).slice(0,300))}
+}
+NODE
