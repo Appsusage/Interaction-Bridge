@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent || exit 1
+python3 - <<'PY'
+from pathlib import Path
+p=Path("backend/extension/pet/cursor/index.js")
+s=p.read_text()
+a='''  await control.cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved", x: control.x, y: control.y, button: "none"
+  });
+  return { sessionId: String(sessionId), x: control.x, y: control.y, viewport, moved: true };'''
+b='''  await control.cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved", x: control.x, y: control.y, button: "none"
+  });
+  const petControl = await page.evaluate(({ x, y }) => {
+    const pet = window.AICortexPetLimbo;
+    return pet && typeof pet.moveTo === "function" ? pet.moveTo(x, y) : { moved: false, reason: "pet-control-unavailable" };
+  }, { x: control.x, y: control.y }).catch(() => ({ moved: false, reason: "pet-control-unavailable" }));
+  return { sessionId: String(sessionId), x: control.x, y: control.y, viewport, moved: true, petControl };'''
+assert s.count(a)==1
+p.write_text(s.replace(a,b))
+PY
+node --check backend/extension/pet/cursor/index.js
