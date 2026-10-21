@@ -1,4 +1,0 @@
-S1217
-from: ChatGPT
-to: shell
-message: In the ai-agent workspace, use the already running local server and existing browser session to perform a read-only page inspection. Report only visible control labels, element roles, and coordinates, plus page title and URL. Do not click, type, navigate, or alter browser state. Write output to Dropbox outbox.
