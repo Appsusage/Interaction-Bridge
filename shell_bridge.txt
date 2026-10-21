@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --check backend/extension/pet/limbo/pet.js
+node --check backend/extension/pet/cursor/index.js
+printf '%s\n' '=== PET CONTROL HOOKS ==='
+grep -n 'aiControlActive\|function setAIControlActive\|function moveTo\|AICortexPetLimbo' backend/extension/pet/limbo/pet.js
+printf '%s\n' '=== CURSOR HOOKS ==='
+grep -n 'petControl\|setAIControlActive\|function moveTo\|releaseControl' backend/extension/pet/cursor/index.js
