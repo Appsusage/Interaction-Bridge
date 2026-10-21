@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-printf '%s\n' '=== CLAMP DEFINITION ==='
-grep -n 'function clamp\|const clamp' backend/extension/pet/limbo/pet.js
-printf '%s\n' '=== FILE CHANGE SUMMARY ==='
-git status --short -- backend/extension/pet/limbo/pet.js backend/extension/pet/cursor/index.js 2>/dev/null || true
-printf '%s\n' '=== BACKUP CHECK ==='
-test -s /tmp/pet.js.pre-ai-cursor-integration.bak && echo 'pet backup exists' || echo 'pet backup missing'
-test -s /tmp/cursor-index.js.pre-pet-integration.bak && echo 'cursor backup exists' || echo 'cursor backup missing'
