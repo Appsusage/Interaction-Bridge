@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --check backend/extension/pet/limbo/pet.js
+node --check backend/extension/pet/cursor/index.js
