@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf 'VISION_INSPECT_20261023\n'
+pwd
+find .. -name AGENTS.md -not -path '*/node_modules/*' -not -path '*/.git/*' -print 2>/dev/null | head -30
+ls capabilities 2>/dev/null
+ls capabilities/vision 2>/dev/null
+sed -n '/function runGesture/,/ball.addEventListener("pointerdown"/p' frontend/app.js
+grep -n 'capabilities\|express.static\|vision' backend/server.js frontend/index.html
+git status --short
