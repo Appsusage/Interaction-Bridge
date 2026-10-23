@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && grep -nE 'WebSocketServer|path:|session-list|sessions|sessionId|connection|auth|upgrade|socket' backend/extension/browser/browser_live.js | head -75; grep -nE 'export function (get|list|register|read)|browserSessions|sessionId' backend/extension/browser/browser_service.js | tail -45; sed -n '150,235p' backend/extension/browser/browser_live.js
