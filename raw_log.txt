@@ -1,61 +1,71 @@
 === github_adaptor raw log ===
-time: 2026-10-22T19:40:27.045Z
+time: 2026-10-23T04:20:50.829Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: b4c6e84c7056bd23db437afdcf44c06499fc27f0
+sha: efe0ae0eb017972cd63271ccb271e0a8cd1ae9b4
 
 === shell_bridge.txt content ===
-set -eu
-cd /home/runner/workspace/ai-agent
+cd /home/runner/workspace/ai-agent || exit 2
 node --input-type=module <<'NODE'
 import fs from 'node:fs';
 import path from 'node:path';
-const files={"capabilities/vision/camera.js":"/* Device camera input for AI vision. Frames stay local until a consumer requests one. */\n(() => {\n  'use strict';\n  if (window.AIAgentVision) return;\n  let stream = null, panel = null, video, status, switchButton, captureButton;\n  let generation = 0, pending = false, facingMode = 'environment';\n\n  function emit(type, detail) {\n    window.dispatchEvent(new CustomEvent('ai-vision-' + type, { detail }));\n  }\n  function release() {\n    const old = stream;\n    stream = null;\n    if (old) old.getTracks().forEach(track => track.stop());\n    if (video) video.srcObject = null;\n  }\n  function setBusy(busy) {\n    pending = busy;\n    if (switchButton) switchButton.disabled = busy;\n    if (captureButton) captureButton.disabled = busy || !stream;\n  }\n  function makeButton(label, action) {\n    const button = document.createElement('button');\n    button.type = 'button'; button.textContent = label;\n    button.addEventListener('click', action);\n    return button;\n  }\n  function ensurePanel() {\n    if (panel) return;\n    panel = document.createElement('section');\n    panel.id = 'aiVisionPanel'; panel.hidden = true;\n    panel.setAttribute('role', 'dialog');\n    panel.setAttribute('aria-label', 'AI 视觉摄像头');\n    panel.innerHTML = '<header><strong>AI 视觉 · 摄像头</strong></header><video autoplay muted playsinline></video><p role=\"status\" aria-live=\"polite\"></p><footer></footer>';\n    video = panel.querySelector('video');\n    video.muted = true; video.playsInline = true;\n    status = panel.querySelector('p');\n    panel.querySelector('header').append(makeButton('关闭', close));\n    switchButton = makeButton('切换镜头', () => {\n      if (!pending) open(facingMode === 'environment' ? 'user' : 'environment');\n    });\n    captureButton = makeButton('采集画面', async () => {\n      try {\n        const frame = await captureFrame();\n        status.textContent = '已采集画面 ' + frame.width + ' × ' + frame.height;\n        emit('frame', frame);\n      } catch (error) { status.textContent = error.message; }\n    });\n    panel.querySelector('footer').append(switchButton, captureButton,\n      makeButton('重试', () => { if (!pending) open(); }));\n    document.body.append(panel);\n    setBusy(false);\n  }\n  function close() {\n    generation++;\n    release(); setBusy(false);\n    if (panel) panel.hidden = true;\n    emit('state', { state: 'closed' });\n  }\n  function cameraError(error) {\n    return ({\n      NotAllowedError: '摄像头权限未获允许，请在浏览器网站权限中允许摄像头。',\n      NotFoundError: '没有找到可用的摄像头。',\n      NotReadableError: '摄像头被其他应用占用或暂时无法读取。',\n      OverconstrainedError: '当前摄像头不支持所需设置，请重试。',\n      SecurityError: '当前页面不允许使用摄像头。'\n    })[error.name] || '摄像头启动失败，请重试。';\n  }\n  async function open(mode = facingMode) {\n    ensurePanel(); panel.hidden = false;\n    if (pending) return false;\n    if (stream && mode === facingMode) return true;\n    const request = ++generation;\n    facingMode = mode === 'user' ? 'user' : 'environment';\n    release(); setBusy(true);\n    status.textContent = '正在开启摄像头…';\n    try {\n      if (!window.isSecureContext) throw new Error('请通过 HTTPS 打开页面后使用摄像头。');\n      if (!navigator.mediaDevices?.getUserMedia) throw new Error('当前浏览器不支持摄像头，请使用支持摄像头的浏览器。');\n      const acquired = await navigator.mediaDevices.getUserMedia({\n        audio: false,\n        video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }\n      });\n      if (request !== generation || panel.hidden) {\n        acquired.getTracks().forEach(track => track.stop());\n        return false;\n      }\n      stream = acquired;\n      stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {\n        if (stream !== acquired) return;\n        generation++; release(); setBusy(false);\n        status.textContent = '摄像头已断开，请重试。';\n        emit('state', { state: 'ended' });\n      }, { once: true }));\n      video.srcObject = stream;\n      video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : '';\n      await video.play();\n      if (request !== generation) return false;\n      status.textContent = '摄像头已开启';\n      emit('state', { state: 'open', facingMode });\n      return true;\n    } catch (error) {\n      if (request !== generation) return false;\n      release();\n      status.textContent = error.name === 'Error' ? error.message : cameraError(error);\n      emit('state', { state: 'error', message: status.textContent });\n      return false;\n    } finally {\n      if (request === generation) setBusy(false);\n    }\n  }\n  async function captureFrame() {\n    if (!stream || pending || !video.videoWidth || video.readyState < 2)\n      throw new Error('摄像头画面尚未准备好。');\n    const canvas = document.createElement('canvas');\n    const scale = Math.min(1, 1280 / video.videoWidth);\n    canvas.width = Math.round(video.videoWidth * scale);\n    canvas.height = Math.round(video.videoHeight * scale);\n    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);\n    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));\n    if (!blob) throw new Error('采集画面失败，请重试。');\n    return { blob, width: canvas.width, height: canvas.height, capturedAt: new Date().toISOString(), facingMode };\n  }\n  window.AIAgentVision = Object.freeze({\n    open, close, captureFrame,\n    getStatus: () => ({ open: !!stream, pending, facingMode })\n  });\n  window.addEventListener('pagehide', close);\n  document.addEventListener('visibilitychange', () => { if (document.hidden) close(); });\n  document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });\n})();\n","capabilities/vision/camera.css":"#aiVisionPanel[hidden] { display: none !important; }\n#aiVisionPanel {\n  position: fixed; z-index: 2147483000;\n  top: max(16px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);\n  width: min(92vw, 560px); max-height: calc(100dvh - 32px); overflow: auto;\n  box-sizing: border-box; padding: 14px; border: 1px solid #ffffff70;\n  border-radius: 18px; background: #f1faffee; color: #23384c;\n  box-shadow: 0 12px 48px #172e4b50; backdrop-filter: blur(16px);\n  font: 14px/1.5 sans-serif;\n}\n#aiVisionPanel header, #aiVisionPanel footer { display: flex; align-items: center; gap: 10px; }\n#aiVisionPanel header { justify-content: space-between; margin-bottom: 12px; }\n#aiVisionPanel footer { flex-wrap: wrap; }\n#aiVisionPanel video { display: block; width: 100%; max-height: 60dvh; min-height: 160px; object-fit: contain; background: #142336; border-radius: 12px; }\n#aiVisionPanel p { margin: 10px 0; }\n#aiVisionPanel button { cursor: pointer; padding: 9px 14px; border: 1px solid #b0c6da; border-radius: 10px; background: #ffffffdd; color: #23384c; font: inherit; }\n#aiVisionPanel button:disabled { opacity: .5; cursor: wait; }\n","capabilities/vision/README.md":"# AI 视觉输入\n\n长按悬浮圆球，向左滑动后释放，直接打开设备摄像头。默认后置镜头，支持切换镜头、关闭和重试。浏览器首次使用需要授予摄像头权限，页面必须为 HTTPS（localhost 除外）。不请求麦克风。\n\n`window.AIAgentVision.open()` / `close()` / `getStatus()` 控制摄像头。\n\n`await window.AIAgentVision.captureFrame()` 返回 `{ blob, width, height, capturedAt, facingMode }`，供 AI 视觉分析模块接入。点击「采集画面」发布 `ai-vision-frame` 事件，`event.detail` 为同样结构。`ai-vision-state` 通知开启、关闭或错误状态。\n\n这是视觉的摄像头输入层；未自动接入物体识别或外部视觉模型，不自动上传、不持续录制、不保存图像。画面采集接口留给后续识别能力调用。关闭、切到后台或离开页面时释放所有摄像头轨道。异步权限请求期间关闭窗口后，迟到的媒体流也立即释放。\n","test/vision_camera.test.cjs":"const test = require('node:test');\nconst assert = require('node:assert/strict');\nconst vm = require('node:vm');\nconst fs = require('node:fs');\nconst path = require('node:path');\nconst source = fs.readFileSync(path.join(__dirname, '../capabilities/vision/camera.js'), 'utf8');\n\nfunction setup(getUserMedia) {\n  class Element extends EventTarget {\n    constructor() { super(); this.hidden = false; this.style = {}; this.children = []; }\n    setAttribute() {}\n    append(...nodes) { this.children.push(...nodes); }\n    set innerHTML(value) {\n      this.parts = Object.fromEntries(['header','video','p','footer'].map(k => [k,new Element()]));\n      Object.assign(this.parts.video, { videoWidth: 1920, videoHeight: 1080, readyState: 2, play: async () => {} });\n    }\n    querySelector(k) { return this.parts[k]; }\n  }\n  class CE extends Event { constructor(type, options) { super(type); this.detail=options?.detail; } }\n  const document = new Element(); document.body = new Element();\n  document.createElement = tag => {\n    const e = new Element();\n    if(tag==='canvas') { e.getContext=()=>({drawImage(){}}); e.toBlob=cb=>cb(new Blob(['frame'],{type:'image/jpeg'})); }\n    return e;\n  };\n  const window = new Element(); window.isSecureContext=true;\n  const media = {getUserMedia};\n  vm.runInNewContext(source, {window,document,navigator:{mediaDevices:media},CustomEvent:CE,console,Date,Blob});\n  return {api:window.AIAgentVision, window, document, media, panel:()=>document.body.children[0]};\n}\nfunction mediaStream() {\n  const track = new EventTarget(); track.readyState='live'; track.stop=()=>{track.readyState='ended'};\n  return {track,getTracks:()=>[track],getVideoTracks:()=>[track]};\n}\ntest('open, JPEG capture, switch and close release camera tracks without audio', async()=>{\n  const requests=[], streams=[];\n  const env=setup(async constraints=>{requests.push(constraints);const s=mediaStream();streams.push(s);return s;});\n  assert.equal(await env.api.open(),true);\n  assert.equal(requests[0].audio,false);\n  assert.equal(requests[0].video.facingMode.ideal,'environment');\n  const frame=await env.api.captureFrame();\n  assert.equal(frame.width,1280);assert.equal(frame.height,720);assert.equal(frame.blob.type,'image/jpeg');\n  assert.equal(await env.api.open('user'),true);assert.equal(streams[0].track.readyState,'ended');\n  env.api.close();assert.equal(streams[1].track.readyState,'ended');assert.equal(env.panel().hidden,true);\n  await assert.rejects(env.api.captureFrame(),/尚未准备/);\n});\ntest('close during permission request stops late stream and never reopens',async()=>{\n  let resolve;const env=setup(()=>new Promise(r=>resolve=r));const result=env.api.open();\n  env.api.close();const s=mediaStream();resolve(s);\n  assert.equal(await result,false);assert.equal(s.track.readyState,'ended');assert.equal(env.panel().hidden,true);\n});\ntest('old request cannot replace a newer camera session',async()=>{\n  const resolves=[];const env=setup(()=>new Promise(r=>resolves.push(r)));\n  const first=env.api.open();env.api.close();const second=env.api.open('user');\n  const newest=mediaStream();resolves[1](newest);await second;\n  const stale=mediaStream();resolves[0](stale);await first;\n  assert.equal(stale.track.readyState,'ended');assert.equal(newest.track.readyState,'live');\n  assert.equal(env.panel().querySelector('video').srcObject,newest);env.api.close();\n});\ntest('permission denial displays recoverable error',async()=>{\n  const env=setup(async()=>{const e=new Error('denied');e.name='NotAllowedError';throw e});\n  assert.equal(await env.api.open(),false);assert.match(env.panel().querySelector('p').textContent,/权限/);\n  env.media.getUserMedia=async()=>mediaStream();assert.equal(await env.api.open(),true);env.api.close();\n});\ntest('pagehide and device disconnect release media',async()=>{\n  let current;const env=setup(async()=>current=mediaStream());\n  await env.api.open();current.track.dispatchEvent(new Event('ended'));assert.equal(env.api.getStatus().open,false);\n  await env.api.open();env.window.dispatchEvent(new Event('pagehide'));assert.equal(current.track.readyState,'ended');\n});\ntest('left release opens vision, pointer cancellation does not',()=>{\n  const app=fs.readFileSync(path.join(__dirname,'../frontend/app.js'),'utf8');\n  const gesture=app.slice(app.indexOf('// Independent floating-ball gestures.'),app.indexOf('// 语音会话只由用户'));\n  class Target extends EventTarget { setPointerCapture(){} contains(){return false;} }\n  const ball=new Target();const doc=new Target();const outer={hidden:true};\n  let opens=0;doc.getElementById=id=>id==='mainFloat'?ball:id==='futureOuterRing'?outer:null;\n  vm.runInNewContext(gesture,{document:doc,window:{AIAgentVision:{open:()=>opens++}},Date,Math});\n  function pointer(type,x){const e=new Event(type,{cancelable:true});Object.assign(e,{pointerId:1,clientX:x,clientY:200,button:0});ball.dispatchEvent(e);}\n  pointer('pointerdown',200);pointer('pointermove',100);pointer('pointercancel',100);pointer('pointerup',100);assert.equal(opens,0);\n  pointer('pointerdown',200);pointer('pointermove',100);pointer('pointerup',100);assert.equal(opens,1);assert.equal(outer.hidden,true);\n});\n"};
-const changes=[];
-function patch(p, before, after) {
- const text=fs.readFileSync(p,'utf8');
- if(text.includes(after)) return;
- if(!text.includes(before)) throw Error('Expected source not found: '+p);
- changes.push([p,text.replace(before,after)]);
+import os from 'node:os';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const entries=[["capabilities/vision/recognition.js","d2161f96a9b2d56b502a083b5b1c1316de97f52c","58d6fb419bba620918a05438f52a3ae37e28e7dd"],["capabilities/vision/labels.js","45324329358c8dc4a1aeb2aba881e0c5ee73cbc9","d31002a629372706d534a5deb2d3b4175ddd4c0f"],["capabilities/vision/camera.css","e925daf7687c2cb5f4e807fbb9dfc06366605b75","419a71521336a48a17e1bf243f9d793a22a183a3"],["backend/vision/taxonomy.js","92e74be4cb5432b83739b8dca50d78f9dc5cc2fd","64004a19b6215d153dfebe370337abf3cc3bc2d2"],["backend/vision/provider.js","b6dbf7b9437ee90dc393b906e035459b06e0c7db","3e06cdd02d5d85c8f8f256016ff0298ff378e7be"],["backend/vision/products.js","cf17a2c552b7fd8370e6306f1855fe7a93c5a732","5984a295d76ec53922f06b272e557f65bd9a81de"],["backend/vision/routes.js","b04ff09db4694074020e493d0a97ad3e0df1f102","973f4b57193420f87367163b12db4ee90c359847"],["capabilities/vision/motion.js","661e8b616898b93a0803eeb351e21dd08147bc5a","a23afce94fca49a7f6dcc94d249b7ab5fcd3682e"]];
+const sha=bytes=>createHash('sha1').update('blob '+bytes.length).update(Buffer.from([0])).update(bytes).digest('hex');
+const data=[],changed=[];
+for(const [file,oldHash,newHash] of entries){
+ const original=fs.readFileSync(file),actual=sha(original);
+ if(actual!==oldHash&&actual!==newHash)throw Error('Local file differs, no files changed: '+file+' '+actual);
+ if(actual===newHash)continue;
+ const response=JSON.parse(execFileSync('gh',['api','repos/Appsusage/Genesis/git/blobs/'+newHash],{encoding:'utf8',maxBuffer:2000000,timeout:25000}));
+ if(response.encoding!=='base64')throw Error('GitHub blob encoding invalid: '+file);
+ const bytes=Buffer.from(response.content.replace(/\s/g,''),'base64');
+ if(sha(bytes)!==newHash)throw Error('GitHub blob checksum mismatch: '+file);
+ data.push({file,bytes,oldHash,newHash});changed.push(file);
 }
-patch('frontend/app.js',"    if (kind === \"left\") {\n      if (outerRing) {\n        const rect = ball.getBoundingClientRect();\n        outerRing.style.left = (rect.left + rect.width / 2 - 122) + \"px\";\n        outerRing.style.top = (rect.top + rect.height / 2 - 150) + \"px\";\n        outerRing.style.right = \"auto\";\n        outerRing.style.bottom = \"auto\";\n        outerRing.hidden = false;\n      }\n",'    if (kind === "left") {\n      hideOuterRing();\n      if (window.AIAgentVision) window.AIAgentVision.open();\n');
-patch('frontend/index.html','<script src="app.js" defer></script>','<script src="/capabilities/vision/camera.js" defer></script>\n<script src="app.js" defer></script>');
-patch('frontend/index.html','</head>','<link rel="stylesheet" href="/capabilities/vision/camera.css">\n</head>');
-patch('backend/server.js','app.use("/extension", express.static(path.join(__dirname, "extension")));',"app.use(\"/extension\", express.static(path.join(__dirname, \"extension\")));\n\n// Only the public camera assets are exposed from the vision capability.\napp.get(\"/capabilities/vision/:asset\", (req, res) => {\n  if (![\"camera.js\", \"camera.css\"].includes(req.params.asset)) return res.sendStatus(404);\n  res.sendFile(path.join(__dirname, \"../capabilities/vision\", req.params.asset));\n});");
-for(const [p,content] of Object.entries(files)){
- if(fs.existsSync(p)&&fs.readFileSync(p,'utf8')!==content)throw Error('Existing different file: '+p);
+if(!data.length){console.log('VISION_ALREADY_CURRENT');process.exit(0);}
+const backup=fs.mkdtempSync(path.join(os.tmpdir(),'ai-agent-vision-backup-'));
+for(const item of data){const dest=path.join(backup,item.file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(item.file,dest);}
+const applied=[];
+try{
+ for(const item of data){
+  if(sha(fs.readFileSync(item.file))!==item.oldHash)throw Error('Concurrent file change: '+item.file);
+  const temp=item.file+'.vision-update-'+process.pid;
+  fs.writeFileSync(temp,item.bytes,{mode:fs.statSync(item.file).mode&0o777});
+  fs.renameSync(temp,item.file);applied.push(item);
+ }
+ for(const item of data)if(sha(fs.readFileSync(item.file))!==item.newHash)throw Error('Post-write mismatch: '+item.file);
+ console.log('VISION_APPLIED files='+changed.length+' backup='+backup);
+}catch(e){
+ for(const item of applied.reverse()){try{if(sha(fs.readFileSync(item.file))===item.newHash)fs.copyFileSync(path.join(backup,item.file),item.file);}catch{}}
+ throw e;
 }
-const backup='/tmp/ai-vision-backup-'+Date.now();fs.mkdirSync(backup);
-for(const p of new Set(changes.map(([p])=>p))){const dst=path.join(backup,p);fs.mkdirSync(path.dirname(dst),{recursive:true});fs.copyFileSync(p,dst);}
-for(const [p,content] of Object.entries(files)){fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,content);}
-for(const [p,content] of changes)fs.writeFileSync(p,content);
-// Cancelled or lost captures must not trigger a camera opening.
-let app=fs.readFileSync('frontend/app.js','utf8');
-app=app.replace('  ball.addEventListener("pointercancel", finish);\n  ball.addEventListener("lostpointercapture", event => { if (active && active.id === event.pointerId) finish(event); });','  function cancelGesture(event) {\n    if (!active || active.id !== event.pointerId) return;\n    active = null; clearLens(); suppressClickUntil = Date.now() + 500;\n  }\n  ball.addEventListener("pointercancel", cancelGesture);\n  ball.addEventListener("lostpointercapture", cancelGesture);');
-fs.writeFileSync('frontend/app.js',app);
-console.log('VISION_APPLIED backup='+backup);
 NODE
-node --check backend/server.js
-node --check frontend/app.js
-node --check capabilities/vision/camera.js
-node --test test/vision_camera.test.cjs
-ps -eo pid,ppid,args | grep -E 'backend/server.js|heartbeat|sync_supervisor' | grep -v grep || true
-node -e "try { console.log('PLAYWRIGHT='+require.resolve('playwright')); } catch { console.log('NO_PLAYWRIGHT'); }"
+node --check capabilities/vision/recognition.js
+node --check capabilities/vision/labels.js
+node --check capabilities/vision/motion.js
+node --check backend/vision/provider.js
+node --check backend/vision/products.js
+node --check backend/vision/taxonomy.js
+node --check backend/vision/routes.js
+git hash-object capabilities/vision/recognition.js capabilities/vision/labels.js capabilities/vision/camera.css backend/vision/taxonomy.js backend/vision/provider.js backend/vision/products.js backend/vision/routes.js capabilities/vision/motion.js
 
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: b4c6e84c7056bd23db437afdcf44c06499fc27f0
+[github_adaptor] GitHub SHA: efe0ae0eb017972cd63271ccb271e0a8cd1ae9b4
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
-[github_adaptor] 准备创建 /inbox/S1363.txt
+[github_adaptor] 准备创建 /inbox/S1434.txt
 [github_adaptor] Dropbox 文件创建成功
 [github_adaptor] Dropbox 文件验证成功
 [github_adaptor] 开始删除 GitHub shell_bridge.txt
 [github_adaptor] GitHub 删除请求成功
 [github_adaptor] ERROR: Error: GitHub shell_bridge.txt 删除验证失败
     at processTask (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:303:13)
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async mainLoop (file:///home/runner/workspace/ai-agent/bridge/shell/github_adaptor.js:422:9)
 
 === END RAW LOG ===
