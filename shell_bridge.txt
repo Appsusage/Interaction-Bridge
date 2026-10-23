@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 2
-node backend/sync/sync_supervisor.js status
-git hash-object capabilities/vision/recognition.js capabilities/vision/labels.js capabilities/vision/camera.css backend/vision/taxonomy.js backend/vision/provider.js backend/vision/products.js backend/vision/routes.js capabilities/vision/motion.js
-node -e "const fs=require('fs');for(const f of ['backend/sync/sync_last_report.json','backend/sync/.github-sync-state.json']){if(!fs.existsSync(f))continue;try{const o=JSON.parse(fs.readFileSync(f,'utf8'));console.log(f,JSON.stringify({status:o.status,revision:o.revision,direction:o.direction,executed:o.executed,blockedCount:o.blockedCount,unmatchedCount:o.unmatchedCount,error:o.error,updatedAt:o.updatedAt}).slice(0,1200));}catch(e){console.log(f,e.message)}}"
