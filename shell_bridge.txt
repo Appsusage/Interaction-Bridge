@@ -1,0 +1,18 @@
+cd /home/runner/workspace/ai-agent && sed -n '1,24p' backend/extension/browser/browser_live.js && node --input-type=module - <<'JS'
+import WebSocket from 'ws';
+const paths=['/browser/live','/browser-live','/browser/live-viewer','/browser/stream'];
+for (const path of paths) {
+ await new Promise(resolve=>{
+  const ws=new WebSocket('ws://127.0.0.1:3000'+path);
+  let done=false;
+  const finish=(v)=>{if(done)return;done=true;console.log(path,v);ws.terminate();resolve();};
+  ws.on('message',raw=>{
+    try{const obj=JSON.parse(raw.toString());if(obj.type==='sessions')return finish(JSON.stringify(obj).slice(0,3000));}
+    catch{}
+  });
+  ws.on('unexpected-response',(_,r)=>finish('HTTP '+r.statusCode));
+  ws.on('error',e=>finish('ERR '+e.message.slice(0,100)));
+  setTimeout(()=>finish('NO_SUITABLE_MESSAGE'),1000);
+ });
+}
+JS
