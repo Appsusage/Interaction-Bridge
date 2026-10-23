@@ -1,0 +1,24 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+import subprocess
+p=Path('backend/extension/browser')
+print('BROWSER FILES')
+for f in p.rglob('*'):
+ if f.is_file() and any(x in f.name for x in ['chatgpt','gmail','live','session']):
+  print(f, f.stat().st_size, __import__('datetime').datetime.fromtimestamp(f.stat().st_mtime).isoformat())
+print('CHATGPT SCRIPT')
+for n in ['backend/extension/browser/chatgpt_live.js','backend/extension/browser/gmail_live.js']:
+ f=Path(n)
+ if f.exists():
+  s=f.read_text(errors='replace').splitlines()
+  for i,l in enumerate(s,1):
+   if any(x in l.lower() for x in ['login','session','cookie','profile','error','timeout','captcha','verify','reconnect','browser','launch','goto','auth']):
+    print(n,i,l[:270])
+print('PROCESS')
+subprocess.run(['ps','-eo','pid,lstart,args'],stdout=subprocess.PIPE,text=True)
+res=subprocess.run("ps -eo pid,lstart,args | grep -E 'node|chrome|chromium|browser' | grep -v grep | head -35",shell=True,text=True,capture_output=True)
+print(res.stdout[:6000])
+print('GIT FILE STATUS')
+res=subprocess.run(['git','status','--short','--','backend/extension/browser/chatgpt_live.js','backend/extension/browser/gmail_live.js'],capture_output=True,text=True)
+print(res.stdout)
+PY
