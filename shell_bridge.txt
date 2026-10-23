@@ -1,0 +1,22 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+for name, ranges in {
+'backend/extension/browser/chatgpt_live.js':[(140,164),(258,347)],
+'backend/extension/browser/browser_service.js':[(1,85)],
+'backend/server.js':[(1,120)]
+}.items():
+ p=Path(name)
+ if not p.exists():continue
+ s=p.read_text(errors='replace').splitlines()
+ print('FILE',name)
+ for a,b in ranges:
+  print('\n'.join(f'{i+1} {s[i]}' for i in range(a-1,min(b,len(s)))))
+print('LOG DIRECTORIES')
+for name in ['backend/extension/browser','backend/logs','logs','.chatgpt-profile']:
+ p=Path(name)
+ if p.exists():
+  for f in list(p.iterdir())[:35]:
+   if name=='.chatgpt-profile': print('profile entry',f.name)
+   elif any(x in f.name.lower() for x in ['log','status','state','error']): print(name,f.name)
+PY
+printf '\nSERVER LOG FILE PATHS\n'; find . -maxdepth 4 -type f \( -iname '*chatgpt*log*' -o -iname '*browser*log*' -o -iname '*server*log*' \) -print | head -40
