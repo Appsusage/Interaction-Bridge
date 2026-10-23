@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 2
-ps -eo pid,ppid,args | grep -E 'backend/server.js|sync_supervisor.js|sync_daemon.js' | grep -v grep || true
-curl -fsS --max-time 5 http://127.0.0.1:3000/vision/status || true
-node test/vision_tracking_browser.cjs
