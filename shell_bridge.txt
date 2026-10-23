@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+for n in ['frontend/browser-live-viewer.js','frontend/browser-live-viewer.css','frontend/app.js','frontend/style.css']:
+ p=Path(n); s=p.read_text(errors='replace').splitlines()
+ print('\nFILE',n)
+ for i,l in enumerate(s,1):
+  if any(x in l for x in ['z-index','zIndex','bringFront','appendChild(','lastElementChild','floatMenu','browser-live-viewer','stacking']):
+   print(i,l[:450])
+PY
