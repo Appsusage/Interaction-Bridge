@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent && python3 - <<'PY'
-from pathlib import Path
-for name in ['backend/extension/3D_viewer.js','frontend/index.html','frontend/browser-live-viewer.js']:
- p=Path(name); s=p.read_text().splitlines()
- print('FILE',name,'lines',len(s))
- for i,l in enumerate(s,1):
-  if any(x in l for x in ['floatMenu','browser-3d-stack','z-index','WINDOW_FRONT','createElement("style")','appendChild(','classList','setProperty("z-index"','style.zIndex','body.style','position:fixed','fullscreen']):
-   print(i,l[:240])
-PY
