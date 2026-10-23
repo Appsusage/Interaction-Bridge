@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+for p in Path("frontend").rglob("*"):
+ if p.suffix not in (".css",".js",".html"): continue
+ try: s=p.read_text()
+ except: continue
+ if any(x in s for x in ("browserFloatButton","贴边","edge-dock","floatMenu","floating-menu")):
+  print("\nFILE",p)
+  for i,line in enumerate(s.splitlines(),1):
+   if any(x in line for x in ("browserFloatButton","z-index","floatMenu","floating-menu","贴边")):
+    print(i,line[:360])
+PY
