@@ -1,64 +1,27 @@
 === github_adaptor raw log ===
-time: 2026-10-23T04:20:50.829Z
+time: 2026-10-23T15:32:51.107Z
 repository: Appsusage/Interaction-Bridge
 file: shell_bridge.txt
-sha: efe0ae0eb017972cd63271ccb271e0a8cd1ae9b4
+sha: e2b421cb68772e8d9641a500cfebcdece7aab6e4
 
 === shell_bridge.txt content ===
-cd /home/runner/workspace/ai-agent || exit 2
-node --input-type=module <<'NODE'
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import {execFileSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
-const entries=[["capabilities/vision/recognition.js","d2161f96a9b2d56b502a083b5b1c1316de97f52c","58d6fb419bba620918a05438f52a3ae37e28e7dd"],["capabilities/vision/labels.js","45324329358c8dc4a1aeb2aba881e0c5ee73cbc9","d31002a629372706d534a5deb2d3b4175ddd4c0f"],["capabilities/vision/camera.css","e925daf7687c2cb5f4e807fbb9dfc06366605b75","419a71521336a48a17e1bf243f9d793a22a183a3"],["backend/vision/taxonomy.js","92e74be4cb5432b83739b8dca50d78f9dc5cc2fd","64004a19b6215d153dfebe370337abf3cc3bc2d2"],["backend/vision/provider.js","b6dbf7b9437ee90dc393b906e035459b06e0c7db","3e06cdd02d5d85c8f8f256016ff0298ff378e7be"],["backend/vision/products.js","cf17a2c552b7fd8370e6306f1855fe7a93c5a732","5984a295d76ec53922f06b272e557f65bd9a81de"],["backend/vision/routes.js","b04ff09db4694074020e493d0a97ad3e0df1f102","973f4b57193420f87367163b12db4ee90c359847"],["capabilities/vision/motion.js","661e8b616898b93a0803eeb351e21dd08147bc5a","a23afce94fca49a7f6dcc94d249b7ab5fcd3682e"]];
-const sha=bytes=>createHash('sha1').update('blob '+bytes.length).update(Buffer.from([0])).update(bytes).digest('hex');
-const data=[],changed=[];
-for(const [file,oldHash,newHash] of entries){
- const original=fs.readFileSync(file),actual=sha(original);
- if(actual!==oldHash&&actual!==newHash)throw Error('Local file differs, no files changed: '+file+' '+actual);
- if(actual===newHash)continue;
- const response=JSON.parse(execFileSync('gh',['api','repos/Appsusage/Genesis/git/blobs/'+newHash],{encoding:'utf8',maxBuffer:2000000,timeout:25000}));
- if(response.encoding!=='base64')throw Error('GitHub blob encoding invalid: '+file);
- const bytes=Buffer.from(response.content.replace(/\s/g,''),'base64');
- if(sha(bytes)!==newHash)throw Error('GitHub blob checksum mismatch: '+file);
- data.push({file,bytes,oldHash,newHash});changed.push(file);
-}
-if(!data.length){console.log('VISION_ALREADY_CURRENT');process.exit(0);}
-const backup=fs.mkdtempSync(path.join(os.tmpdir(),'ai-agent-vision-backup-'));
-for(const item of data){const dest=path.join(backup,item.file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(item.file,dest);}
-const applied=[];
-try{
- for(const item of data){
-  if(sha(fs.readFileSync(item.file))!==item.oldHash)throw Error('Concurrent file change: '+item.file);
-  const temp=item.file+'.vision-update-'+process.pid;
-  fs.writeFileSync(temp,item.bytes,{mode:fs.statSync(item.file).mode&0o777});
-  fs.renameSync(temp,item.file);applied.push(item);
- }
- for(const item of data)if(sha(fs.readFileSync(item.file))!==item.newHash)throw Error('Post-write mismatch: '+item.file);
- console.log('VISION_APPLIED files='+changed.length+' backup='+backup);
-}catch(e){
- for(const item of applied.reverse()){try{if(sha(fs.readFileSync(item.file))===item.newHash)fs.copyFileSync(path.join(backup,item.file),item.file);}catch{}}
- throw e;
-}
-NODE
-node --check capabilities/vision/recognition.js
-node --check capabilities/vision/labels.js
-node --check capabilities/vision/motion.js
-node --check backend/vision/provider.js
-node --check backend/vision/products.js
-node --check backend/vision/taxonomy.js
-node --check backend/vision/routes.js
-git hash-object capabilities/vision/recognition.js capabilities/vision/labels.js capabilities/vision/camera.css backend/vision/taxonomy.js backend/vision/provider.js backend/vision/products.js backend/vision/routes.js capabilities/vision/motion.js
-
+cd /home/runner/workspace/ai-agent && python3 - <<'PY'
+from pathlib import Path
+p=Path("frontend/style.css"); s=p.read_text().splitlines()
+for i,line in enumerate(s,1):
+ if any(x in line for x in (".float-menu",".float-main",".float-item","#floatMenu","#mainFloat","z-index")):
+  print(i,line[:900])
+print("\nHTML")
+s=Path("frontend/index.html").read_text().splitlines()
+for i in range(198,281): print(i+1,s[i])
+PY
 
 === adaptor log ===
 [github_adaptor] 检测到 shell_bridge.txt
 [github_adaptor] 5 秒监听已停止
-[github_adaptor] GitHub SHA: efe0ae0eb017972cd63271ccb271e0a8cd1ae9b4
+[github_adaptor] GitHub SHA: e2b421cb68772e8d9641a500cfebcdece7aab6e4
 [github_adaptor] 查询 Dropbox Shell Bridge 记录
-[github_adaptor] 准备创建 /inbox/S1434.txt
+[github_adaptor] 准备创建 /inbox/S1459.txt
 [github_adaptor] Dropbox 文件创建成功
 [github_adaptor] Dropbox 文件验证成功
 [github_adaptor] 开始删除 GitHub shell_bridge.txt
