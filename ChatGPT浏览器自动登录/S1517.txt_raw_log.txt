@@ -1,0 +1,47 @@
+CHATGPT_BROWSER_HEADLESS_TRUE false
+DISPLAY_SET true
+  if (startupPromise) return startupPromise;
+
+  startupPromise = (async () => {
+    const profileDir = getProfileDir();
+    await fs.mkdir(profileDir, { recursive: true });
+    const context = await chromium.launchPersistentContext(profileDir, {
+      headless: process.env.CHATGPT_BROWSER_HEADLESS === "true",
+      executablePath: getExecutablePath(),
+      viewport: { width: 1280, height: 900 },
+      ignoreDefaultArgs: ["--mute-audio"],
+      args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"]
+    });
+    try { await context.grantPermissions(["microphone"], { origin: "https://chatgpt.com" }); } catch {}
+    await context.addInitScript(installRemoteAudioBridge);
+    pageRef = context.pages()[0] || await context.newPage();
+    sessionRef = registerBrowserSession({
+      browser: null,
+      context,
+      page: pageRef,
+      options: { displayPolicy: "background", importance: 30 }
+    });
+    started = true;
+
+    try {
+      await pageRef.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await wait(1800);
+      if (await isLoggedIn(pageRef)) {
+        emitStatus("完成", { step: "existing-session", url: pageRef.url() });
+      } else {
+        await beginEmailLogin(pageRef);
+      }
+    } catch (error) {
+      emitStatus("失败", { step: "startup-navigation", error: error.message });
+    }
+
+    monitor = setInterval(() => { void monitorLoginState(); }, 15000);
+    monitor.unref?.();
+    return { started: true, sessionId: sessionRef, profileDir };
+  })();
+
+  try { return await startupPromise; }
+  finally { startupPromise = null; }
+
+[exit code] 0
+Progress: Completed
