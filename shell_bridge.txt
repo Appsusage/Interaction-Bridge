@@ -1,0 +1,122 @@
+node <<'MULTI_SHELL_INTEGRATION_SCRIPT'
+const fs = require('node:fs');
+const cp = require('node:child_process');
+const originals = new Map();
+const proposed = new Map();
+function read(file) {
+  if (!originals.has(file)) originals.set(file, fs.readFileSync(file,'utf8'));
+  return proposed.get(file) ?? originals.get(file);
+}
+function replaceOnce(file,before,after) {
+  const data = read(file);
+  if (!data.includes(before)) throw Error('MISSING ANCHOR ' + file + ' '+before.slice(0,95));
+  if (data.indexOf(before)!==data.lastIndexOf(before)) throw Error('DUPLICATE ANCHOR '+file+' '+before.slice(0,75));
+  proposed.set(file,data.replace(before,after));
+  console.log('PATCH',file,before.slice(0,70).replace(/\n/g,' '));
+}
+const worker='bridge/shell/multi-task/shell_command.js';
+const backend='backend/server.js';
+const consoleUi='frontend/backend-console-viewer.js';
+const consoleCss='frontend/backend-console-viewer.css';
+const html='frontend/index.html';
+const viewer3d='backend/extension/3D_viewer.js';
+if (!fs.existsSync('bridge/shell/multi-task/shell_floats.js') || !fs.existsSync('frontend/shell-multi-floats.js')) throw Error('NEW_FLOAT_MODULES_NOT_PRESENT');
+replaceOnce(worker,
+  "constructor({ pollMs = 1000, maxConcurrent = 8, shell = '/bin/bash', logger = console } = {}) {",
+  "constructor({ pollMs = 1000, maxConcurrent = 8, shell = '/bin/bash', logger = console, onEvent = null } = {}) {");
+replaceOnce(worker, '    this.logger = logger;\n    this.running = new Map();',
+  '    this.logger = logger;\n    this.onEvent = typeof onEvent === "function" ? onEvent : null;\n    this.running = new Map();');
+replaceOnce(worker, '  async sourceCandidates() {',
+  '  emitFloat(detail) { try { this.onEvent?.(detail); } catch (error) { this.logger.warn("[shell float] event error:", error?.message); } }\n\n  async sourceCandidates() {');
+replaceOnce(worker,
+  "    this.running.set(task.path, state);\n    const append = bytes => { state.log += bytes.toString('utf8'); state.lastActivity = Date.now(); state.attempts = 0; };\n    child.stdout.on('data', append);\n    child.stderr.on('data', append);",
+  "    this.running.set(task.path, state);\n    const notify = (kind, extra = {}) => this.emitFloat({ kind, folder: task.folder, taskName: task.name, ...extra });\n    notify('start', { command });\n    const append = (bytes, stream = 'stdout') => {\n      const text = bytes.toString('utf8');\n      state.log += text; state.lastActivity = Date.now(); state.attempts = 0;\n      notify('chunk', { text, stream });\n    };\n    child.stdout.on('data', chunk => append(chunk, 'stdout'));\n    child.stderr.on('data', chunk => append(chunk, 'stderr'));" );
+replaceOnce(worker,
+  "        if (Date.now() - state.lastActivity < 10000) continue;",
+  "        if (Date.now() - state.lastActivity < 10000) {\n          const remaining = Math.max(1, Math.ceil((10000 - (Date.now() - state.lastActivity)) / 1000));\n          notify('countdown', { remaining });\n          continue;\n        }");
+replaceOnce(worker,
+  "        let answer = null;\n        const deadline = Date.now() + 20000;",
+  "        notify('waiting', { message: '10 秒无输出，已写入 ' + filename + '，等待 AI 回答 yes/no' });\n        let answer = null;\n        const deadline = Date.now() + 20000;");
+replaceOnce(worker,
+  "          answer = await this.readAnswer(task, filename);\n          if (answer) break;\n          await delay(1000);",
+  "          answer = await this.readAnswer(task, filename);\n          if (answer) break;\n          notify('answer-countdown', { remaining: Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) });\n          await delay(1000);");
+replaceOnce(worker,
+  "        if (answer === 'yes' || !answer || state.attempts >= 3) {",
+  "        notify('answer', { message: 'AI 回答: ' + (answer || '20 秒内没有回答') + ' · 尝试 ' + state.attempts + '/3' });\n        if (answer === 'yes' || !answer || state.attempts >= 3) {");
+replaceOnce(worker,
+  "        // Answer no: a fresh 10-second observation window.\n        state.lastActivity = Date.now();",
+  "        // Answer no: a fresh 10-second observation window.\n        notify('continue', { message: 'AI 回答 no，任务延后，重新观察 10 秒' });\n        state.lastActivity = Date.now();");
+replaceOnce(worker,
+  "      this.running.delete(task.path);\n    }\n  }\n\n  async terminate(",
+  "      notify('finish', { exitCode, message: 'Shell 已结束，浮窗 10 秒后关闭；日志写入 Outbox' });\n      this.running.delete(task.path);\n    }\n  }\n\n  async terminate(");
+replaceOnce(backend,
+  'import { attachBackendConsole } from "./console_live.js";',
+  'import { attachBackendConsole } from "./console_live.js";\nimport { installMultiTaskShellFloats } from "../bridge/shell/multi-task/shell_floats.js";');
+replaceOnce(backend,
+  'attachBackendConsole(httpServer);',
+  'attachBackendConsole(httpServer);\ninstallMultiTaskShellFloats(app, httpServer);');
+replaceOnce(consoleUi,
+  '<button type="button" class="bcv-pause">暂停滚动</button>',
+  '<button type="button" class="bcv-multi-start" title="启动或停止新版多任务 Shell Bridge">启动Shell</button><button type="button" class="bcv-pause">暂停滚动</button>');
+const uiSnippet=[
+'  const multiButton = root.querySelector(".bcv-multi-start");',
+'  let multiRunning = false;',
+'  function updateMultiButton(data) {',
+'    multiRunning = !!data.running;',
+'    multiButton.textContent = multiRunning ? "停止Shell" : "启动Shell";',
+'    multiButton.title = multiRunning ? "停止接收新任务；当前执行不中断" : "启动新版多任务 Shell Bridge 监听";',
+'    multiButton.setAttribute("aria-pressed", String(multiRunning));',
+'  }',
+'  async function refreshMultiStatus() {',
+'    try {',
+'      const res = await fetch("/shell-multi/status", {cache:"no-store",credentials:"same-origin"});',
+'      if (res.ok) updateMultiButton(await res.json());',
+'    } catch {}',
+'  }',
+'  multiButton.addEventListener("click", async () => {',
+'    const action = multiRunning ? "stop" : "start";',
+'    multiButton.disabled = true;',
+'    try {',
+'      const res = await fetch("/shell-multi/" + action, {',
+'        method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:"{}"',
+'      });',
+'      const info = await res.json();',
+'      if (!res.ok) throw new Error(info.error || "请求失败 " + res.status);',
+'      updateMultiButton(info);',
+'      status.textContent = info.message || (multiRunning ? "新版 Shell 运行中" : "新版 Shell 已停止");',
+'    } catch (error) { status.textContent = "Shell 控制失败：" + error.message; }',
+'    finally { multiButton.disabled = false; }',
+'  });',
+'  refreshMultiStatus();',
+'  setInterval(refreshMultiStatus, 6000);',
+'  pauseButton.addEventListener("click", () => {'
+].join('\n');
+replaceOnce(consoleUi,'  pauseButton.addEventListener("click", () => {',uiSnippet);
+replaceOnce(consoleCss,
+  '#backend-console-viewer.bcv-minimized{',
+  '#backend-console-viewer .bcv-multi-start{background:#24445c;color:#c9f8e8;border-color:#6d9eaa}#backend-console-viewer .bcv-multi-start[aria-pressed="true"]{background:#43572c;color:#f7ffdd}#backend-console-viewer .bcv-multi-start:disabled{opacity:.55;cursor:wait}#backend-console-viewer.bcv-minimized{');
+replaceOnce(html,
+  '<script src="/shell-float.js" defer></script>',
+  '<script src="/shell-float.js" defer></script>\n  <script src="/shell-multi-floats.js" defer></script>');
+replaceOnce(viewer3d,
+  '    if (!(element instanceof HTMLElement) || element.matches(EXCLUDED)) return false;',
+  '    if (!(element instanceof HTMLElement) || element.matches(EXCLUDED)) return false;\n    // Per-task Shell Floats retain their own 10-second demotion and z-index behavior.\n    if (element.hasAttribute("data-shell-multi-float")) return false;');
+
+const temps=[];
+try {
+  for(const [file,data] of proposed) {
+    const tmp=file+'.pending-shell-multi-'+process.pid+(file.endsWith('.js')?'.mjs':'.tmp');
+    fs.writeFileSync(tmp,data,'utf8'); temps.push(tmp);
+    if(file.endsWith('.js'))cp.execFileSync(process.execPath,['--check',tmp],{stdio:'inherit'});
+  }
+  for(const [file,data] of proposed)fs.writeFileSync(file,data,'utf8');
+  console.log('SHELL_MULTI_INTEGRATION_SUCCESS',JSON.stringify([...proposed.keys()]));
+} catch(error) {
+  for(const [file,data] of originals)fs.writeFileSync(file,data,'utf8');
+  throw error;
+} finally {
+  for(const tmp of temps)try{fs.unlinkSync(tmp)}catch{}
+}
+
+MULTI_SHELL_INTEGRATION_SCRIPT
+node --check backend/server.js && node --check bridge/shell/multi-task/shell_command.js && node --check bridge/shell/multi-task/shell_floats.js && node --check frontend/backend-console-viewer.js && node --check frontend/shell-multi-floats.js
