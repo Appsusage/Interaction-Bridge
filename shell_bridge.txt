@@ -1,7 +1,0 @@
-node --input-type=module -e 'import fs from "node:fs";
-const f="./bridge/shell/multi-task/shell_command.js",s=fs.readFileSync(f,"utf8");
-const old="headers['"'"'Dropbox-API-Arg'"'"'] = JSON.stringify(params.args);";
-const next="headers['"'"'Dropbox-API-Arg'"'"'] = JSON.stringify(params.args).replace(/[\\u007F-\\uFFFF]/g, ch => \"\\\\u\" + ch.charCodeAt(0).toString(16).padStart(4, \"0\"));";
-if(!s.includes(old)){console.log("UNICODE_HEADER_PATCH_NOT_APPLIED",s.includes(next)?"ALREADY_PATCHED":"PATTERN_MISSING");process.exit(2)}
-fs.writeFileSync(f,s.replace(old,next));
-console.log("UNICODE_HEADER_PATCH_APPLIED");' && node --check bridge/shell/multi-task/shell_command.js
