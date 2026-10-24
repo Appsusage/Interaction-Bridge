@@ -1,0 +1,5 @@
+CHATGPT_FOREGROUND_HTTP 200
+CHATGPT_FOREGROUND_RESULT {"scrolled":true}
+
+[exit code] 0
+Progress: Completed
