@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf 'NEW_WORKER_EXPORTS\n'
-rg -n 'startShellCommand|stop\(|schedule\(|collect\(|setInterval|setTimeout|import.meta|process.argv|onEvent' bridge/shell/multi-task/shell_command.js | tail -100
-printf 'NEW_WORKER_TAIL\n'
-tail -n 110 bridge/shell/multi-task/shell_command.js
-printf 'OLD_BRIDGE_SERVER_HEAD\n'
-sed -n '1,75p' bridge/shell/server.js
-printf 'NEW_START_DIAG_END\n'
