@@ -1,0 +1,46 @@
+# Shell Bridge 按会话话题分文件夹执行规范
+
+生效时间：2026-10-24（Asia/Kuching）
+适用范围：本会话起，所有经 GitHub Interaction-Bridge、Backup-Interaction-Bridge 或 Dropbox AI Shell Bridge 提交的 Shell Bridge 任务。
+
+## 1. 一个聊天话题，一个任务文件夹
+- 每个新聊天话题第一次提交 Shell Bridge 命令之前，先创建一个以该聊天窗话题命名的专属文件夹。
+- 同一话题的后续任务，一律沿用同名文件夹，不得每条命令另建主题文件夹，也不得混入其他话题。
+- 文件夹名称保留可识别的话题文字；剔除路径分隔符及不支持的字符。发生重名时使用明确后缀，避免跨会话混用。
+- 当前会话话题文件夹：`Shell Bridge 多任务与浮窗测试`。
+
+## 2. Shell Bridge 指令文件必须放在话题文件夹内
+在 GitHub 中的入口：
+```text
+Appsusage/Interaction-Bridge/<话题文件夹>/shell_bridge.txt
+Appsusage/Backup-Interaction-Bridge/<话题文件夹>/shell_bridge.txt
+```
+在真正的 Dropbox App 文件夹中的入口：
+```text
+/Apps/AI Shell Bridge/inbox/<话题文件夹>/shell_bridge.txt
+```
+- 只向本次选定的一个执行入口提交任务，避免主/备仓库双重执行。
+- 同名 `shell_bridge.txt` 尚未被接收时不得覆盖；必须等上一条命令安全进入处理阶段再提交下一条。
+- 不再以仓库根目录的 `shell_bridge.txt` 作为本规范的任务入口。
+
+## 3. 按话题收集、重命名并执行
+任务接收后，`shell_command.js` 应将源文件内容复制到真正的 Dropbox App 文件夹：
+```text
+/Apps/AI Shell Bridge/processing/<话题文件夹>/Sxxx.txt
+```
+- `Sxxx.txt` 使用不会撞号的递增序号；记录来源仓库或 Dropbox 路径、话题名称、执行状态。
+- 执行每个 `processing/<话题文件夹>/Sxxx.txt`，各任务独立记录 Shell 原始输出、等待、AI yes/no 回答和延后信息。
+- Dropbox API 若使用 **App Folder 权限**，API 的 `/` 对应网页中的 `/Apps/AI Shell Bridge/`，所以 API 路径写作 `/inbox/...`、`/processing/...` 等；绝不可填成 `/ai-agent/bridge/shell`。
+- Replit 本地模块路径 `ai-agent/bridge/shell/` 与 Dropbox 文件路径完全不同，不得混淆。
+
+## 4. 保留日志；完成后才清理话题文件夹
+- 任务运行期间，不得提前删除来源 `shell_bridge.txt`、尚未处理的任务或正在使用的主题文件夹。
+- 每个任务执行结束，先写入并验证完整日志及最终状态已保存在 `/Apps/AI Shell Bridge/archive/` 或既定持久化日志位置，再清理该任务的临时处理文件。
+- 话题还有未完成任务、未确认的日志、正在运行的 Shell 或后续任务时，保留同名话题文件夹。
+- 只有**整个聊天话题的所有 Shell Bridge 任务均已完成、回执核验并归档**，才删除该话题在两个 GitHub 入口及 Dropbox inbox/processing 中的临时任务文件夹。
+- 只删除该话题的临时文件夹，不删除本规范 Markdown、其他话题文件夹或公共基础目录。
+
+## 5. 实施约束
+- 本文为强制执行规范；实际监听程序必须支持扫描各入口的话题子文件夹，不能仅扫描根目录。
+- 在监听器、`shell_command.js` 和必要的调度入口验证支持话题子文件夹之前，禁止声称新结构已成功运行。
+- 不修改无关逻辑，不更改 `dropbox_token.js` 或泄露 Token。
