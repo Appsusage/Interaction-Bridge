@@ -1,0 +1,23 @@
+node <<'MULTI_FLOAT_REFINEMENTS'
+const fs=require('node:fs');const cp=require('node:child_process');
+const files=['frontend/shell-multi-floats.js','bridge/shell/multi-task/shell_floats.js','bridge/shell/multi-task/shell_command.js'];
+const old=new Map(),neu=new Map();
+function rep(file,a,b){const s=neu.get(file)||fs.readFileSync(file,'utf8');if(!old.has(file))old.set(file,s);if(!s.includes(a)||s.indexOf(a)!==s.lastIndexOf(a))throw Error('ANCHOR_BAD '+file+' '+a.slice(0,70));neu.set(file,s.replace(a,b))}
+rep(files[0],
+"    const target = panelFrom(event);\n    if (target) selectOtherPanel(target);",
+"    const target = panelFrom(event);\n    if (target && target.id !== 'shell-float-window' && target.id !== 'backend-console-shell-drawer') selectOtherPanel(target);");
+rep(files[0],
+"    if (state.event === 'start') { clearTimeout(win.finishTimer); win.active = true; setFront(win.element); }",
+"    if (state.event === 'start') { clearTimeout(win.finishTimer); win.active = true; selectOtherPanel(null); setFront(win.element); }");
+rep(files[1],
+"    if (event.kind === 'start') {",
+"    if (event.kind === 'queued') {\n      state.text = '[Shell Bridge] ' + state.taskName + ' 已进入 Processing，等待执行...\\n';\n      state.status = '已进入 Processing';\n    } else if (event.kind === 'start') {");
+rep(files[2],
+"      await upload(path, source.content);\n      occupied.add(path.toLowerCase());",
+"      await upload(path, source.content);\n      this.emitFloat({ kind: 'queued', folder: source.folder, taskName: name });\n      occupied.add(path.toLowerCase());");
+const tmp=[];
+try{for(const [file,s] of neu){const t=file+'.temp-check-'+process.pid+'.mjs';fs.writeFileSync(t,s);cp.execFileSync(process.execPath,['--check',t],{stdio:'inherit'});tmp.push(t)}
+for(const [file,s] of neu)fs.writeFileSync(file,s);console.log('MULTI_FLOAT_CORRECTIONS_APPLIED',JSON.stringify([...neu.keys()]));
+}catch(e){for(const [f,s] of old)fs.writeFileSync(f,s);throw e}finally{for(const t of tmp)try{fs.unlinkSync(t)}catch{}}
+
+MULTI_FLOAT_REFINEMENTS
