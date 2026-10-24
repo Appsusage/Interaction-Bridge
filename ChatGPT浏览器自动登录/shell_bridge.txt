@@ -1,0 +1,3 @@
+cd /home/runner/workspace/ai-agent
+node -e 'console.log("CHATGPT_BROWSER_HEADLESS_TRUE",process.env.CHATGPT_BROWSER_HEADLESS==="true");console.log("DISPLAY_SET",Boolean(process.env.DISPLAY))'
+sed -n '312,353p' backend/extension/browser/chatgpt_live.js
