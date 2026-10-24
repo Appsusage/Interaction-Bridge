@@ -1,0 +1,15 @@
+SERVER_PROCESS
+    164      28    06:26:55 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+  47828   47791    02:59:52 /nix/store/cikdc61gfwvdma6y0p9b5d5d448aqcv6-nodejs-24.12.0/bin/node --max-old-space-size=1536 /nix/store/6wjhsy7rpyxbpl65grd5a8aq96b50i8a-typescript-5.9.3/lib/node_modules/typescript/lib/tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/02d392746a2d60608059536906451def/tscancellation* --locale en --validateDefaultNpmLocation --useNodeIpc
+  47829   47791    02:59:52 /nix/store/cikdc61gfwvdma6y0p9b5d5d448aqcv6-nodejs-24.12.0/bin/node --max-old-space-size=1536 /nix/store/6wjhsy7rpyxbpl65grd5a8aq96b50i8a-typescript-5.9.3/lib/node_modules/typescript/lib/tsserver.js --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/7e0c792c1ac3d7f0e9cf3796d1efb954/tscancellation* --locale en --validateDefaultNpmLocation --useNodeIpc
+  48071      28    02:59:34 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/server.js
+  89525   51421       00:00 /bin/bash -c cd /home/runner/workspace/ai-agent printf 'SERVER_PROCESS\n' ps -eo pid,ppid,etime,args | rg '[n]ode.*(backend/server|server.js|nodemon)|[n]odemon' | head -35 printf 'RESTART_ENDPOINTS\n' rg -n 'restart|重启|relaunch|server/restart|console/restart' backend/console_live.js backend/server.js frontend/console* frontend/*.js 2>/dev/null | head -80 printf 'CHATGPT_SHA_AFTER\n' sha256sum backend/extension/browser/chatgpt_live.js printf 'RESTART_CHECK_DONE\n' 
+  89527   89525       00:00 rg [n]ode.*(backend/server|server.js|nodemon)|[n]odemon
+RESTART_ENDPOINTS
+frontend/app.js:2256:    // Use a cooldown to avoid a tight restart loop and preserve pending transcript.
+CHATGPT_SHA_AFTER
+4fe68d3d8d2028929ca75174645b1a24ad76e1781e97efd65ec84fc09766285e  backend/extension/browser/chatgpt_live.js
+RESTART_CHECK_DONE
+
+[exit code] 0
+Progress: Completed
