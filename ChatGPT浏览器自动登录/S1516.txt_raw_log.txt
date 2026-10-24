@@ -1,0 +1,12 @@
+6:const CHATGPT_HOME = "https://chatgpt.com/";
+162:async function beginEmailLogin(page) {
+170:        await page.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+283:    if (!loginFlowActive) await beginEmailLogin(pageRef);
+317:    const context = await chromium.launchPersistentContext(profileDir, {
+318:      headless: process.env.CHATGPT_BROWSER_HEADLESS === "true",
+319:      executablePath: getExecutablePath(),
+336:      await pageRef.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+341:        await beginEmailLogin(pageRef);
+
+[exit code] 0
+Progress: Completed
