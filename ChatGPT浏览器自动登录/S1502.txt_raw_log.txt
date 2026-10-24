@@ -1,0 +1,7 @@
+SESSION_TOTAL 3
+SESSION_INFO {"sessionId":"1792846930167-r76l77rdtyj","origin":"https://chatgpt.com","path":"/auth/login","title":"Just a moment...","challengeDetected":false,"loginCandidates":[]}
+SESSION_INFO {"sessionId":"1792860252575-8ordit5neyy","origin":"https://accounts.google.com","path":"/v3/signin/identifier"}
+SESSION_INFO {"sessionId":"1792860299085-742yrrpz4ze","origin":"https://accounts.google.com","path":"/v3/signin/rejected"}
+
+[exit code] 0
+Progress: Completed
