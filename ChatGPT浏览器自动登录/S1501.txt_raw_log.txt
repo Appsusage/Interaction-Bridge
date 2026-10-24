@@ -1,0 +1,5 @@
+SESSION_COUNT 3
+INSPECT_RESULT {"status":200,"url":"https://chatgpt.com/auth/login","title":"Just a moment...","challengeDetected":false,"candidateCount":0,"loginCandidates":[],"textFlags":{"login":false,"justMoment":false,"verifyHuman":false,"email":false}}
+
+[exit code] 0
+Progress: Completed
