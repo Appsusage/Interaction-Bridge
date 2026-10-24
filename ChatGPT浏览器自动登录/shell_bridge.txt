@@ -1,0 +1,22 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e '
+const ws=new WebSocket("ws://127.0.0.1:3000/browser/live");
+const timer=setTimeout(()=>{console.log("BROWSER_STATUS_TIMEOUT");ws.close();},8000);
+let target=null;
+ws.addEventListener("message",event=>{
+ const m=JSON.parse(event.data);
+ if(m.type==="sessions"){
+  target=(m.sessions||[]).find(s=>/chatgpt\.com/.test(s.url||""));
+  console.log("CHATGPT_SESSION",target?JSON.stringify(target):"NOT_FOUND");
+  if(target)ws.send(JSON.stringify({type:"attach",sessionId:target.sessionId}));
+  else {clearTimeout(timer);ws.close();}
+ } else if(m.type==="status" && m.sessionId===target?.sessionId){
+  console.log("CHATGPT_PAGE",JSON.stringify({url:m.url,title:m.title,state:m.state}));
+  clearTimeout(timer);ws.close();
+ }else if(m.type==="error"){
+  console.log("CHATGPT_ERROR",m.message);
+  clearTimeout(timer);ws.close();
+ }
+});
+ws.addEventListener("error",()=>{console.log("BROWSER_LIVE_CONNECT_FAILED");clearTimeout(timer);});
+'
