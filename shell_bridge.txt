@@ -1,0 +1,17 @@
+node --input-type=module -e 'import {getDropboxAccessToken} from "./bridge/shell/dropbox_token.js";
+import {ShellCommand} from "./bridge/shell/multi-task/shell_command.js";
+const token=await getDropboxAccessToken();
+const api=async(endpoint,body)=>{const r=await fetch("https://api.dropboxapi.com/2/files/"+endpoint,{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify(body)});return{status:r.status,body:await r.json()}};
+const folder="/outbox/__shell_command_orphan_validation__";
+const from=folder+"/S1490.txt",payload="ORPHAN_ARCHIVE_TEST_2026_10_24";
+const folderResult=await api("create_folder_v2",{path:folder,autorename:false});if(folderResult.status!==200 && !JSON.stringify(folderResult.body).includes("conflict"))throw Error("create_folder:"+JSON.stringify(folderResult));
+const up=await fetch("https://content.dropboxapi.com/2/files/upload",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:from,mode:"add",autorename:false})},body:payload});console.log("SEED_OUTBOX_TEST_FILE",up.status);if(!up.ok)throw Error((await up.text()).slice(0,300));
+const w=new ShellCommand({logger:console});await w.reconcileOutboxFolders();
+const old=await api("get_metadata",{path:from});console.log("SOURCE_GONE",old.status===409);
+const fallback="/archive/__shell_command_orphan_validation__/S1490.txt";
+const candidate=[fallback,"/archive/S1490.txt"];
+for(const dest of candidate){const met=await api("get_metadata",{path:dest});if(met.status!==200)continue;
+const res=await fetch("https://content.dropboxapi.com/2/files/download",{method:"POST",headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:dest})}});
+if(res.ok){const body=await res.text();if(body===payload){console.log("ARCHIVE_RELOCATED",dest);const del=await api("delete_v2",{path:dest});console.log("TEST_ARCHIVE_CLEANED",del.status);if(dest===fallback){const dir=await api("delete_v2",{path:"/archive/__shell_command_orphan_validation__"});console.log("TEST_SUBDIR_CLEANED",dir.status)}break;}}
+}
+const folderCheck=await api("get_metadata",{path:folder});console.log("OUTBOX_ORPHAN_FOLDER_DELETED",folderCheck.status===409);if(folderCheck.status!==409)process.exitCode=2;'
