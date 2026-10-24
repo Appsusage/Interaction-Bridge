@@ -1,0 +1,15 @@
+node --input-type=module <<'MULTI_SHELL_ONE_SHOT'
+import {ShellCommand} from './bridge/shell/multi-task/shell_command.js';
+const events=[];
+const worker=new ShellCommand({logger:console,maxConcurrent:1,onEvent:(event)=>{
+ events.push(event.kind);
+ console.log('FLOAT_EVENT',event.kind,event.taskName, event.remaining ?? '',event.text ?? '');
+}});
+await worker.collect();
+console.log('QUEUED_TASKS',JSON.stringify([...worker.queued.values()].map(t=>t.name)));
+worker.schedule();
+const deadline=Date.now()+20000;
+while((worker.running.size || worker.queued.size) && Date.now()<deadline)await new Promise(r=>setTimeout(r,500));
+console.log('FLOAT_EVENT_SUMMARY',events.join(','));
+console.log('FINISHED_TASKS',worker.running.size,'QUEUED',worker.queued.size);
+MULTI_SHELL_ONE_SHOT
