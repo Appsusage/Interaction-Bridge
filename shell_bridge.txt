@@ -1,0 +1,27 @@
+node <<'SHELL_MULTI_FIX_V2'
+const fs=require('node:fs'),cp=require('node:child_process');
+const files=['frontend/shell-multi-floats.js','bridge/shell/multi-task/shell_floats.js','bridge/shell/multi-task/shell_command.js'];
+const original=new Map(),updated=new Map();
+function ensure(f){if(!original.has(f))original.set(f,fs.readFileSync(f,'utf8'));return updated.get(f)||original.get(f)}
+function change(f,a,b,matches=1){let s=ensure(f);const count=s.split(a).length-1;if(count!==matches)throw Error('PATTERN_COUNT_BAD '+f+' count='+count+' wanted='+matches);updated.set(f,s.split(a).join(b))}
+change(files[0],
+"    const target = panelFrom(event);\n    if (target) selectOtherPanel(target);",
+"    const target = panelFrom(event);\n    if (target && target.id !== 'shell-float-window' && target.id !== 'backend-console-shell-drawer') selectOtherPanel(target);",2);
+change(files[0],
+"    if (state.event === 'start') { clearTimeout(win.finishTimer); win.active = true; setFront(win.element); }",
+"    if (state.event === 'start') { clearTimeout(win.finishTimer); win.active = true; selectOtherPanel(null); setFront(win.element); }");
+change(files[1],
+"    if (event.kind === 'start') {",
+"    if (event.kind === 'queued') {\n      state.text = '[Shell Bridge] ' + state.taskName + ' 已进入 Processing，等待执行...\\n';\n      state.status = '已进入 Processing';\n    } else if (event.kind === 'start') {");
+change(files[2],
+"      await upload(path, source.content);\n      occupied.add(path.toLowerCase());",
+"      await upload(path, source.content);\n      this.emitFloat({ kind: 'queued', folder: source.folder, taskName: name });\n      occupied.add(path.toLowerCase());");
+const temp=[];
+try {
+for(const [f,s] of updated){const t=f+'.verify-'+process.pid+'.mjs';fs.writeFileSync(t,s);cp.execFileSync(process.execPath,['--check',t],{stdio:'inherit'});temp.push(t);}
+for(const [f,s] of updated)fs.writeFileSync(f,s);
+console.log('REFINEMENT_SUCCESS',JSON.stringify([...updated.keys()]));
+}catch(e){for(const [f,s] of original)fs.writeFileSync(f,s);throw e}
+finally{for(const t of temp)try{fs.unlinkSync(t)}catch{}}
+
+SHELL_MULTI_FIX_V2
