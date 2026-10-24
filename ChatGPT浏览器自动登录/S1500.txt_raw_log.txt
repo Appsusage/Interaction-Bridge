@@ -1,0 +1,5 @@
+CHATGPT_SESSION {"sessionId":"1792846930167-r76l77rdtyj","url":"https://chatgpt.com/auth/login"}
+CHATGPT_PAGE {"url":"https://chatgpt.com/auth/login","title":"Just a moment...","state":"streaming"}
+
+[exit code] 0
+Progress: Completed
