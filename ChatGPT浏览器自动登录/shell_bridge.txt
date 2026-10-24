@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf 'SERVER_PROCESS\n'
-ps -eo pid,ppid,etime,args | rg '[n]ode.*(backend/server|server.js|nodemon)|[n]odemon' | head -35
-printf 'RESTART_ENDPOINTS\n'
-rg -n 'restart|重启|relaunch|server/restart|console/restart' backend/console_live.js backend/server.js frontend/console* frontend/*.js 2>/dev/null | head -80
-printf 'CHATGPT_SHA_AFTER\n'
-sha256sum backend/extension/browser/chatgpt_live.js
-printf 'RESTART_CHECK_DONE\n'
