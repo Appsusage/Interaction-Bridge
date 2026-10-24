@@ -1,0 +1,15 @@
+ENTRY_PATCH_APPLIED 4fe68d3d8d2028929ca75174645b1a24ad76e1781e97efd65ec84fc09766285e
+BACKUP /tmp/chatgpt_live_19e2cdec_before_login_change.js
+6:const CHATGPT_HOME = "https://chatgpt.com/";
+170:        await page.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+172:      const homepageLoginButton = page.getByRole("button", { name: /^(log in|sign in|登录)$/i }).first();
+173:      const homepageLoginLink = page.getByRole("link", { name: /^(log in|sign in|登录)$/i }).first();
+174:      if (await homepageLoginButton.isVisible().catch(() => false)) {
+175:        await homepageLoginButton.click({ timeout: 10000 });
+176:      } else if (await homepageLoginLink.isVisible().catch(() => false)) {
+177:        await homepageLoginLink.click({ timeout: 10000 });
+180:        emitStatus("waiting", { step: "homepage-login-button", title, url: page.url(), note: "ChatGPT 首页还没有显示登录按钮；保留当前会话，不直接跳入 /auth/login。" });
+336:      await pageRef.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+
+[exit code] 0
+Progress: Completed
