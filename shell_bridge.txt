@@ -1,0 +1,1 @@
+nl -ba bridge/shell/multi-task/shell_command.js | sed -n '1,340p'
