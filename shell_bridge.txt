@@ -1,0 +1,14 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e '
+import fs from "node:fs";
+import {spawn,execFileSync} from "node:child_process";
+const rows=execFileSync("ps",["-eo","pid=,args="],{encoding:"utf8"}).split("\n").map(s=>({pid:Number(s.trim().split(/\s+/,1)[0]),text:s}));
+const active=rows.filter(x=>x.pid!==process.pid && /^\s*\d+\s+\S*\/node\s+--input-type=module\s+-e\s+/.test(x.text) && x.text.includes("ai-agent-multitask-worker"));
+console.log("EXISTING_WORKER_PIDS",active.map(x=>x.pid));
+if(active.length===0){
+ const fd=fs.openSync("/tmp/ai-agent-multitask-worker.log","a");
+ const code="import {startShellCommand} from \"./bridge/shell/multi-task/shell_command.js\"; const worker=startShellCommand({pollMs:3000,maxConcurrent:1,logger:console}); process.on(\"SIGTERM\",()=>worker.stop());";
+ const child=spawn(process.execPath,["--input-type=module","-e",code,"ai-agent-multitask-worker"],{cwd:process.cwd(),env:process.env,detached:true,stdio:["ignore",fd,fd]});
+ child.unref();fs.closeSync(fd);console.log("MULTITASK_STARTED_PID",child.pid);
+}else console.log("MULTITASK_ALREADY_RUNNING");
+'
