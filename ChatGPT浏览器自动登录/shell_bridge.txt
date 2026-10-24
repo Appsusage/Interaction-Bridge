@@ -1,0 +1,2 @@
+cd /home/runner/workspace/ai-agent
+rg -n 'headless|executablePath|userDataDir|launchPersistentContext|chromium\.launch|CHROME|DISPLAY|CHATGPT_HOME|beginEmailLogin|Just a moment|challenge' backend/extension/browser/chatgpt_live.js | head -100
