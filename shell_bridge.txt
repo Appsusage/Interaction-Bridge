@@ -1,0 +1,23 @@
+node --input-type=module <<'FLOAT_WS_TEST'
+import {createServer} from 'node:http';
+import WebSocket from 'ws';
+import assert from 'node:assert/strict';
+import {installMultiTaskShellFloats} from './bridge/shell/multi-task/shell_floats.js';
+const server=createServer();
+const app={get(){},post(){}};
+const hub=installMultiTaskShellFloats(app,server);
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const host='127.0.0.1:'+server.address().port;
+const socket=new WebSocket('ws://'+host+'/shell-multi/floats/live',{headers:{origin:'http://'+host}});
+const received=[];socket.on('message',raw=>received.push(JSON.parse(raw.toString())));
+await new Promise((r,j)=>{socket.once('open',r);socket.once('error',j)});
+hub.publish({kind:'start',folder:'test',taskName:'S99998.txt',command:'echo ok'});
+hub.publish({kind:'chunk',folder:'test',taskName:'S99998.txt',text:'ok\n'});
+hub.publish({kind:'finish',folder:'test',taskName:'S99998.txt',exitCode:0});
+await new Promise(r=>setTimeout(r,150));
+assert.deepEqual(received.filter(x=>x.type==='task').map(x=>x.event),['start','chunk','finish']);
+assert.equal(received.at(-1).active,false);
+console.log('MULTI_FLOAT_WEBSOCKET_TEST_PASS',received.length);
+socket.close();await new Promise(r=>socket.once('close',r));
+await new Promise(r=>server.close(r));await new Promise(r=>hub.wss.close(r));
+FLOAT_WS_TEST
