@@ -1,1 +1,0 @@
-echo '=== 3D layer rules ==='; sed -n '35,250p' backend/extension/3D_viewer.js; sed -n '430,505p' backend/extension/3D_viewer.js; echo '=== backend shell_float ==='; sed -n '1,175p' bridge/shell/shell_float.js; echo '=== authentication patterns ==='; sed -n '1200,1320p' backend/server.js; echo '=== relevant boot ==='; sed -n '480,575p' backend/server.js
