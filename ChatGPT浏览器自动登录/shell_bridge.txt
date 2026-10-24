@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf 'LIVE_CHATGPT_SOURCE_SHA\n'
-sha256sum backend/extension/browser/chatgpt_live.js
-printf 'ENTRY_REFERENCES\n'
-rg -n 'CHATGPT_HOME|CHATGPT_LOGIN|beginEmailLogin|isLoggedIn|page.goto|loginFlowActive|monitorLoginState' backend/extension/browser/chatgpt_live.js
-printf 'LOGIN_FUNCTION\n'
-sed -n '160,295p' backend/extension/browser/chatgpt_live.js
-printf 'SOURCE_INSPECTION_END\n'
