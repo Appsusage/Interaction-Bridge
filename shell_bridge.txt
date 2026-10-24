@@ -1,0 +1,26 @@
+node --input-type=module <<'VERIFY_SHELL_MULTI'
+import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
+import { installMultiTaskShellFloats } from './bridge/shell/multi-task/shell_floats.js';
+import { ShellCommand } from './bridge/shell/multi-task/shell_command.js';
+import { readFileSync } from 'node:fs';
+const endpoints=[];
+const app={get:(path,...handlers)=>endpoints.push(['GET',path,handlers]),post:(path,...handlers)=>endpoints.push(['POST',path,handlers])};
+const server=new EventEmitter();
+const hub=installMultiTaskShellFloats(app,server);
+const worker=new ShellCommand({onEvent:hub.publish});
+for(const kind of ['queued','start','chunk','countdown','waiting','answer-countdown','answer','continue','finish']){
+ worker.emitFloat({kind,folder:'topic-check',taskName:'S9999.txt',text:'test',command:'echo test',exitCode:0,remaining:5});
+}
+assert.equal(hub.getStatus().running,false);
+assert.equal(endpoints.length,3);
+assert.ok(endpoints.some(([m,p])=>m==='POST'&&p==='/shell-multi/start'));
+assert.ok(server.listenerCount('upgrade')===1);
+assert.ok(readFileSync('frontend/backend-console-viewer.js','utf8').includes('bcv-multi-start'));
+assert.ok(readFileSync('frontend/index.html','utf8').includes('shell-multi-floats.js'));
+assert.ok(readFileSync('backend/extension/3D_viewer.js','utf8').includes('data-shell-multi-float'));
+console.log('MULTI_SHELL_MODULE_TEST_PASS','endpoints='+endpoints.length,'socket_upgrade='+server.listenerCount('upgrade'),'events=9');
+hub.wss.close();
+VERIFY_SHELL_MULTI
+printf '=== running server routes ===\n'
+curl -s -o /dev/null -w 'HTTP %{http_code}\n' http://127.0.0.1:3000/shell-multi/status || true
