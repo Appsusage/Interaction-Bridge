@@ -1,0 +1,6 @@
+TOPIC_OUTBOX_SEQUENTIAL_TEST_OK
+stderr checkpoint
+TOPIC_EXECUTION_END
+
+[exit code] 0
+Progress: Completed
