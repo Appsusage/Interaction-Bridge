@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e '
+const key=process.env.BROWSER_API_KEY;
+if(!key){console.log("BROWSER_API_KEY_MISSING");process.exit(1);}
+const response=await fetch("http://127.0.0.1:3000/browser/scroll",{
+ method:"POST",
+ headers:{"content-type":"application/json","x-browser-key":key},
+ body:JSON.stringify({
+  sessionId:"1792846930167-r76l77rdtyj",
+  pixels:0,
+  displayPolicy:"foreground",
+  importance:100,
+  requiresUserAction:true
+ }),
+ signal:AbortSignal.timeout(12000)
+});
+console.log("CHATGPT_FOREGROUND_HTTP",response.status);
+console.log("CHATGPT_FOREGROUND_RESULT",JSON.stringify(await response.json()));
+'
