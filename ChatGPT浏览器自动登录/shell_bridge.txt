@@ -1,0 +1,59 @@
+cd /home/runner/workspace/ai-agent
+set -e
+node --input-type=module <<'ENTRY_UPDATE'
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const file='backend/extension/browser/chatgpt_live.js';
+const original=fs.readFileSync(file,'utf8');
+const hash=crypto.createHash('sha256').update(original).digest('hex');
+const expected='19e2cdec9bf658732b71664466e67135a105ccda2b2b833c841573aed93d0f0d';
+if(hash!==expected)throw new Error('Source changed; refusing to overwrite: '+hash);
+const fromHome='const CHATGPT_HOME = "https://chatgpt.com/c/6ad37538-30e4-83ec-8aab-d49150f1e753";\nconst CHATGPT_LOGIN = "https://chatgpt.com/auth/login";';
+const toHome='const CHATGPT_HOME = "https://chatgpt.com/";';
+const fromEntry=[
+'    if (!/auth\\.openai\\.com|\\/auth\\/login/i.test(page.url())) {',
+'      await page.goto(CHATGPT_LOGIN, { waitUntil: "domcontentloaded", timeout: 30000 });',
+'    }'
+].join('\n');
+const toEntry=[
+'    if (!/auth\\.openai\\.com|\\/auth\\/login/i.test(page.url())) {',
+'      const current = new URL(page.url());',
+'      if (current.origin !== "https://chatgpt.com" || current.pathname !== "/") {',
+'        await page.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });',
+'      }',
+'      const homepageLoginButton = page.getByRole("button", { name: /^(log in|sign in|登录)$/i }).first();',
+'      const homepageLoginLink = page.getByRole("link", { name: /^(log in|sign in|登录)$/i }).first();',
+'      if (await homepageLoginButton.isVisible().catch(() => false)) {',
+'        await homepageLoginButton.click({ timeout: 10000 });',
+'      } else if (await homepageLoginLink.isVisible().catch(() => false)) {',
+'        await homepageLoginLink.click({ timeout: 10000 });',
+'      } else {',
+'        const title = await page.title().catch(() => "");',
+'        emitStatus("waiting", { step: "homepage-login-button", title, url: page.url(), note: "ChatGPT 首页还没有显示登录按钮；保留当前会话，不直接跳入 /auth/login。" });',
+'        return;',
+'      }',
+'    }'
+].join('\n');
+const fromComment=' * 3. If signed out, open the official ChatGPT login page and submit CHATGPT_LOGIN_EMAIL.';
+const toComment=' * 3. If signed out, use the visible Log in button on the ChatGPT homepage.';
+let updated=original;
+for(const [label,from,to] of [
+ ['home',fromHome,toHome],
+ ['entry',fromEntry,toEntry],
+ ['comment',fromComment,toComment]
+]){
+ const count=updated.split(from).length-1;
+ if(count!==1)throw new Error(label+' match count '+count+'; refusing to overwrite');
+ updated=updated.replace(from,to);
+}
+const backup='/tmp/chatgpt_live_19e2cdec_before_login_change.js';
+const temp=file+'.login_entry.tmp';
+fs.copyFileSync(file,backup);
+const stat=fs.statSync(file);
+fs.writeFileSync(temp,updated,{mode:stat.mode});
+fs.renameSync(temp,file);
+console.log('ENTRY_PATCH_APPLIED',crypto.createHash('sha256').update(updated).digest('hex'));
+console.log('BACKUP',backup);
+ENTRY_UPDATE
+node --check backend/extension/browser/chatgpt_live.js
+rg -n 'CHATGPT_HOME|homepageLoginButton|homepageLoginLink|homepage-login-button' backend/extension/browser/chatgpt_live.js
