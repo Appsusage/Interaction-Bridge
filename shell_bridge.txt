@@ -1,4 +1,0 @@
-echo '=== live node processes ==='; ps -eo pid,ppid,stat,comm,args | grep -E 'node|pnpm|npm|replit|supervisor' | grep -v 'grep' | head -45; echo '=== heartbeat registry summary ==='; node - <<'NODE'
-const fs=require('fs');const p='backend/heartbeat/pid.json';if(!fs.existsSync(p)){console.log('pid.json missing');process.exit()};try{let o=JSON.parse(fs.readFileSync(p,'utf8'));console.log(JSON.stringify({keys:Object.keys(o),processes:(o.processes||[]).map(x=>({targetKey:x.targetKey,pid:x.pid,pidStartTime:!!x.pidStartTime}))}).slice(0,12),null,2))}catch(e){console.log('REGISTRY_READ_ERROR',e.message)}
-NODE
- echo '=== port 3000 ==='; (ss -ltnp 2>/dev/null || true) | grep ':3000' | head -8
