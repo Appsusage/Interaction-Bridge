@@ -1,0 +1,5 @@
+MULTI_TASK_FLOAT_E2E_START
+MULTI_TASK_FLOAT_E2E_DONE
+
+[exit code] 0
+Progress: Completed
