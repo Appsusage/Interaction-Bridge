@@ -1,0 +1,17 @@
+PATCH_TOOL
+CURRENT_SHA
+19e2cdec9bf658732b71664466e67135a105ccda2b2b833c841573aed93d0f0d  backend/extension/browser/chatgpt_live.js
+WORKTREE_STATUS
+WORKTREE_DIFF
+CURRENT_MARKERS
+6:const CHATGPT_HOME = "https://chatgpt.com/c/6ad37538-30e4-83ec-8aab-d49150f1e753";
+7:const CHATGPT_LOGIN = "https://chatgpt.com/auth/login";
+8:const getLoginEmail = () => String(process.env.CHATGPT_LOGIN_EMAIL || "frankii.social911@gmail.com").trim();
+169:      await page.goto(CHATGPT_LOGIN, { waitUntil: "domcontentloaded", timeout: 30000 });
+213:        emitStatus("waiting", { step: "manual-login", note: "未配置 CHATGPT_LOGIN_EMAIL；请用户在实时浏览器输入自己的 ChatGPT 账号。" });
+292: * 3. If signed out, open the official ChatGPT login page and submit CHATGPT_LOGIN_EMAIL.
+323:      await pageRef.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+PATCH_STATUS_DONE
+
+[exit code] 0
+Progress: Completed
