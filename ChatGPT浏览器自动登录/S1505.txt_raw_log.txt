@@ -1,0 +1,164 @@
+LIVE_CHATGPT_SOURCE_SHA
+19e2cdec9bf658732b71664466e67135a105ccda2b2b833c841573aed93d0f0d  backend/extension/browser/chatgpt_live.js
+ENTRY_REFERENCES
+6:const CHATGPT_HOME = "https://chatgpt.com/c/6ad37538-30e4-83ec-8aab-d49150f1e753";
+7:const CHATGPT_LOGIN = "https://chatgpt.com/auth/login";
+8:const getLoginEmail = () => String(process.env.CHATGPT_LOGIN_EMAIL || "frankii.social911@gmail.com").trim();
+123:let loginFlowActive = false;
+150:async function isLoggedIn(page) {
+163:async function beginEmailLogin(page) {
+164:  if (loginFlowActive) return;
+165:  loginFlowActive = true;
+169:      await page.goto(CHATGPT_LOGIN, { waitUntil: "domcontentloaded", timeout: 30000 });
+213:        emitStatus("waiting", { step: "manual-login", note: "未配置 CHATGPT_LOGIN_EMAIL；请用户在实时浏览器输入自己的 ChatGPT 账号。" });
+262:async function monitorLoginState() {
+265:    if (await isLoggedIn(pageRef)) {
+266:      if (loginFlowActive) emitStatus("完成", { step: "logged-in", url: pageRef.url() });
+267:      loginFlowActive = false;
+270:    if (!loginFlowActive) await beginEmailLogin(pageRef);
+292: * 3. If signed out, open the official ChatGPT login page and submit CHATGPT_LOGIN_EMAIL.
+323:      await pageRef.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+325:      if (await isLoggedIn(pageRef)) {
+328:        await beginEmailLogin(pageRef);
+334:    monitor = setInterval(() => { void monitorLoginState(); }, 15000);
+LOGIN_FUNCTION
+  return /What’s on the agenda|What can I help with|Upgrade|Free/i.test(text);
+}
+
+async function beginEmailLogin(page) {
+  if (loginFlowActive) return;
+  loginFlowActive = true;
+  emitStatus("进行中", { step: "open-login" });
+  try {
+    if (!/auth\.openai\.com|\/auth\/login/i.test(page.url())) {
+      await page.goto(CHATGPT_LOGIN, { waitUntil: "domcontentloaded", timeout: 30000 });
+    }
+    await wait(1800);
+    const loginEmail = getLoginEmail();
+    const readState = async () => ({
+      title: await page.title().catch(() => ""),
+      text: await pageText(page),
+      url: page.url()
+    });
+    let state = await readState();
+    if (/just a moment|verify you are human|security check|unusual activity|captcha/i.test(state.title + " " + state.text)) {
+      emitStatus("waiting", { step: "security-check", note: "ChatGPT 正在显示安全检查页面；不会绕过检查，请用户在实时浏览器中正常完成。" });
+      return;
+    }
+
+    // Prefer the normal email flow. If the login page offers no email field but
+    // the configured account is Gmail, try the official Google sign-in button once.
+    let emailField = page.locator('input[type="email"], input[name="email"], input[autocomplete="username"]').first();
+    if (!(await emailField.count())) {
+      // Some current auth screens first show a Log in / Sign in choice.
+      // Open only an explicit login entry, then re-detect the form.
+      const loginEntryButton = page.getByRole("button", { name: /^(log in|sign in|log in or sign up)$/i }).first();
+      const loginEntryLink = page.getByRole("link", { name: /^(log in|sign in)$/i }).first();
+      if (await loginEntryButton.count()) {
+        await loginEntryButton.click({ timeout: 8000 }).catch(() => {});
+        await wait(1200);
+        state = await readState();
+      } else if (await loginEntryLink.count()) {
+        await loginEntryLink.click({ timeout: 8000 }).catch(() => {});
+        await wait(1200);
+        state = await readState();
+      }
+      emailField = page.locator('input[type="email"], input[name="email"], input[autocomplete="username"]').first();
+    }
+    if (!(await emailField.count())) {
+      const continueEmail = page.getByRole("button", { name: /continue with email|email address/i }).first();
+      if (await continueEmail.count()) {
+        await continueEmail.click({ timeout: 8000 }).catch(() => {});
+        await wait(1000);
+        emailField = page.locator('input[type="email"], input[name="email"], input[autocomplete="username"]').first();
+      }
+    }
+    if (await emailField.count()) {
+      if (!loginEmail) {
+        emitStatus("waiting", { step: "manual-login", note: "未配置 CHATGPT_LOGIN_EMAIL；请用户在实时浏览器输入自己的 ChatGPT 账号。" });
+        return;
+      }
+      await emailField.fill(loginEmail, { timeout: 10000 });
+      const continueButton = page.getByRole("button", { name: /^continue$|^next$/i }).first();
+      if (await continueButton.count()) {
+        await continueButton.click({ timeout: 10000 });
+      } else {
+        await emailField.press("Enter").catch(() => {});
+      }
+      await wait(1800);
+    } else if (/gmail\.com$/i.test(loginEmail)) {
+      const googleButton = page.getByRole("button", { name: /continue with google|google/i }).first();
+      if (await googleButton.count()) {
+        await googleButton.click({ timeout: 10000 });
+        await wait(1800);
+        state = await readState();
+        // Select only the exact configured Google account when the account chooser offers it.
+        const exactAccount = page.getByText(loginEmail, { exact: true }).first();
+        if (await exactAccount.count()) {
+          await exactAccount.click({ timeout: 8000 }).catch(() => {});
+          await wait(1500);
+        }
+      }
+    }
+
+    state = await readState();
+    if (/Check your inbox|verification code|Enter the code|email-verification/i.test(state.text + " " + state.url)) {
+      emitStatus("waiting", { step: "email-verification", email: loginEmail || null, note: "已打开验证码页面；请在实时浏览器中完成验证。程序不会读取或记录验证码。" });
+      return;
+    }
+    if (/captcha|verify you are human|security check|unusual activity|just a moment/i.test(state.title + " " + state.text)) {
+      emitStatus("waiting", { step: "security-check", note: "遇到安全验证，停止自动操作，等待用户在网页中完成。" });
+      return;
+    }
+    if (/accounts\.google\.com/i.test(state.url) || /password|enter your password|choose an account|verify it's you/i.test(state.text)) {
+      emitStatus("waiting", { step: "provider-auth", provider: /accounts\.google\.com/i.test(state.url) ? "google" : "unknown", email: loginEmail || null, note: "已进入第三方身份验证；请用户在实时浏览器中完成密码、账户选择或 MFA。程序不会填写密码或绕过验证。" });
+      return;
+    }
+    if (/auth\.openai\.com|\/auth\/login/i.test(state.url) || /Log in or sign up|Continue with Google|Continue with Microsoft|Enter your email/i.test(state.text)) {
+      emitStatus("waiting", { step: "login-form", email: loginEmail || null, url: state.url, note: "登录页面仍未完成自动识别；已停止重复提交，请在实时浏览器中选择登录方式或完成页面提示。" });
+      return;
+    }
+    emitStatus("waiting", { step: "manual-login", email: loginEmail || null, url: state.url, note: "无法确认登录状态；已停止自动重试，请在实时浏览器检查当前页面。" });
+  } catch (error) {
+    emitStatus("失败", { step: "login-flow", error: error.message, note: "自动登录步骤已停止，不会持续重试。" });
+  }
+}
+
+async function monitorLoginState() {
+  if (!pageRef) return;
+  try {
+    if (await isLoggedIn(pageRef)) {
+      if (loginFlowActive) emitStatus("完成", { step: "logged-in", url: pageRef.url() });
+      loginFlowActive = false;
+      return;
+    }
+    if (!loginFlowActive) await beginEmailLogin(pageRef);
+    else {
+      const title = await pageRef.title().catch(() => "");
+      const text = await pageText(pageRef);
+      const url = pageRef.url();
+      if (/just a moment|captcha|verify you are human|security check|unusual activity/i.test(title + " " + text)) {
+        emitStatus("waiting", { step: "security-check", note: "ChatGPT 正在显示安全检查页面；不会绕过检查，请用户在实时浏览器中正常完成。" });
+      } else if (/Check your inbox|verification code|Enter the code|email-verification/i.test(text + " " + url)) {
+        emitStatus("waiting", { step: "email-verification", email: getLoginEmail() || null, note: "等待用户在实时浏览器完成验证码；程序不会读取验证码。" });
+      } else if (/accounts\.google\.com/i.test(url) || /password|choose an account|verify it's you/i.test(text)) {
+        emitStatus("waiting", { step: "provider-auth", provider: /accounts\.google\.com/i.test(url) ? "google" : "unknown", note: "等待用户完成账户选择、密码或 MFA 验证；不会自动输入密码或绕过验证。" });
+      }
+    }
+  } catch (error) {
+    emitStatus("失败", { step: "state-check", error: error.message });
+  }
+}
+
+/**
+ * Persistent ChatGPT login playbook:
+ * 1. Reuse the same on-disk Chromium profile at .chatgpt-profile.
+ * 2. Open chatgpt.com when the server starts.
+ * 3. If signed out, open the official ChatGPT login page and submit CHATGPT_LOGIN_EMAIL.
+ * 4. The profile keeps browser cookies between normal server restarts; no plaintext password is stored.
+ * 5. Email verification codes and security checks are not bypassed. This version pauses on the code page;
+ *    the user must complete the code/security step in the live browser before the monitor resumes.
+SOURCE_INSPECTION_END
+
+[exit code] 0
+Progress: Completed
