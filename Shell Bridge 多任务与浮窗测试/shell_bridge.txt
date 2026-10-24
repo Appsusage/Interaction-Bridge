@@ -1,0 +1,1 @@
+printf 'TOPIC_OUTBOX_SEQUENTIAL_TEST_OK\n'; printf 'stderr checkpoint\n' >&2; sleep 1; printf 'TOPIC_EXECUTION_END\n'
