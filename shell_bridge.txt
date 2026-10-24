@@ -1,0 +1,133 @@
+mkdir -p bridge/shell/multi-task
+cat > bridge/shell/multi-task/shell_floats.js <<'SHELL_FLOATS_END'
+/**
+ * Per-task Shell Float WebSocket feed and explicit Console start/stop controls.
+ * Independent of the legacy single-window bridge/shell/shell_float.js.
+ */
+import { WebSocketServer } from 'ws';
+import { startShellCommand } from './shell_command.js';
+
+const FINISH_LINGER_MS = 10_000;
+const MAX_SNAPSHOT_CHARS = 2_000_000;
+
+function sameOrigin(req) {
+  const origin = req.get?.('origin') || req.headers.origin;
+  const referer = req.get?.('referer') || req.headers.referer;
+  const host = req.get?.('host') || req.headers.host;
+  const site = req.get?.('sec-fetch-site') || req.headers['sec-fetch-site'];
+  if (site && site !== 'same-origin') return false;
+  try { return new URL(origin || referer).host === host; }
+  catch { return false; }
+}
+
+export function installMultiTaskShellFloats(app, httpServer) {
+  let worker = null;
+  let revision = 0;
+  const tasks = new Map();
+  const wss = new WebSocketServer({ noServer: true });
+  const send = (client, item) => {
+    if (client.readyState === 1) {
+      try { client.send(JSON.stringify(item)); } catch {}
+    }
+  };
+
+  function publish(event = {}) {
+    if (!event.taskName || !event.folder) return;
+    const id = event.folder + '/' + event.taskName;
+    const now = Date.now();
+    const state = tasks.get(id) || { id, folder: event.folder, taskName: event.taskName,
+      status: '排队中', text: '', active: true, finishedAt: null };
+    const line = typeof event.text === 'string' ? event.text : '';
+    if (event.kind === 'start') {
+      state.active = true;
+      state.finishedAt = null;
+      state.text = '[Shell Bridge] ' + event.taskName + ' · ' + event.folder + '\n$ ' + (event.command || '') + '\n';
+      state.status = '运行中';
+    } else if (event.kind === 'chunk') {
+      state.text += line;
+      state.status = '执行中';
+    } else if (event.kind === 'countdown') {
+      state.status = '无输出倒计时 ' + event.remaining + ' 秒';
+    } else if (event.kind === 'answer-countdown') {
+      state.status = '等待 AI yes/no · ' + event.remaining + ' 秒';
+    } else if (event.kind === 'waiting') {
+      state.text += '\n[Shell Bridge] ' + (event.message || '等待 AI yes/no') + '\n';
+      state.status = '等待 AI yes/no';
+    } else if (['answer', 'continue', 'notice'].includes(event.kind)) {
+      state.text += '\n[Shell Bridge] ' + (event.message || line || event.kind) + '\n';
+      state.status = event.message || event.kind;
+    } else if (event.kind === 'finish') {
+      state.active = false;
+      state.finishedAt = now;
+      state.text += '\n[Shell Bridge] exit code: ' + (event.exitCode ?? 'unknown') +
+        '\n[Shell Bridge] ' + (event.message || '任务结束，10 秒后关闭浮窗') + '\n';
+      state.status = '已结束 · 10 秒后关闭';
+    }
+    if (state.text.length > MAX_SNAPSHOT_CHARS) {
+      state.text = '[较早可视日志已省略，完整日志保存在 Dropbox Outbox]\n' + state.text.slice(-MAX_SNAPSHOT_CHARS);
+    }
+    Object.assign(state, { updatedAt: now, revision: ++revision });
+    tasks.set(id, state);
+    const packet = { type: 'task', id, event: event.kind, folder: state.folder,
+      taskName: state.taskName, status: state.status,
+      append: event.kind === 'chunk' ? line : undefined,
+      text: event.kind === 'chunk' ? undefined : state.text,
+      active: state.active, remaining: event.remaining, finishedAt: state.finishedAt, revision };
+    for (const client of wss.clients) send(client, packet);
+    if (!state.active && state.finishedAt) {
+      const finishedAt = state.finishedAt;
+      setTimeout(() => {
+        if (tasks.get(id)?.finishedAt === finishedAt) tasks.delete(id);
+      }, FINISH_LINGER_MS + 60_000).unref?.();
+    }
+  }
+
+  httpServer.on('upgrade', (request, socket, head) => {
+    let url;
+    try { url = new URL(request.url, 'http://localhost'); } catch { return; }
+    if (url.pathname !== '/shell-multi/floats/live') return;
+    if (request.headers.origin) {
+      try {
+        if (new URL(request.headers.origin).host !== request.headers.host) { socket.destroy(); return; }
+      } catch { socket.destroy(); return; }
+    }
+    wss.handleUpgrade(request, socket, head, client => wss.emit('connection', client));
+  });
+  wss.on('connection', client => {
+    send(client, { type: 'snapshot', tasks: [...tasks.values()]
+      .filter(s => s.active || Date.now() - s.finishedAt < FINISH_LINGER_MS)
+      .map(s => ({ ...s })) });
+    send(client, { type: 'worker-status', ...getStatus() });
+  });
+  function getStatus() {
+    return { running: !!worker && !worker.stopped, active: worker?.running.size || 0,
+      queued: worker?.queued.size || 0, stopping: !!worker?.stopped && !!worker?.running.size };
+  }
+  const requireConsole = (req, res, next) => {
+    if (!sameOrigin(req)) return res.status(403).json({ error: 'Requires same-origin Console request' });
+    next();
+  };
+  app.get('/shell-multi/status', (_req, res) => res.json(getStatus()));
+  app.post('/shell-multi/start', requireConsole, (_req, res) => {
+    try {
+      if (worker && !worker.stopped) return res.json({ ...getStatus(), message: '已在监听' });
+      if (worker?.running.size) return res.status(409).json({ ...getStatus(), error: '仍有任务在运行，不能重复启动' });
+      worker = startShellCommand({ onEvent: publish });
+      console.log('[multi-task shell] 已手动启动新版 Shell Bridge');
+      res.json({ ...getStatus(), message: '新版 Shell Bridge 已启动监听' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app.post('/shell-multi/stop', requireConsole, (_req, res) => {
+    if (worker && !worker.stopped) {
+      worker.stop();
+      console.log('[multi-task shell] 已停止监听；运行中的任务会继续至结束');
+    }
+    res.json({ ...getStatus(), message: '已停止接收新任务；已有任务继续完成' });
+  });
+  return { publish, getStatus, wss };
+}
+
+SHELL_FLOATS_END
+node --check bridge/shell/multi-task/shell_floats.js && printf 'SHELL_FLOATS_MODULE_CREATED\n' && wc -c bridge/shell/multi-task/shell_floats.js
