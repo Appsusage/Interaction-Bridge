@@ -1,0 +1,6 @@
+VIEWER_FOREGROUND 200 {"scrolled":true}
+HOMEPAGE_RELOAD 200 {"url":"https://chatgpt.com/?__cf_chl_rt_tk=r3Su257gFkVsX1KE0Rg8oFmK810Jm2tySbJV7osLFJw-1792877227-1.0.1.1-ITJ_E2Mpk6NrEJue1Fz9Nyaw0lehN.zQc4u0qH.NYXU","title":""}
+POST_RELOAD_INSPECT {"status":200,"url":"https://chatgpt.com/","title":"Just a moment...","text":"","candidates":[]}
+
+[exit code] 0
+Progress: Completed
