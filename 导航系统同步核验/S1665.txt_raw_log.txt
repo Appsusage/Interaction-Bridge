@@ -1,0 +1,71 @@
+[command]
+printf 'LOCAL_BROWSER_TEST_CAPABILITY\n'
+node --input-type=module -e "for(const x of ['playwright','playwright-core','puppeteer','puppeteer-core']){try{console.log(x,import.meta.resolve(x))}catch(e){console.log(x,'not_installed')}}"
+printf 'CHROMIUM_BIN\n'
+command -v chromium || command -v chromium-browser || command -v google-chrome || true
+printf 'NAV_HTML_TOP\n'
+curl -fsS --max-time 6 http://127.0.0.1:3000/navigation/ | head -n 28
+printf 'NAV_ASSETS\n'
+ls -la capabilities/navigation/
+printf 'SYNC_REPORT_FILES\n'
+rg --files backend/sync | rg 'report|status|history' | head -n 30
+printf 'LOCAL_BROWSER_TEST_CAPABILITY_DONE\n'
+[streams]
+[stdout] LOCAL_BROWSER_TEST_CAPABILITY
+[stdout] playwright file:///home/runner/workspace/ai-agent/node_modules/playwright/index.mjs
+[stdout] playwright-core file:///home/runner/workspace/ai-agent/node_modules/playwright-core/index.mjs
+[stdout] puppeteer file:///home/runner/workspace/node_modules/.pnpm/puppeteer@25.3.0/node_modules/puppeteer/lib/puppeteer/puppeteer.js
+[stdout] puppeteer-core not_installed
+[stdout] CHROMIUM_BIN
+[stdout] /repl/tools/bin/chromium
+NAV_HTML_TOP
+[stdout] <!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>AI 导航 · GPS 地图预览</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="navigation-page">
+    <div id="map" role="application" aria-label="可拖动的导航地图"></div>
+    <header class="top-panel">
+      <div class="brand"><span class="brand-dot"></span><span>AI NAVIGATION</span><small>GPS 地图预览</small></div>
+      <div id="status" class="status" role="status" aria-live="polite">地图准备中…</div>
+    </header>
+    <section class="control-panel" aria-label="GPS 导航控制">
+      <div class="panel-head"><div><strong>我的位置</strong><small id="updated">尚未定位</small></div><span id="gpsState" class="state-label">未启动</span></div>
+      <div class="stats">
+        <div><span>纬度 / 经度</span><strong id="coordinates">-- / --</strong></div>
+        <div><span>定位精度</span><strong id="accuracy">--</strong></div>
+        <div><span>移动速度</span><strong id="speed">--</strong></div>
+      </div>
+      <div class="buttons">
+        <button id="start" class="primary" type="button">开始实时定位</button>
+        <button id="stop" type="button" disabled>停止</button>
+        <button id="recenter" type="button" disabled>回到位置</button>
+[stdout] NAV_ASSETS
+[stdout] total 44
+drwxr-xr-x 1 runner runner  204 Oct 25 16:25 .
+drwxr-xr-x 1 runner runner  172 Oct 25 16:25 ..
+-rw-r--r-- 1 runner runner 3154 Oct 25 16:25 app.js
+drwxr-xr-x 1 runner runner    0 Oct 25 16:25 data
+-rw-r--r-- 1 runner runner 1976 Oct 25 16:25 gps.js
+-rw-r--r-- 1 runner runner 1890 Oct 25 16:25 index.html
+-rw-r--r-- 1 runner runner  738 Oct 25 16:25 learning.js
+-rw-r--r-- 1 runner runner 3386 Oct 25 16:25 map.js
+-rw-r--r-- 1 runner runner 1471 Oct 25 16:25 navigation.js
+-rw-r--r-- 1 runner runner 1085 Oct 25 16:25 routing.js
+-rw-r--r-- 1 runner runner 3064 Oct 25 16:25 style.css
+-rw-r--r-- 1 runner runner  435 Oct 25 16:25 traffic.js
+-rw-r--r-- 1 runner runner  527 Oct 25 16:25 vision.js
+-rw-r--r-- 1 runner runner  512 Oct 25 16:25 voice.js
+[stdout] SYNC_REPORT_FILES
+[stdout] backend/sync/sync_last_report.json
+[stdout] LOCAL_BROWSER_TEST_CAPABILITY_DONE
+
+[exit code] 0
+Progress: Completed
