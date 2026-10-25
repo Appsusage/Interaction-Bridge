@@ -1,0 +1,72 @@
+[command]
+printf 'NAVIGATION_SYNC_AFTER_HOTFIX\n'
+printf 'SYNC_REPORT_BEGIN\n'
+if test -f backend/sync/sync_last_report.json; then head -c 3500 backend/sync/sync_last_report.json; fi
+printf '\nSYNC_REPORT_END\n'
+printf 'NAV_FILES_BEGIN\n'
+for f in capabilities/navigation/navigation.js capabilities/navigation/gps.js capabilities/navigation/map.js capabilities/navigation/app.js capabilities/navigation/index.html capabilities/navigation/style.css; do
+  if test -f "$f"; then printf 'PRESENT %s\n' "$f"; else printf 'MISSING %s\n' "$f"; fi
+done
+printf 'NAV_FILES_END\n'
+printf 'SYNC_HOTFIX_SHA='; git hash-object backend/sync/whole_project_sync.js
+printf 'SYNC_HOTFIX_CHECK_COMPLETE\n'
+[streams]
+[stdout] NAVIGATION_SYNC_AFTER_HOTFIX
+SYNC_REPORT_BEGIN
+[stdout] {
+  "status": "synced",
+  "revision": "d3f80ad9547f27ad03e77b72a32868934f8b4d3a",
+  "blockedCount": 6,
+  "blocked": [
+    {
+      "path": "backend/extension/browser/3D_viewer.js",
+      "action": "block",
+      "reason": "deletion_disabled"
+    },
+    {
+      "path": "backend/props/README.md",
+      "action": "block",
+      "reason": "both_modified"
+    },
+    {
+      "path": "backend/server.js",
+      "action": "block",
+      "reason": "both_modified"
+    },
+    {
+      "path": "capabilities/vision/README.md",
+      "action": "block",
+      "reason": "both_modified"
+    },
+    {
+      "path": "frontend/app.js",
+      "action": "block",
+      "reason": "both_modified"
+    },
+    {
+      "path": "frontend/index.html",
+      "action": "block",
+      "reason": "both_modified"
+    }
+  ],
+  "pendingCount": 23,
+  "executed": true,
+  "path": "backend/sync/tests/whole_project_sync.test.js",
+  "direction": "pull",
+  "checkedAt": "2026-10-25T16:21:09.100Z"
+}
+[stdout] 
+SYNC_REPORT_END
+NAV_FILES_BEGIN
+[stdout] MISSING capabilities/navigation/navigation.js
+MISSING capabilities/navigation/gps.js
+MISSING capabilities/navigation/map.js
+MISSING capabilities/navigation/app.js
+MISSING capabilities/navigation/index.html
+MISSING capabilities/navigation/style.css
+NAV_FILES_END
+SYNC_HOTFIX_SHA=[stdout] 1d3cfa3c5d8ba68ddb998db6487dd81a5d804579
+[stdout] SYNC_HOTFIX_CHECK_COMPLETE
+
+[exit code] 0
+Progress: Completed
