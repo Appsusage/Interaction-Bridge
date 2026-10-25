@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && node --check bridge/shell/multi-task/shell_command.js && node --check bridge/shell/multi-task/shell_floats.js && node backend/sync/sync_supervisor.js status && ps -eo pid,ppid,args | grep -E 'multi-task|sync_supervisor|github_adaptor' | grep -v grep
