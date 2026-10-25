@@ -1,0 +1,17 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'CHECK_MAIN_SIGNAL_HANDLING'
+import fs from 'node:fs';
+const files=['backend/server.js','backend/ai_core.js','backend/extension/browser/chatgpt_live.js','bridge/shell/multi-task/shell_floats.js'];
+for(const file of files){
+ const text=fs.readFileSync(file,'utf8');
+ for(const term of ['SIGTERM','SIGINT','process.on(\'exit\'','process.once(\'exit\'','process.exit','process.argv','uncaughtException']){
+  const lines=text.split('\n').map((line,i)=>({line:i+1,text:line})).filter(v=>v.text.includes(term));
+  if(lines.length)console.log('SIGNAL_MATCH',file,term,JSON.stringify(lines.slice(0,12)));
+ }
+}
+const pid=112, stat=fs.readFileSync('/proc/'+pid+'/stat','utf8');
+const close=stat.lastIndexOf(')');
+const fields=stat.slice(close+2).split(' ');
+console.log('MAIN_PID_STATUS',JSON.stringify({pid,ppid:fields[1],startTicks:fields[19],name:fs.readFileSync('/proc/'+pid+'/comm','utf8').trim(),status:fs.readFileSync('/proc/'+pid+'/status','utf8').split('\n').filter(x=>/^(State|SigCgt|SigIgn|SigBlk):/.test(x))}));
+CHECK_MAIN_SIGNAL_HANDLING
