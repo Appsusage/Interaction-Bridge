@@ -1,0 +1,22 @@
+[command]
+set -e
+printf 'V2_MAIN_3000_PRIMARY_PIPELINE_OK\n'
+printf 'V2_MAIN_3000_STDERR_OK\n' >&2
+node --input-type=module <<'MAIN_WORKER_CHECK'
+const r=await fetch('http://127.0.0.1:3000/shell-multi/status');
+const status=await r.json();
+console.log('AI_SERVER_V2_STATUS',JSON.stringify(status));
+if(!r.ok||!status.running)throw Error('Main AI Server V2 is not active');
+let standalone='stopped';
+try{const s=await fetch('http://127.0.0.1:3102/health');if(s.ok)standalone='unexpectedly active';}catch{}
+console.log('INDEPENDENT_TEST_INSTANCE',standalone);
+if(standalone!=='stopped')throw Error('Duplicate independent V2 worker still active');
+MAIN_WORKER_CHECK
+[streams]
+[stdout] V2_MAIN_3000_PRIMARY_PIPELINE_OK
+[stderr] V2_MAIN_3000_STDERR_OK
+[stdout] AI_SERVER_V2_STATUS {"running":true,"active":1,"queued":0,"stopping":false}
+[stdout] INDEPENDENT_TEST_INSTANCE stopped
+
+[exit code] 0
+Progress: Completed
