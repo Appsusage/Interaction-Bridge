@@ -1,0 +1,31 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'V2_FINALIZE_DEDUP'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+s=p.read_text()
+needle="this.seen.has('pending:' + task.path)) continue;"
+assert s.count(needle)==1
+s=s.replace(needle,"this.seen.has('pending:' + task.path) || this.seen.has('completed:' + task.path)) continue;",1)
+needle='        await remove(runningMarker);'
+assert s.count(needle)==1
+s=s.replace(needle,needle+"\n        this.seen.add('completed:' + task.path);",1)
+p.write_text(s)
+p=Path('bridge/shell/multi-task/risk_coordinator.js')
+s=p.read_text()
+needle="    await io.upload(resultPath(task),record,'add');"
+assert s.count(needle)==1
+s=s.replace(needle,"""    try{await io.upload(resultPath(task),record,'add');}
+    catch(error){
+      if(!/conflict|\\b409\\b/i.test(error.message))throw error;
+      const existing=(await io.download(resultPath(task))).toString('utf8');
+      if(existing!==record)throw Error('Existing Outbox result has different content; preserve checkpoint');
+    }""",1)
+needle="    if(!completed)io.seen.add('pending:'+task.path);"
+assert s.count(needle)==1
+s=s.replace(needle,"    io.seen.add((completed?'completed:':'pending:')+task.path);",1)
+p.write_text(s)
+print('V2_DUPLICATE_SCHEDULING_AND_IDEMPOTENT_LOG_SAVE_FIXED')
+V2_FINALIZE_DEDUP
+node --check bridge/shell/multi-task/shell_command.js
+node --check bridge/shell/multi-task/risk_coordinator.js
