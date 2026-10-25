@@ -59,4 +59,9 @@ printf 'V2_CUTOVER_PREPARATION_OK\n'
 [system] Unconfirmed previous execution at risk_running; manual review required.
 [system] Unconfirmed previous execution at risk_running; manual review required.
 
-Pending, to be continued.
+
+[terminal] CANCELLED_BY_USER 2026-10-25T13:12:06.001Z
+[reason] Old cutover would terminate legacy Shell Bridge; superseded by dual-run policy. Previous risk stage result is unconfirmed and will not be replayed.
+[exit code] 125
+[finished] 2026-10-25T13:12:06.001Z
+
