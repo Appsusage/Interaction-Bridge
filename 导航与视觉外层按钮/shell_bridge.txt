@@ -1,0 +1,28 @@
+node -e 'const fs=require("fs");
+const crypto=require("crypto");
+const path=require("path");
+const target="frontend/index.html";
+const original=fs.readFileSync(target);
+const hash=crypto.createHash("sha1").update("blob "+original.length+"\0").update(original).digest("hex");
+const expected="028fdaf522573214a31f54bccc6d022a3ef5a783";
+if(hash!==expected) throw new Error("Source changed; stop. "+hash);
+const before=original.toString("utf8");
+const anchorNavigation="<button id=\"voiceFloatButton\"";
+const anchorVision="<button id=\"browserFloatButton\"";
+if(!before.includes(anchorNavigation)||!before.includes(anchorVision)) throw new Error("Button anchors absent");
+if(before.includes("navigationFloatButton")||before.includes("visionFloatButton")) throw new Error("Buttons already exist");
+const navigation="<button id=\"navigationFloatButton\" type=\"button\" class=\"float-item\" aria-label=\"打开导航地图\" title=\"导航\" onclick=\"window.open(&quot;/navigation/&quot;, &quot;_blank&quot;, &quot;noopener,noreferrer&quot;)\">🧭</button>\n\n";
+const vision="<button id=\"visionFloatButton\" type=\"button\" class=\"float-item\" aria-label=\"打开 AI 视觉\" title=\"视觉\" onclick=\"window.AIAgentVision?.open()\">👁️</button>\n\n";
+const after=before.replace(anchorNavigation,navigation+anchorNavigation).replace(anchorVision,vision+anchorVision);
+if(after===before) throw new Error("No change");
+const backup=path.join("backend/sync/.sync-backups","navigation-menu-"+Date.now(),"index.html");
+fs.mkdirSync(path.dirname(backup),{recursive:true});
+fs.copyFileSync(target,backup,fs.constants.COPYFILE_EXCL);
+const temp=target+".new-menu-"+process.pid;
+fs.writeFileSync(temp,after,"utf8");
+fs.renameSync(temp,target);
+const final=fs.readFileSync(target);
+const updatedHash=crypto.createHash("sha1").update("blob "+final.length+"\0").update(final).digest("hex");
+console.log("MENU_BUTTONS_INSTALLED "+updatedHash+" BACKUP "+backup);
+console.log("ORDER "+Array.from(after.matchAll(/id="(backgroundFloatButton|avatarFloatButton|reconnectFloatButton|navigationFloatButton|voiceFloatButton|visionFloatButton|browserFloatButton)"/g),m=>m[1]).join(" > "));
+'
