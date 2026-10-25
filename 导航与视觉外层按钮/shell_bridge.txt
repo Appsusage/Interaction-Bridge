@@ -1,0 +1,10 @@
+printf 'LIVE_MENU_HTML\n'
+sed -n '208,286p' frontend/index.html
+printf 'LIVE_MENU_APP\n'
+sed -n '1884,1976p' frontend/app.js
+printf 'LIVE_MENU_STYLES\n'
+sed -n '905,948p' frontend/style.css
+sed -n '1100,1118p' frontend/style.css
+printf 'LIVE_FRONT_HASH\n'
+git hash-object frontend/index.html
+printf 'LIVE_MENU_DONE\n'
