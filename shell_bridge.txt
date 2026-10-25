@@ -1,0 +1,23 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --check bridge/shell/multi-task/shell_command.js
+node --check bridge/shell/multi-task/risk_coordinator.js
+node --check bridge/shell/multi-task/shell_floats.js
+node --check bridge/shell/multi-task/server.js
+if node --input-type=module -e "const r=await fetch('http://127.0.0.1:3102/health').catch(()=>null);process.exit(r?.ok?0:1)"; then
+ echo V2_SERVER_ALREADY_RUNNING
+else
+ nohup node bridge/shell/multi-task/server.js >>bridge/shell/multi-task/server.log 2>&1 </dev/null &
+ echo V2_SPAWN_REQUESTED_PID=$!
+ sleep 4
+fi
+node --input-type=module <<'VERIFY_V2_LIVE'
+const r=await fetch('http://127.0.0.1:3102/health');
+const j=await r.json();
+console.log('V2_HEALTH',JSON.stringify(j));
+if(!r.ok||!j.ok||!j.running)process.exit(1);
+const c=await fetch('http://127.0.0.1:3102/shell-multi/console');
+console.log('V2_CONSOLE_HTTP',c.status);
+if(c.status!==200)process.exit(1);
+VERIFY_V2_LIVE
+tail -n 25 bridge/shell/multi-task/server.log
