@@ -1,0 +1,11 @@
+122:let loginFlowActive = false;
+163:  if (loginFlowActive) return;
+164:  loginFlowActive = true;
+275:async function monitorLoginState() {
+279:      if (loginFlowActive) emitStatus("完成", { step: "logged-in", url: pageRef.url() });
+280:      loginFlowActive = false;
+283:    if (!loginFlowActive) await beginEmailLogin(pageRef);
+347:    monitor = setInterval(() => { void monitorLoginState(); }, 15000);
+
+[exit code] 0
+Progress: Completed
