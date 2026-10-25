@@ -1,0 +1,31 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+echo RUNTIME_DIAG_BEGIN
+node --input-type=module <<'NODE'
+import { createExperienceTracker } from './backend/extension/browser/experience/index.js';
+import fs from 'node:fs';
+const tracker=createExperienceTracker({site:'chatgpt.com',goal:'login'});
+console.log('TRACKER_LOADED',typeof tracker.observe,typeof tracker.choose,typeof tracker.finish);
+for(const path of ['/health','/extension/browser/experience/data/operation_history.json','/extension/browser/chatgpt/experience/successful_cases.json']){
+try{const r=await fetch('http://127.0.0.1:3000'+path,{signal:AbortSignal.timeout(3000)});console.log('HTTP_STATUS',path,r.status)}catch(e){console.log('HTTP_ERROR',path,e.name)}}
+try{const r=JSON.parse(fs.readFileSync('backend/heartbeat/pid.json','utf8'));console.log('HEARTBEAT_SERVER_ENTRIES',JSON.stringify((r.processes||[]).filter(x=>JSON.stringify(x).includes('server.js')).map(x=>({targetKey:x.targetKey,pid:x.pid}))))}catch(e){console.log('HEARTBEAT_REGISTRY',e.code||e.message)}
+NODE
+printf 'NODE_PROCESSES\n'; ps -eo pid,ppid,args | grep -E 'node|heartbeat' | grep -v grep | cut -c 1-180 | head -35
+echo RUNTIME_DIAG_END
+[streams]
+[stdout] RUNTIME_DIAG_BEGIN
+[stdout] TRACKER_LOADED function function function
+[stdout] HTTP_STATUS /health 200
+[stdout] HTTP_STATUS /extension/browser/experience/data/operation_history.json 404
+[stdout] HTTP_STATUS /extension/browser/chatgpt/experience/successful_cases.json 200
+[stdout] HEARTBEAT_SERVER_ENTRIES [{"targetKey":"file:/home/runner/workspace/ai-agent/bridge/shell/server.js","pid":187}]
+[stdout] NODE_PROCESSES
+[stdout]    4033      28 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/github_adaptor.js
+   4035      28 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/server.js
+   9907      28 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+   9911      28 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/sync/sync_supervisor.js run
+   9938    9911 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node /home/runner/workspace/ai-agent/backend/sync/sync_daemon.js --daemon
+[stdout] RUNTIME_DIAG_END
+
+[exit code] 0
+Progress: Completed
