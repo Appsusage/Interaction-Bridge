@@ -1,0 +1,9 @@
+printf 'LIVE_LAYER_PRECHECK\n'
+git hash-object frontend/index.html frontend/app.js frontend/style.css
+printf 'INNER_IDS_AND_CONTEXT\n'
+sed -n '247,288p' frontend/index.html
+printf 'RADIUS_CONTEXT\n'
+sed -n '1898,1941p' frontend/app.js
+printf 'STYLE_TAIL\n'
+tail -n 28 frontend/style.css
+printf 'LIVE_LAYER_PRECHECK_DONE\n'
