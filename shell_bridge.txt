@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'SHELL_BRIDGE_INSPECT'
+import fs from 'node:fs';
+import path from 'node:path';
+console.log('NEW_BRIDGE_SOURCE_INSPECTION_START');
+console.log('CWD',process.cwd());
+const roots=['bridge/shell/multi-task','bridge/shell','backend/bridge/shell/multi-task'];
+for(const root of roots){
+ console.log('DIRECTORY',root,'EXISTS',fs.existsSync(root));
+ if(!fs.existsSync(root))continue;
+ for(const ent of fs.readdirSync(root,{withFileTypes:true})){
+  if(!ent.isFile())continue;
+  if(!/shell_command|shell_float|multi|server|package/i.test(ent.name))continue;
+  const p=path.join(root,ent.name);
+  const data=fs.readFileSync(p,'utf8');
+  console.log('SOURCE_BEGIN',p,'BYTES',Buffer.byteLength(data));
+  console.log(data.slice(0,95000));
+  console.log('SOURCE_END',p);
+ }
+}
+console.log('NEW_BRIDGE_SOURCE_INSPECTION_FINISHED');
+SHELL_BRIDGE_INSPECT
