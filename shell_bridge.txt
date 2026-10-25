@@ -1,0 +1,15 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'FIX_NEW_SEQUENCE'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+s=p.read_text()
+old='await scan(' + chr(96) + '$' + '{ROOT}/processing' + chr(96) + ');'
+assert s.count(old)==1, 'Processing scan not found or duplicate'
+new=old+'\n      await scan(' + chr(96) + '$' + '{ROOT}/archive' + chr(96) + ');'
+assert 'await scan(' + chr(96) + '$' + '{ROOT}/archive' + chr(96) + ');' not in s, 'Already fixed'
+s=s.replace(old,new,1)
+p.write_text(s)
+print('V2_ARCHIVE_SCAN_ADDED')
+FIX_NEW_SEQUENCE
+node --check bridge/shell/multi-task/shell_command.js
