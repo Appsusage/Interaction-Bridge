@@ -1,0 +1,19 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import fs from 'node:fs';import crypto from 'node:crypto';
+let source=fs.readFileSync('backend/extension/browser/chatgpt_live.js','utf8');
+console.log('FILE_CHECK',JSON.stringify({stateMachinePatched:source.includes('let loginMonitorBusy = false;'),releaseLock:source.includes('loginFlowActive = false;\n  }\n}'),sourceHash:crypto.createHash('sha256').update(source).digest('hex').slice(0,12)}));
+let active=[];
+for(let name of fs.readdirSync('/proc').filter(s=>/^\d+$/.test(s)))try{
+ const cmd=fs.readFileSync('/proc/'+name+'/cmdline','utf8').replaceAll('\u0000',' ');
+ if(/backend\/server\.js|bridge\/shell\/multi-task\/shell_command\.js|github_adaptor\.js/.test(cmd))active.push({pid:+name,component:cmd.includes('backend/server.js')?'server':cmd.includes('shell_command.js')?'multitask':'github-adaptor'});
+}catch{}
+console.log('RUNNING_COMPONENTS',JSON.stringify(active.slice(0,20)));
+try {
+const WebSocket=(await import('ws')).default;
+const ws=new WebSocket('ws://127.0.0.1:3000/browser/live');
+ws.on('message',msg=>{let o=JSON.parse(msg.toString()); if(o.type==='sessions'){console.log('BROWSER_SESSIONS',JSON.stringify(o.sessions)); ws.close();}});
+setTimeout(()=>ws.terminate(),5000).unref();
+await new Promise(resolve=>ws.on('close',resolve));
+} catch(e){console.log('SESSION_CHECK_ERROR',e.message)}
+NODE
