@@ -46,4 +46,9 @@ NODE
 [continued at] 2026-10-25T12:51:58.895Z
 [system] Batch not ready; task held.
 
-Pending, to be continued.
+
+[terminal] CANCELLED_BY_USER 2026-10-25T13:12:06.002Z
+[reason] Original restart targeted obsolete PID 9907. AI Server restart and private-route 404 checks have already passed (S1637 and S1643).
+[exit code] 125
+[finished] 2026-10-25T13:12:06.002Z
+
