@@ -1,0 +1,124 @@
+=== LOGIN SIGNALS ===
+backend/server.js:56:import { startChatGPTLive } from "./extension/browser/chatgpt_live.js";
+backend/server.js:1318:app.post("/browser/open", requireBrowserKey, async (req, res) => {
+backend/server.js:1397:app.post("/browser/recognition/inspect", requireBrowserKey, async (req, res) => {
+backend/server.js:1425:startChatGPTLive().catch(error => {
+backend/extension/browser/chatgpt_live.js:122:let loginFlowActive = false;
+backend/extension/browser/chatgpt_live.js:130:function emitStatus(state, detail = {}) {
+backend/extension/browser/chatgpt_live.js:163:  if (loginFlowActive) return;
+backend/extension/browser/chatgpt_live.js:164:  loginFlowActive = true;
+backend/extension/browser/chatgpt_live.js:165:  emitStatus("进行中", { step: "open-login" });
+backend/extension/browser/chatgpt_live.js:180:        emitStatus("waiting", { step: "homepage-login-button", title, url: page.url(), note: "ChatGPT 首页还没有显示登录按钮；保留当前会话，不直接跳入 /auth/login。" });
+backend/extension/browser/chatgpt_live.js:193:      emitStatus("waiting", { step: "security-check", note: "ChatGPT 正在显示安全检查页面；不会绕过检查，请用户在实时浏览器中正常完成。" });
+backend/extension/browser/chatgpt_live.js:226:        emitStatus("waiting", { step: "manual-login", note: "未配置 CHATGPT_LOGIN_EMAIL；请用户在实时浏览器输入自己的 ChatGPT 账号。" });
+backend/extension/browser/chatgpt_live.js:254:      emitStatus("waiting", { step: "email-verification", email: loginEmail || null, note: "已打开验证码页面；请在实时浏览器中完成验证。程序不会读取或记录验证码。" });
+backend/extension/browser/chatgpt_live.js:258:      emitStatus("waiting", { step: "security-check", note: "遇到安全验证，停止自动操作，等待用户在网页中完成。" });
+backend/extension/browser/chatgpt_live.js:262:      emitStatus("waiting", { step: "provider-auth", provider: /accounts\.google\.com/i.test(state.url) ? "google" : "unknown", email: loginEmail || null, note: "已进入第三方身份验证；请用户在实时浏览器中完成密码、账户选择或 MFA。程序不会填写密码或绕过验证。" });
+backend/extension/browser/chatgpt_live.js:266:      emitStatus("waiting", { step: "login-form", email: loginEmail || null, url: state.url, note: "登录页面仍未完成自动识别；已停止重复提交，请在实时浏览器中选择登录方式或完成页面提示。" });
+backend/extension/browser/chatgpt_live.js:269:    emitStatus("waiting", { step: "manual-login", email: loginEmail || null, url: state.url, note: "无法确认登录状态；已停止自动重试，请在实时浏览器检查当前页面。" });
+backend/extension/browser/chatgpt_live.js:271:    emitStatus("失败", { step: "login-flow", error: error.message, note: "自动登录步骤已停止，不会持续重试。" });
+backend/extension/browser/chatgpt_live.js:279:      if (loginFlowActive) emitStatus("完成", { step: "logged-in", url: pageRef.url() });
+backend/extension/browser/chatgpt_live.js:280:      loginFlowActive = false;
+backend/extension/browser/chatgpt_live.js:283:    if (!loginFlowActive) await beginEmailLogin(pageRef);
+backend/extension/browser/chatgpt_live.js:289:        emitStatus("waiting", { step: "security-check", note: "ChatGPT 正在显示安全检查页面；不会绕过检查，请用户在实时浏览器中正常完成。" });
+backend/extension/browser/chatgpt_live.js:291:        emitStatus("waiting", { step: "email-verification", email: getLoginEmail() || null, note: "等待用户在实时浏览器完成验证码；程序不会读取验证码。" });
+backend/extension/browser/chatgpt_live.js:293:        emitStatus("waiting", { step: "provider-auth", provider: /accounts\.google\.com/i.test(url) ? "google" : "unknown", note: "等待用户完成账户选择、密码或 MFA 验证；不会自动输入密码或绕过验证。" });
+backend/extension/browser/chatgpt_live.js:297:    emitStatus("失败", { step: "state-check", error: error.message });
+backend/extension/browser/chatgpt_live.js:310:export async function startChatGPTLive() {
+backend/extension/browser/chatgpt_live.js:339:        emitStatus("完成", { step: "existing-session", url: pageRef.url() });
+backend/extension/browser/chatgpt_live.js:344:      emitStatus("失败", { step: "startup-navigation", error: error.message });
+
+=== INITIAL STATE ===
+      window.__aiAudioBridgeMicStream = null;
+    }
+  };
+  window.__aiAudioBridgeInstalled = true;
+}
+
+let started = false;
+let loginFlowActive = false;
+let monitor = null;
+let startupPromise = null;
+let pageRef = null;
+let sessionRef = null;
+
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function emitStatus(state, detail = {}) {
+  if (!sessionRef) return;
+  browserActivity.emit("activity", {
+    sessionId: sessionRef,
+    action: "ChatGPT 自动登录",
+    state,
+    detail,
+    importance: state === "waiting" || state === "失败" ? 100 : 30,
+    requiresUserAction: state === "waiting",
+    displayPolicy: state === "waiting" ? "foreground" : "background",
+    at: Date.now()
+  });
+}
+
+async function pageText(page) {
+  try { return await page.locator("body").innerText({ timeout: 5000 }); }
+  catch { return ""; }
+}
+
+async function isLoggedIn(page) {
+  const url = page.url();
+  const text = await pageText(page);
+
+=== END OF MODULE ===
+ * 5. Email verification codes and security checks are not bypassed. This version pauses on the code page;
+ *    the user must complete the code/security step in the live browser before the monitor resumes.
+ */
+export async function startChatGPTLive() {
+  if (started) return { started: true, sessionId: sessionRef };
+  if (startupPromise) return startupPromise;
+
+  startupPromise = (async () => {
+    const profileDir = getProfileDir();
+    await fs.mkdir(profileDir, { recursive: true });
+    const context = await chromium.launchPersistentContext(profileDir, {
+      headless: process.env.CHATGPT_BROWSER_HEADLESS === "true",
+      executablePath: getExecutablePath(),
+      viewport: { width: 1280, height: 900 },
+      ignoreDefaultArgs: ["--mute-audio"],
+      args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"]
+    });
+    try { await context.grantPermissions(["microphone"], { origin: "https://chatgpt.com" }); } catch {}
+    await context.addInitScript(installRemoteAudioBridge);
+    pageRef = context.pages()[0] || await context.newPage();
+    sessionRef = registerBrowserSession({
+      browser: null,
+      context,
+      page: pageRef,
+      options: { displayPolicy: "background", importance: 30 }
+    });
+    started = true;
+
+    try {
+      await pageRef.goto(CHATGPT_HOME, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await wait(1800);
+      if (await isLoggedIn(pageRef)) {
+        emitStatus("完成", { step: "existing-session", url: pageRef.url() });
+      } else {
+        await beginEmailLogin(pageRef);
+      }
+    } catch (error) {
+      emitStatus("失败", { step: "startup-navigation", error: error.message });
+    }
+
+    monitor = setInterval(() => { void monitorLoginState(); }, 15000);
+    monitor.unref?.();
+    return { started: true, sessionId: sessionRef, profileDir };
+  })();
+
+  try { return await startupPromise; }
+  finally { startupPromise = null; }
+}
+
+=== PUBLIC CHALLENGE HTTP ===
+http_code=403 url=https://chatgpt.com/ content_type=text/html; charset=UTF-8
+
+[exit code] 0
+Progress: Completed
