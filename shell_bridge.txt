@@ -1,0 +1,71 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'V2_WIRE_RISK'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+s=p.read_text()
+assert "risk_coordinator.js" not in s and "activeCohort" not in s
+s=s.replace("import { spawn } from 'node:child_process';","import { spawn } from 'node:child_process';\nimport { createRiskCohort, executeRiskTask } from './risk_coordinator.js';",1)
+needle="    this.managedTopics = new Set();"
+assert s.count(needle)==1
+s=s.replace(needle,needle+"\n    this.activeCohort = null;\n    this.skipExistingSources = false;",1)
+a=s.index('  schedule() {')
+b=s.index('  async start() {',a)
+section="""  schedule() {
+    if (this.activeCohort) return;
+    const safe = [...this.queued.values()].filter(task => !task.dangerous);
+    for (const task of safe) {
+      if (this.running.size >= this.maxConcurrent) break;
+      this.queued.delete(task.path);
+      this.running.set(task.path, { ...task, state:'reserved' });
+      void this.run(task).catch(error => this.logger.error('[v2] safe task:',error))
+        .finally(() => this.running.delete(task.path));
+    }
+    if (safe.length || this.running.size) return;
+    const risk = [...this.queued.values()].filter(task => task.dangerous).slice(0,this.maxConcurrent);
+    if (!risk.length) return;
+    const cohort = createRiskCohort(risk, event => this.emitFloat(event));
+    this.activeCohort = cohort;
+    const io = {
+      shell:this.shell, logger:this.logger, running:this.running, seen:this.seen,
+      upload, download, mkdir, remove, emit:event=>this.emitFloat(event),
+      publish:(task,filename,body)=>this.publish(task,filename,body),
+      removeSource:async task => {
+        if (!task.source) return;
+        if (task.source.kind === 'github') {
+          const current = await gh(task.source.repo,task.source.path);
+          if (current?.sha === task.source.sha) await gh(task.source.repo,task.source.path,'DELETE',undefined,current.sha);
+        } else if (task.source.kind === 'dropbox') {
+          const current = (await list('/inbox/'+task.folder)).find(e => isFile(e) && e.path_display === task.source.path);
+          if (current?.rev === task.source.rev) await remove(task.source.path);
+        }
+      }
+    };
+    for (const task of risk) {
+      this.queued.delete(task.path);
+      this.running.set(task.path, {...task,state:'risk-reserved'});
+    }
+    void Promise.allSettled(risk.map(task=>executeRiskTask(task,cohort,io)))
+      .finally(() => { if (this.activeCohort===cohort) this.activeCohort=null; });
+  }
+
+"""
+s=s[:a]+section+s[b:]
+old="    this.stopped = false;\n    while (!this.stopped) {"
+assert s.count(old)==1
+new="""    this.stopped = false;
+    if (this.skipExistingSources) {
+      const existing = await this.sourceCandidates();
+      for (const source of existing) {
+        const signature = source.kind + ':' + (source.repo || '') + ':' + source.path + ':' + (source.sha || source.rev || '');
+        this.seen.add(signature);
+      }
+      this.logger.info('[v2] ignored '+existing.length+' pre-existing unclaimed sources at startup');
+    }
+    while (!this.stopped) {"""
+s=s.replace(old,new,1)
+p.write_text(s)
+print('V2_RISK_COHORT_WIRED_TO_NEW_WORKER')
+V2_WIRE_RISK
+node --check bridge/shell/multi-task/shell_command.js
+node --check bridge/shell/multi-task/risk_coordinator.js
