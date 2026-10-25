@@ -1,0 +1,5 @@
+SERVER_LISTENING {"pid":113980,"portConfig":"PORT=3000","listeningPorts":[3000]}
+SERVER_LISTENING {"pid":161990,"portConfig":"PORT=3000","listeningPorts":[]}
+
+[exit code] 0
+Progress: Completed
