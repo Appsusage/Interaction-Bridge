@@ -1,0 +1,21 @@
+cd /home/runner/ai-agent
+printf 'HEALTH '
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/health
+printf 'NAV_PAGE '
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' http://127.0.0.1:3000/navigation/
+printf 'NAV_ROOT '
+curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' http://127.0.0.1:3000/navigation
+printf 'NAV_APP_JS '
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' http://127.0.0.1:3000/navigation/app.js
+printf 'NAV_CSS '
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' http://127.0.0.1:3000/navigation/style.css
+printf 'NAV_GPS_JS '
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' http://127.0.0.1:3000/navigation/gps.js
+printf 'NAV_MAP_JS '
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' http://127.0.0.1:3000/navigation/map.js
+printf 'RUNNING_SERVER '
+ps -eo pid,command | grep '[n]ode backend/server.js' | head -n 3
+printf 'SYNC_STATUS '
+node backend/sync/sync_supervisor.js status
+printf 'SYNC_REPORT '
+node -e "const f=require('fs'); const p='backend/sync/data/sync_last_report.json'; if(f.existsSync(p)){const x=JSON.parse(f.readFileSync(p)); console.log(JSON.stringify(x).slice(0,900))} else console.log('not at '+p)"
