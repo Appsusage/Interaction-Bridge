@@ -1,0 +1,14 @@
+[command]
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e "const r=await fetch('http://127.0.0.1:3102/health');console.log('V2_LIVE',await r.text())"
+ps -eo pid,ppid,args | grep -E '(multi-task|github_adaptor|bridge/shell/server)' | grep -v grep || true
+[streams]
+[stdout] V2_LIVE {"ok":true,"mode":"multi-task","pid":1294,"running":true,"active":1,"queued":0,"stopping":false}
+[stdout]     163      28 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/github_adaptor.js
+    170      28 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/server.js
+   1285       1 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/multi-task/supervisor.js
+   1294    1285 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node /home/runner/workspace/ai-agent/bridge/shell/multi-task/server.js
+
+[exit code] 0
+Progress: Completed
