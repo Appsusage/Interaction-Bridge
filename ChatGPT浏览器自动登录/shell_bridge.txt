@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-node --check backend/extension/browser/chatgpt_live.js
-rg -n 'loginFlowActive|monitorLoginState' backend/extension/browser/chatgpt_live.js
