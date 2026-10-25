@@ -1,0 +1,17 @@
+[command]
+set -e
+printf 'V2_PRIMARY_ROUTING_TEST_OK\n'
+printf 'V2_STDERR_STILL_CAPTURED\n' >&2
+node --input-type=module <<'V2_PRIMARY_CHECK'
+const response=await fetch('http://127.0.0.1:3102/health');
+const status=await response.json();
+if(!status.ok||!status.running)throw Error('Multi-task server unavailable');
+console.log('V2_PRIMARY_HEALTH_CHECK',JSON.stringify({pid:status.pid,running:status.running}));
+V2_PRIMARY_CHECK
+[streams]
+[stdout] V2_PRIMARY_ROUTING_TEST_OK
+[stderr] V2_STDERR_STILL_CAPTURED
+[stdout] V2_PRIMARY_HEALTH_CHECK {"pid":5370,"running":true}
+
+[exit code] 0
+Progress: Completed
