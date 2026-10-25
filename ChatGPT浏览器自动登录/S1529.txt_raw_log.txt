@@ -1,0 +1,7 @@
+PRE_SWITCH {"health":200,"old":113980,"orphan":161990}
+STOPPED_OLD_AND_ORPHAN
+FALLBACK_SPAWN_PID 163438
+AFTER_SWITCH {"health":200,"oldGone":true,"orphanGone":true}
+
+[exit code] 0
+Progress: Completed
