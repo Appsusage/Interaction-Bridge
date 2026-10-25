@@ -1,0 +1,32 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --check bridge/shell/multi-task/shell_floats.js
+node --input-type=module <<'VERIFY_AUTO_START_AFTER_MAIN_RESTART'
+import fs from 'node:fs';
+const mainNeedle='backend/server.js';
+const commandParts=pid=>{try{return fs.readFileSync('/proc/'+pid+'/cmdline','utf8').split('\0').filter(Boolean)}catch{return []}};
+const exactMain=()=>fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x)).map(Number).filter(pid=>commandParts(pid).slice(1).some(part=>part===mainNeedle||part.endsWith('/'+mainNeedle)));
+const matches=exactMain();
+if(matches.length!==1)throw Error('Expected precisely one main AI Server: '+JSON.stringify(matches));
+const previous=matches[0];
+const before=await (await fetch('http://127.0.0.1:3000/shell-multi/status')).json();
+if(!before.running||before.active||before.queued)throw Error('Main V2 not idle; refusing restart: '+JSON.stringify(before));
+const regex=/(?:^|[\\/])backend[\\/]server\.js$/;
+if(!regex.test('/home/runner/workspace/ai-agent/backend/server.js'))throw Error('V2 startup process-path detector failed');
+console.log('MAIN_SERVER_RESTART_VERIFIED_PID',previous,'V2_BEFORE',JSON.stringify(before));
+if(!commandParts(previous).slice(1).some(part=>part===mainNeedle||part.endsWith('/'+mainNeedle)))throw Error('Main server PID changed before signal');
+process.kill(previous,'SIGTERM');
+let ready=null;
+for(let i=0;i<120;i++){
+ await new Promise(resolve=>setTimeout(resolve,500));
+ const candidates=exactMain().filter(x=>x!==previous);
+ if(candidates.length!==1)continue;
+ try{
+  const health=await fetch('http://127.0.0.1:3000/health');
+  const status=await (await fetch('http://127.0.0.1:3000/shell-multi/status')).json();
+  if(health.ok&&status.running&&status.primary===true){ready={newPid:candidates[0],status};break;}
+ }catch{}
+}
+if(!ready)throw Error('Main AI Server auto-start not confirmed; old fallback remains untouched');
+console.log('V2_AUTO_START_AFTER_MAIN_RESTART_VERIFIED',JSON.stringify(ready));
+VERIFY_AUTO_START_AFTER_MAIN_RESTART
