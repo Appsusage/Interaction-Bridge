@@ -1,6 +1,0 @@
-printf 'SYNC_HOTFIX_RECHECK\n'
-printf 'MAIN='; git hash-object backend/sync/whole_project_sync.js
-printf 'TEST='; git hash-object backend/sync/tests/whole_project_sync.test.js
-printf 'IGNORED_HELPER='; rg -n 'ignoredUntrackedSources' backend/sync/whole_project_sync.js || true
-printf 'LAST_REPORT='; if test -f backend/sync/sync_last_report.json; then head -c 500 backend/sync/sync_last_report.json; fi
-printf '\nSYNC_HOTFIX_RECHECK_COMPLETE\n'
