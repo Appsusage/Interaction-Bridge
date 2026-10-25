@@ -1,0 +1,20 @@
+set -e
+cd /home/runner/workspace/ai-agent
+echo CUTOVER_ROOT_CAUSE_BEGIN
+ps -p 28 -o pid,ppid,args || true
+ps -eo pid,ppid,args | grep -E '(heartbeat|supervisor-router|backend/server.js|bridge/shell)' | grep -v grep || true
+node --input-type=module <<'READONLY_REGISTRY'
+import fs from 'node:fs';
+const p='backend/heartbeat/pid.json';
+if(fs.existsSync(p)){
+ const j=JSON.parse(fs.readFileSync(p,'utf8'));
+ console.log('HEARTBEAT_REGISTRY_SHAPE',Array.isArray(j)?'array':Object.keys(j));
+ console.log('MATCHING_ENTRIES',JSON.stringify((Array.isArray(j)?j:(j.processes||j.entries||[])).filter(e=>/bridge\/shell|multi-task|heartbeat/i.test(JSON.stringify(e))).map(e=>({targetKey:e.targetKey,name:e.name,pid:e.pid,status:e.status,command:e.command,args:e.args}))).slice(0,7000));
+}else console.log('HEARTBEAT_REGISTRY_MISSING');
+for(const p of ['backend/heartbeat/supervisor-router.js','package.json']){
+ if(!fs.existsSync(p))continue;
+ const l=fs.readFileSync(p,'utf8').split('\n');
+ for(let i=0;i<l.length;i++)if(/bridge\/shell|github_adaptor|multi-task|spawn|heartbeat|watch|interval|\bstart\b/.test(l[i]))console.log('LINE',p,i+1,l[i].slice(0,240));
+}
+READONLY_REGISTRY
+echo CUTOVER_ROOT_CAUSE_END
