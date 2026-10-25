@@ -1,0 +1,43 @@
+[command]
+node --input-type=module -e 'import { chromium } from "playwright";
+const b=await chromium.launch({executablePath:"/repl/tools/bin/chromium",headless:true,args:["--no-sandbox","--disable-dev-shm-usage","--use-fake-ui-for-media-stream","--use-fake-device-for-media-stream"]});
+try {
+ for(const width of [390,320,280]){
+  const p=await b.newPage({viewport:{width,height:740}});
+  const errors=[];p.on("pageerror",e=>errors.push(e.message));
+  await p.goto("http://127.0.0.1:3000/",{waitUntil:"domcontentloaded",timeout:15000});
+  await p.waitForFunction(()=>typeof window.setFloatMenuOpen==="function"&&typeof window.AIAgentVision?.open==="function",null,{timeout:15000});
+  const hidden=!(await p.locator("#navigationFloatButton").isVisible());
+  await p.locator("#dockToggle").click();
+  const a=await p.locator("#floatMenu .float-item,#floatMenu .float-outer-item,#mainFloat").evaluateAll(els=>els.map(e=>{const r=e.getBoundingClientRect();return {id:e.id,x:r.x,y:r.y,right:r.right,bottom:r.bottom,cx:r.x+r.width/2,cy:r.y+r.height/2,w:r.width,h:r.height}}));
+  const inner=a.filter(x=>["backgroundFloatButton","avatarFloatButton","reconnectFloatButton","voiceFloatButton","browserFloatButton"].includes(x.id));
+  const outer=a.filter(x=>["navigationFloatButton","visionFloatButton"].includes(x.id));
+  const collisions=[];
+  for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++)if(Math.hypot(a[i].cx-a[j].cx,a[i].cy-a[j].cy)<43)collisions.push(a[i].id+"/"+a[j].id);
+  const clipped=a.filter(x=>x.x<0||x.right>width||x.y<0||x.bottom>740).map(x=>x.id);
+  const core=a.find(x=>x.id==="mainFloat");
+  const polar=id=>{const x=a.find(z=>z.id===id);return {angle:(Math.atan2(x.cy-core.cy,x.cx-core.cx)*180/Math.PI+360)%360,radius:Math.round(Math.hypot(x.cx-core.cx,x.cy-core.cy))}};
+  console.log("OUTER_MENU_GEOMETRY "+JSON.stringify({width,hiddenBeforeOpen:hidden,innerCount:inner.length,outerCount:outer.length,inner:inner.map(x=>x.id),polar:{link:polar("reconnectFloatButton"),nav:polar("navigationFloatButton"),voice:polar("voiceFloatButton"),vision:polar("visionFloatButton"),browser:polar("browserFloatButton")},collisions,clipped,errors}));
+  if(width===390){
+   const pop=p.waitForEvent("popup",{timeout:8000}).catch(()=>null);
+   await p.locator("#navigationFloatButton").click();
+   const popup=await pop;
+   console.log("OUTER_NAV_CLICK "+JSON.stringify({opened:!!popup,url:popup?await popup.url():null}));
+   if(popup) await popup.close();
+   await p.locator("#visionFloatButton").click();
+   await p.waitForTimeout(500);
+   console.log("OUTER_VISION_CLICK "+JSON.stringify({visible:await p.locator("#aiVisionPanel").isVisible(),errors}));
+  }
+  await p.close();
+ }
+} finally {await b.close();}
+'
+[streams]
+[stdout] OUTER_MENU_GEOMETRY {"width":390,"hiddenBeforeOpen":true,"innerCount":5,"outerCount":2,"inner":["backgroundFloatButton","avatarFloatButton","reconnectFloatButton","voiceFloatButton","browserFloatButton"],"polar":{"link":{"angle":180,"radius":86},"nav":{"angle":202.50000355894852,"radius":154},"voice":{"angle":225,"radius":86},"vision":{"angle":247.4999942657165,"radius":154},"browser":{"angle":270,"radius":86}},"collisions":[],"clipped":[],"errors":[]}
+[stdout] OUTER_NAV_CLICK {"opened":true,"url":"http://127.0.0.1:3000/navigation/"}
+[stdout] OUTER_VISION_CLICK {"visible":true,"errors":[]}
+[stdout] OUTER_MENU_GEOMETRY {"width":320,"hiddenBeforeOpen":true,"innerCount":5,"outerCount":2,"inner":["backgroundFloatButton","avatarFloatButton","reconnectFloatButton","voiceFloatButton","browserFloatButton"],"polar":{"link":{"angle":180,"radius":70},"nav":{"angle":202.4999965883543,"radius":138},"voice":{"angle":224.99999121877516,"radius":70},"vision":{"angle":247.5000034116457,"radius":138},"browser":{"angle":270,"radius":70}},"collisions":[],"clipped":[],"errors":[]}
+[stdout] OUTER_MENU_GEOMETRY {"width":280,"hiddenBeforeOpen":true,"innerCount":5,"outerCount":2,"inner":["backgroundFloatButton","avatarFloatButton","reconnectFloatButton","voiceFloatButton","browserFloatButton"],"polar":{"link":{"angle":180,"radius":62},"nav":{"angle":202.49999652910492,"radius":130},"voice":{"angle":225,"radius":62},"vision":{"angle":247.5000060524256,"radius":130},"browser":{"angle":270,"radius":62}},"collisions":[],"clipped":[],"errors":[]}
+
+[exit code] 0
+Progress: Completed
