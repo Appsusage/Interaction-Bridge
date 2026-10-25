@@ -1,0 +1,72 @@
+[command]
+printf 'SERVER_NAV_ROUTE_INSPECTION\n'
+printf 'SERVER_HASH='; git hash-object backend/server.js
+printf 'SERVER_ROUTE_LINES\n'; rg -n 'capabilities/vision|/navigation|app.use\(' backend/server.js | head -n 28
+printf 'SERVER_ROUTE_CONTEXT\n'; sed -n '112,160p' backend/server.js
+printf 'SERVER_NAV_ROUTE_INSPECTION_DONE\n'
+[streams]
+[stdout] SERVER_NAV_ROUTE_INSPECTION
+SERVER_HASH=[stdout] 95f1c3fda620fa925d02a1fe61408323c978b99c
+[stdout] SERVER_ROUTE_LINES
+[stdout] 118:app.use(express.json());
+121:app.use("/extension/browser/experience/data", (_req, res) => res.sendStatus(404));
+122:app.use("/extension/browser/chatgpt/experience", (_req, res) => res.sendStatus(404));
+123:app.use("/extension", express.static(path.join(__dirname, "extension")));
+126:app.get("/capabilities/vision/:asset", (req, res) => {
+128:  res.sendFile(path.join(__dirname, "../capabilities/vision", req.params.asset));
+131:app.use(
+146:app.use(
+[stdout] SERVER_ROUTE_CONTEXT
+[stdout] const app = express();
+
+console.log("Google OAuth routes loading...");
+
+registerVisionRoutes(app, express, { root: path.resolve(__dirname, "..") });
+
+app.use(express.json());
+
+// Keep Browser learning histories private; the rest of /extension stays unchanged.
+app.use("/extension/browser/experience/data", (_req, res) => res.sendStatus(404));
+app.use("/extension/browser/chatgpt/experience", (_req, res) => res.sendStatus(404));
+app.use("/extension", express.static(path.join(__dirname, "extension")));
+
+// Only the public camera assets are exposed from the vision capability.
+app.get("/capabilities/vision/:asset", (req, res) => {
+  if (!["camera.js", "camera.css", "motion.js", "labels.js", "detector.js", "detector-worker.js", "text.js", "recognition.js"].includes(req.params.asset)) return res.sendStatus(404);
+  res.sendFile(path.join(__dirname, "../capabilities/vision", req.params.asset));
+});
+
+app.use(
+express.static(
+path.join(
+__dirname,
+"../frontend"
+)
+)
+);
+
+
+
+
+
+
+// 上传功能
+app.use(
+uploadRouter
+);
+
+
+
+// 自主模式接口
+
+app.post(
+"/autonomy",
+
+async(req,res)=>{
+
+
+try{
+[stdout] SERVER_NAV_ROUTE_INSPECTION_DONE
+
+[exit code] 0
+Progress: Completed
