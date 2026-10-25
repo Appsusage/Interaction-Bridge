@@ -1,0 +1,7 @@
+printf 'MENU_SEARCH\n'
+rg -n -i '语音|链接|浏览器|voice|browser|visual|vision|floatmenu|float-menu|outer|外层|radial|sector|petal' frontend/index.html frontend/app.js frontend/*.css | head -n 230
+printf 'NAV_VIS_MODULES\n'
+rg -n 'vision|openVision|navigation|/navigation' frontend/app.js frontend/index.html capabilities/vision backend/server.js | head -n 120
+printf 'STATUS\n'
+git status --short -- frontend/index.html frontend/app.js frontend/style.css frontend/styles.css capabilities/navigation capabilities/vision | head -n 90
+printf 'MENU_SEARCH_DONE\n'
