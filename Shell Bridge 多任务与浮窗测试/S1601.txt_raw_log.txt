@@ -15,4 +15,7 @@ printf 'V2_RISK_BARRIER_RELEASED_OK\n'
 [stdout] V2_RISK_BARRIER_RELEASED_OK
 [phase_exit] exit=0 signal=none
 
+[exit code] 0
+[finished] 2026-10-25T07:15:28.044Z
+
 Pending, to be continued.
