@@ -1,3 +1,0 @@
-cd /home/runner/workspace/ai-agent
-ps -eo pid,ppid,stat,args | grep -E '[s]hell_command|[g]ithub_adaptor|[b]ackend/server.js' | head -20
-tail -12 /tmp/ai-agent-multitask-worker.log 2>/dev/null | cut -c 1-220
