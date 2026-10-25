@@ -1,0 +1,25 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'SAFE_TOPIC_SCOPE_V2'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+s=p.read_text()
+assert 'this.managedTopics' not in s, 'Already scoped'
+needle='    this.busy = false;'
+assert s.count(needle)==1
+s=s.replace(needle,needle+'\n    this.managedTopics = new Set();',1)
+lines=s.splitlines(keepends=True)
+sourceLines=[x for x in lines if 'await upload(path, source.content);' in x]
+assert len(sourceLines)==1
+line=sourceLines[0]
+indent=line[:len(line)-len(line.lstrip())]
+s=s.replace(line,indent+'this.managedTopics.add(source.folder);\n'+line,1)
+lines=s.splitlines(keepends=True)
+matches=[x for x in lines if 'live.has(folder.name)' in x and 'continue;' in x]
+assert len(matches)==1
+line=matches[0]
+s=s.replace(line,line.replace('live.has(folder.name)','live.has(folder.name) || !this.managedTopics.has(folder.name)'),1)
+p.write_text(s)
+print('V2_OUTBOX_ONLY_MANAGED_TOPICS')
+SAFE_TOPIC_SCOPE_V2
+node --check bridge/shell/multi-task/shell_command.js
