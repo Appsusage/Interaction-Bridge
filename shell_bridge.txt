@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent && node --input-type=module <<'MULTITASK_READINESS'
-import fs from 'node:fs';
-import {spawnSync} from 'node:child_process';
-const paths=['bridge/shell/multi-task/shell_command.js','bridge/shell/multi-task/shell_floats.js','bridge/shell/multi-task/shell_float.js','bridge/shell/server.js','bridge/shell/dropbox_token.js'];
-console.log('MULTITASK_READINESS_BEGIN');
-for(const p of paths){const exists=fs.existsSync(p);const check=exists?spawnSync(process.execPath,['--check',p],{encoding:'utf8'}):null;console.log('FILE',p,'EXISTS',exists,'SYNTAX_EXIT',check?.status??'missing','STDERR',check?.stderr?.slice(0,1000)??'');}
-const r=spawnSync('ps',['-eo','pid,ppid,args'],{encoding:'utf8'});console.log('RUNNING_BRIDGES',r.stdout.split('\n').filter(x=>/shell_command|shell_float|bridge\/shell|multi-task/.test(x)&&!/MULTITASK_READINESS|node --input-type=module/.test(x)).slice(0,25).join('\n'));
-console.log('MULTITASK_READINESS_END');
-MULTITASK_READINESS
