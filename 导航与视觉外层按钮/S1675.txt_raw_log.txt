@@ -1,0 +1,136 @@
+[command]
+printf 'LIVE_LAYER_PRECHECK\n'
+git hash-object frontend/index.html frontend/app.js frontend/style.css
+printf 'INNER_IDS_AND_CONTEXT\n'
+sed -n '247,288p' frontend/index.html
+printf 'RADIUS_CONTEXT\n'
+sed -n '1898,1941p' frontend/app.js
+printf 'STYLE_TAIL\n'
+tail -n 28 frontend/style.css
+printf 'LIVE_LAYER_PRECHECK_DONE\n'
+[streams]
+[stdout] LIVE_LAYER_PRECHECK
+[stdout] 6fcf5edb1d9093d6cdf04d2ae8afe5958564eb6b
+d1854ad80d0184347d7e0981874ce8c9a2243564
+3d72304197e7844ce5e620c786df235a44621837
+[stdout] INNER_IDS_AND_CONTEXT
+[stdout] 
+</button>
+
+
+
+
+
+
+
+<button id="navigationFloatButton" type="button" class="float-item" aria-label="打开导航地图" title="导航" onclick="window.open(&quot;/navigation/&quot;, &quot;_blank&quot;, &quot;noopener,noreferrer&quot;)">🧭</button>
+
+<button id="voiceFloatButton" type="button" class="float-item" aria-label="语音输入" title="语音输入"
+onclick="toggleVoice()"
+
+>
+
+🎤
+
+</button>
+
+
+
+
+
+
+
+<button id="visionFloatButton" type="button" class="float-item" aria-label="打开 AI 视觉" title="视觉" onclick="window.AIAgentVision?.open()">👁️</button>
+
+<button id="browserFloatButton" type="button" class="float-item" aria-label="显示/隐藏实时浏览器" title="显示/隐藏实时浏览器" onclick="toggleBrowserViewer()">🌐</button>
+
+<button
+
+id="mainFloat"
+
+class="float-main"
+
+>
+
+
+
+</button>
+
+[stdout] RADIUS_CONTEXT
+[stdout] 
+function positionFloatDockItems() {
+  if (!floatMenu || !mainFloat || !floatMenu.classList.contains("open")) return;
+  const items = Array.from(floatMenu.querySelectorAll(".float-item"));
+  if (!items.length) return;
+  const size = 44;
+  const center = 29;
+  const viewportW = window.innerWidth || document.documentElement.clientWidth;
+  const viewportH = window.innerHeight || document.documentElement.clientHeight;
+  const anchorRight = window.matchMedia("(max-width: 600px)").matches ? 22 : 28;
+  const anchorBottom = window.matchMedia("(max-width: 600px)").matches ? 112 : 140;
+  const cx = viewportW - anchorRight - center;
+  const cy = viewportH - anchorBottom - center;
+  const minSpacingRadius = items.length > 1
+    ? (size + 4) / (2 * Math.sin(Math.PI / (2 * (items.length - 1))))
+    : 0;
+  const radius = Math.max(58, minSpacingRadius, Math.min(94, viewportW * 0.22, viewportH * 0.19));
+  const arcAngles = items.length === 1
+    ? [180]
+    : items.map((_, i) => 90 + (180 * i / (items.length - 1)));
+  items.forEach((item, i) => {
+    const angle = arcAngles[i] * Math.PI / 180;
+    let x = center + Math.cos(angle) * radius - size / 2;
+    let y = center + Math.sin(angle) * radius - size / 2;
+    // Keep each circular button inside the visible viewport.
+    const minX = center - cx;
+    const maxX = viewportW - size - cx + center;
+    const minY = center - cy;
+    const maxY = viewportH - size - cy + center;
+    x = Math.max(minX, Math.min(x, maxX));
+    y = Math.max(minY, Math.min(y, maxY));
+    item.style.transform = `translate(${x}px, ${y}px)`;
+  });
+}
+if (floatMenu && mainFloat && dockToggle) {
+  dockToggle.addEventListener("click", () => setFloatMenuOpen(true));
+  mainFloat.addEventListener("click", () => setFloatMenuOpen(!floatMenu.classList.contains("open")));
+  // Tap outside the expanded dock to dismiss it without affecting the chat.
+  document.addEventListener("pointerdown", event => {
+    if (floatMenu.classList.contains("open") && !floatMenu.contains(event.target)) setFloatMenuOpen(false);
+  });
+}
+window.addEventListener("resize", () => {
+  if (floatMenu && floatMenu.classList.contains("open")) positionFloatDockItems();
+[stdout] STYLE_TAIL
+[stdout] .ai-settings-intro{color:#64788b;line-height:1.6;font-size:13px}
+.ai-settings-sections{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.ai-settings-sections section{display:flex;gap:12px;min-height:98px;padding:14px;border:1px solid #e1e9f0;border-radius:15px;background:#fff}
+.ai-settings-sections section>span{color:#8ca0b3;font-size:11px;padding-top:3px}.ai-settings-sections strong{font-size:14px}
+.ai-settings-sections p{margin:6px 0 8px;color:#6c7f91;font-size:12px;line-height:1.45}.ai-settings-sections em{color:#8b9bad;font-size:10px;font-style:normal}
+.future-outer-ring{position:fixed;right:0;bottom:calc(45% - 55px);width:244px;height:162px;z-index:2147482998;pointer-events:none}
+.future-outer-ring svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.future-outer-ring path{fill:none;stroke:rgba(83,123,158,.9);stroke-width:2;stroke-dasharray:4 7}
+.future-outer-ring span{position:absolute;right:36px;top:14px;padding:5px 9px;border-radius:12px;color:#496983;background:rgba(245,250,255,.9);border:1px solid rgba(83,123,158,.25);font-size:10px}
+@media(max-width:600px){.ai-settings-window{padding:17px;border-radius:19px}.ai-settings-sections{grid-template-columns:1fr}}
+/* Console-equivalent fixed topmost layer for the quick-action dock. */
+body > #floatMenu.float-menu, body > #floatMenu.float-menu.open {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+}
+
+/* The function edge dock uses the native top layer, above the browser viewer.
+   Reset popover's default centered positioning without changing dock geometry. */
+#floatMenu.float-menu[popover] {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  z-index: 2147483647 !important;
+}
+[stdout] LIVE_LAYER_PRECHECK_DONE
+
+[exit code] 0
+Progress: Completed
