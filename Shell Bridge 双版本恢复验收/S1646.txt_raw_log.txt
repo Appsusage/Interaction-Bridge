@@ -1,0 +1,26 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+printf 'LEGACY_FILES\n'
+ls -l bridge/shell/server.js bridge/shell/github_adaptor.js
+printf 'LEGACY_STARTUP_REFS\n'
+rg -n 'listen\(|PORT|setInterval|setTimeout|main\(|process\.env|dotenv|worker|poll|start\(' bridge/shell/server.js bridge/shell/github_adaptor.js | head -n 95
+printf 'LEGACY_COMMAND_PATHS_CHECKED\n'
+[streams]
+[stdout] LEGACY_FILES
+[stdout] -rw-r--r-- 1 runner runner  9673 Oct 25 04:42 bridge/shell/github_adaptor.js
+-rw-r--r-- 1 runner runner 19647 Oct 19 11:21 bridge/shell/server.js
+[stdout] LEGACY_STARTUP_REFS
+[stdout] bridge/shell/github_adaptor.js:12:const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+bridge/shell/github_adaptor.js:438:          setTimeout(resolve, INTERVAL)
+bridge/shell/github_adaptor.js:462:      setTimeout(resolve, INTERVAL)
+bridge/shell/server.js:460:            process.env,
+bridge/shell/server.js:887:    // Give the frontend's 100ms poll a short head start before the file leaves inbox.
+bridge/shell/server.js:888:    await new Promise(resolve => setTimeout(resolve, 350));
+bridge/shell/server.js:935:async function pollInbox() {
+bridge/shell/server.js:1039:setInterval(
+bridge/shell/server.js:1040:  pollInbox,
+bridge/shell/server.js:1044:pollInbox();
+[stdout] LEGACY_COMMAND_PATHS_CHECKED
+
+[exit code] 0
+Progress: Completed
