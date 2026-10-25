@@ -1,0 +1,31 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+echo SERVER_SIGNAL_DIAG
+ps -o pid,ppid,stat,etime,args -p 9907 || true
+if test -e /proc/9907/status; then grep -E '^(Name|State|PPid|SigBlk|SigIgn|SigCgt):' /proc/9907/status; fi
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+for(const p of ['backend/server.js','backend/extension/browser/chatgpt_live.js']){
+const t=fs.readFileSync(p,'utf8');console.log('SIGNAL_HANDLER_SCAN',p,t.split('\n').filter(l=>/SIGTERM|SIGINT|process\.on\(['"]|\.on\(['"](?:SIGTERM|SIGINT)/.test(l)).slice(0,12));
+}
+for(const route of ['/health','/extension/browser/chatgpt/experience/successful_cases.json']){
+const r=await fetch('http://127.0.0.1:3000'+route,{signal:AbortSignal.timeout(2500)});console.log('ROUTE',route,r.status);
+}
+NODE
+[streams]
+[stdout] SERVER_SIGNAL_DIAG
+[stdout]     PID    PPID STAT     ELAPSED COMMAND
+   9907      28 Ssl+    01:42:48 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+[stdout] Name:	MainThread
+State:	S (sleeping)
+PPid:	28
+SigBlk:	0000000000000000
+SigIgn:	0000000001001000
+SigCgt:	0000000108010600
+[stdout] SIGNAL_HANDLER_SCAN backend/server.js []
+[stdout] SIGNAL_HANDLER_SCAN backend/extension/browser/chatgpt_live.js []
+[stdout] ROUTE /health 200
+[stdout] ROUTE /extension/browser/chatgpt/experience/successful_cases.json 200
+
+[exit code] 0
+Progress: Completed
