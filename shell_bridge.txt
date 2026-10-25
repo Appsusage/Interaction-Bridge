@@ -1,0 +1,158 @@
+set -e
+cd /home/runner/workspace/ai-agent
+cat > bridge/shell/multi-task/risk_coordinator.js <<'RISK_COORDINATOR_V2'
+/**
+ * Checkpoint-coordinated high-risk batch execution.
+ * This module is isolated from the legacy Shell Bridge.
+ */
+import {spawn} from 'node:child_process';
+import {appendFileSync, mkdirSync, readFileSync} from 'node:fs';
+import {join} from 'node:path';
+
+const marker = /^\s*#\s*(?:SHELL_RISK_CHECKPOINT|HIGH_RISK_CHECKPOINT)\s*$/im;
+const pendingSuffix = '\nPending, to be continued.\n';
+const missing = error => /not_found/i.test(error?.message ?? '');
+const stagePath = task => '/outbox/' + task.folder + '/' + task.name + '.checkpoint.json';
+const resultPath = task => '/outbox/' + task.folder + '/' + task.name;
+
+export function createRiskCohort(tasks, emit) {
+  let unblock;
+  const barrier = new Promise(resolve => { unblock = resolve; });
+  const batch = {tasks, ready:new Set(), finished:new Map(), barrier, serial:Promise.resolve(), aborted:false};
+  batch.abort = () => {batch.aborted=true;unblock();};
+  batch.readyUp = task => {
+    batch.ready.add(task.path);
+    for (const member of tasks) emit({kind:'risk-progress',folder:member.folder,
+      taskName:member.name,progress:batch.ready.size + '/' + tasks.length});
+    if (batch.ready.size===tasks.length) unblock();
+  };
+  return batch;
+}
+
+export async function executeRiskTask(task, cohort, io) {
+  const full = task.content.toString('utf8');
+  const found = marker.exec(full);
+  const prep = found ? full.slice(0,found.index) : '';
+  const risk = found ? full.slice(found.index+found[0].length) : full;
+  const base = '/outbox/' + task.folder;
+  const localFolder = join(process.cwd(),'bridge','shell','multi-task','.running-logs');
+  const localFile = join(localFolder, task.name + '.log');
+  mkdirSync(localFolder,{recursive:true});
+  let record = '[v2 high-risk] ' + task.name + '\n[original source] ' +
+    (task.source?.path || task.path) + '\n[full command]\n' + full + '\n';
+  const notice = (kind, extra={}) => io.emit({kind,folder:task.folder,taskName:task.name,...extra});
+  const write = (data,stream='system') => {
+    const line = '[' + stream + '] ' + data;
+    record += line;
+    appendFileSync(localFile,line,'utf8');
+    notice('chunk',{text:line,stream});
+  };
+  const hold = async () => {
+    if (task.source) await io.publish(task,task.name + '_raw_log.txt',record+pendingSuffix);
+  };
+  const checkpoint = async (phase,code=null) => {
+    await io.mkdir(base);
+    await io.upload(stagePath(task),JSON.stringify({phase,code,log:record,
+      source:task.source||null,updated:new Date().toISOString()}));
+    await hold();
+  };
+  const readCheckpoint = async () => {
+    try{return JSON.parse((await io.download(stagePath(task))).toString('utf8'));}
+    catch(e){if(missing(e))return null;throw e;}
+  };
+  const run = async (script,phase) => {
+    if (!script.trim()) return 0;
+    write('begin '+phase+'\n$ '+script+'\n');
+    return await new Promise(resolve=>{
+      let settled=false;
+      const end=code=>{if(!settled){settled=true;resolve(code);}};
+      let child;
+      try{child=spawn(io.shell,['-c',script],{detached:false,stdio:['ignore','pipe','pipe']});}
+      catch(e){write(e.stack+'\n','spawn_error');end(-1);return;}
+      const state=io.running.get(task.path);
+      if(state)state.pid=child.pid;
+      child.stdout.on('data',data=>write(data.toString('utf8'),'stdout'));
+      child.stderr.on('data',data=>write(data.toString('utf8'),'stderr'));
+      child.once('error',e=>{write(e.stack+'\n','spawn_error');end(-1);});
+      child.once('close',(code,signal)=>{
+        write('exit='+code+' signal='+(signal||'none')+'\n','phase_exit');
+        end(code===null?-1:code);
+      });
+    });
+  };
+  const ready = () => {cohort.readyUp(task);return cohort.barrier;};
+  io.running.set(task.path,{...task,mode:'risk',pid:null});
+  notice('start',{command:full,highRisk:true,progress:'0/'+cohort.tasks.length});
+  let completed=false,old=null,exitCode=null;
+  try{
+    old=await readCheckpoint();
+    if(old) {
+      record=old.log + '\n[continued at] ' + new Date().toISOString() + '\n';
+      try{record+=readFileSync(localFile,'utf8').slice(old.log?.length||0);}catch{}
+      if(old.phase==='preparing'||old.phase==='risk_running'){
+        write('Unconfirmed previous execution at '+old.phase+'; manual review required.\n');
+        await hold();
+        cohort.abort();
+        return;
+      }
+      if(!['prepared','risk_completed'].includes(old.phase))throw Error('Unexpected checkpoint '+old.phase);
+      exitCode=old.code;
+    }
+    if(!old){
+      await checkpoint('preparing');
+      const rc=await run(prep,'prepare');
+      if(rc!==0){write('preparation failed; risk stage not started.\n');cohort.abort();return;}
+      await checkpoint('prepared');
+    }
+    await ready();
+    if(cohort.aborted){write('Batch not ready; task held.\n');await hold();return;}
+    if(old?.phase!=='risk_completed'){
+      let release;
+      const next=new Promise(resolve=>{release=resolve;});
+      const previous=cohort.serial;
+      cohort.serial=previous.then(()=>next);
+      await previous;
+      try{
+        if(cohort.aborted){await hold();return;}
+        const dependencies=[...full.matchAll(/^\s*#\s*DEPENDS_ON:\s*(S\d{1,6}\.txt)\s*$/gim)].map(m=>m[1]);
+        for(const dep of dependencies){
+          if(cohort.tasks.some(t=>t.name===dep)){
+            if(cohort.finished.get(dep)!==0)throw Error('Dependency not completed successfully: '+dep);
+          }else{
+            const text=(await io.download(base+'/'+dep)).toString('utf8');
+            if(!/\[exit code\]\s*0/.test(text))throw Error('External dependency failed: '+dep);
+          }
+        }
+        await checkpoint('risk_running');
+        notice('risk-start',{progress:cohort.ready.size+'/'+cohort.tasks.length});
+        exitCode=await run(risk,'high-risk');
+        await checkpoint('risk_completed',exitCode);
+      }finally{release();}
+    }
+    cohort.finished.set(task.name,exitCode);
+    record+='\n[exit code] '+exitCode+'\n[finished] '+new Date().toISOString()+'\n';
+    await hold();
+    if(task.source)await io.publish(task,task.name+'_raw_log.txt',record);
+    await io.upload(resultPath(task),record,'add');
+    const stored=(await io.download(resultPath(task))).toString('utf8');
+    if(stored!==record)throw Error('Outbox raw-log verification mismatch');
+    if(task.source)await io.removeSource(task);
+    await io.remove(task.path+'.source.json');
+    await io.remove(task.path);
+    await io.remove(stagePath(task));
+    completed=true;
+    notice('finish',{exitCode,message:'完整原始日志已保存'});
+  }catch(e){
+    write((e.stack||e.message||String(e))+'\n','error');
+    cohort.abort();
+    try{await hold();}catch(err){io.logger.error('[v2 risk] pending log failed',err);}
+    notice('notice',{message:'检查点保留，等待恢复'});
+    io.logger.error('[v2 risk] task preserved',task.name,e);
+  }finally{
+    if(!completed)io.seen.add('pending:'+task.path);
+    io.running.delete(task.path);
+  }
+}
+RISK_COORDINATOR_V2
+node --check bridge/shell/multi-task/risk_coordinator.js
+echo RISK_COORDINATOR_NEW_ONLY_VERIFIED
