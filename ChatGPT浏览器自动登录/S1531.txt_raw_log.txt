@@ -1,0 +1,5 @@
+ATTACH_CHATGPT 1792889433109-66wm5hqnow8
+ATTACH_EVENT {"type":"status","sessionId":"1792889433109-66wm5hqnow8","state":"streaming","title":"Just a moment...","url":"https://chatgpt.com/"}
+
+[exit code] 0
+Progress: Completed
