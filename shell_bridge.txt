@@ -1,0 +1,5 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'MULTITASK_NEXT_AUDIT'
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+for(const p of ['bridge/shell/multi-task/shell_command.js','bridge/shell/multi-task/shell_floats.js']){let s=fs.readFileSync(p,'utf8');console.log('FILE',p,'BYTES',s.length);for(const token of ['startShellCommand','hasTerminationCommand','SIGKILL','SIGTERM','setTimeout','SEQUENCE_FLOOR','TASK_SEQUENCE','getNextTaskName','checkpoint','pending','raw_log']){console.log('TOKEN',token,'COUNT',s.split(token).length-1)}}
+const p=spawnSync('ps',['-eo','pid,ppid,args'],{encoding:'utf8'});console.log('PROCESSES',p.stdout.split('\n').filter(x=>/shell_command|github_sync|sync_supervisor/.test(x)&&!/MULTITASK_NEXT_AUDIT/.test(x)).join('\n'));console.log('AUDIT_DONE');
+MULTITASK_NEXT_AUDIT
