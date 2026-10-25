@@ -1,0 +1,8 @@
+set -e
+cd /home/runner/workspace/ai-agent
+echo V2_RISK_LINES
+nl -ba bridge/shell/multi-task/risk_coordinator.js | sed -n '112,160p'
+echo V2_PROCESSING_GUARD
+nl -ba bridge/shell/multi-task/shell_command.js | sed -n '255,275p'
+echo V2_SERVER_LOG
+tail -n 28 bridge/shell/multi-task/server.log
