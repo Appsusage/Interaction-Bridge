@@ -1,0 +1,6 @@
+BEFORE_RESTART {"pids":[113980],"health":200}
+SIGTERM_TO_OLD_CHAT_SERVER 113980
+
+Quit progress: yes/no
+Answer: 
+Continue: 1/3
