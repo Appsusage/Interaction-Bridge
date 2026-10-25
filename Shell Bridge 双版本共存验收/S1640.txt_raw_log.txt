@@ -1,0 +1,27 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+printf 'V2_COHABITATION_ACCEPTANCE_BEGIN\n'
+node --input-type=module <<'V2_COHABITATION_CHECK'
+import {execFileSync} from 'node:child_process';
+for(const [name,url] of [['AI','http://127.0.0.1:3000/health'],['V2','http://127.0.0.1:3000/shell-multi/status']]){
+ const r=await fetch(url,{signal:AbortSignal.timeout(2500)});
+ console.log('HEALTH',name,r.status,(await r.text()).slice(0,250));
+}
+const p=execFileSync('ps',['-eo','pid,args'],{encoding:'utf8'}).split('\n');
+for(const [name,re] of [['OLD_GITHUB',/node bridge\/shell\/github_adaptor\.js$/],['OLD_DROPBOX',/node bridge\/shell\/server\.js$/],['NEW_MAIN',/node backend\/server\.js$/]]){
+ console.log(name,p.filter(x=>re.test(x)).map(x=>x.trim().match(/^\d+/)?.[0]));
+}
+console.log('V2_COHABITATION_ACCEPTANCE_PASS');
+V2_COHABITATION_CHECK
+
+[streams]
+[stdout] V2_COHABITATION_ACCEPTANCE_BEGIN
+[stdout] HEALTH AI 200 {"status":"ok"}
+[stdout] HEALTH V2 200 {"primary":true,"running":true,"active":1,"queued":2,"stopping":false}
+[stdout] OLD_GITHUB [ '111' ]
+[stdout] OLD_DROPBOX [ '113' ]
+[stdout] NEW_MAIN [ '362' ]
+V2_COHABITATION_ACCEPTANCE_PASS
+
+[exit code] 0
+Progress: Completed
