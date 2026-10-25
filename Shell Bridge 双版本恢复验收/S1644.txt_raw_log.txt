@@ -6,5 +6,10 @@ printf 'V2_NEXT_RISK_TASK_PREP_OK\n'
 # process.kill(123456) is only a classification marker; this line is a shell comment and sends no signal.
 printf 'V2_NEXT_RISK_TASK_FINISHED_OK\n'
 
+[system] begin prepare
+$ printf 'V2_NEXT_RISK_TASK_PREP_OK\n'
+
+[stdout] V2_NEXT_RISK_TASK_PREP_OK
+[phase_exit] exit=0 signal=none
 
 Pending, to be continued.
