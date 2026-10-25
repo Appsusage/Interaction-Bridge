@@ -1,0 +1,7 @@
+    PID    PPID STAT     ELAPSED COMMAND
+ 113980      28 Ssl+    03:30:23 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+ 161990       1 Ssl        02:25 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node backend/server.js
+SERVER_PROCESS_STATES [{"pid":113980,"state":"S (sleeping)","ppid":"28"},{"pid":161990,"state":"S (sleeping)","ppid":"1"}]
+
+[exit code] 0
+Progress: Completed
