@@ -1,0 +1,31 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'TEST_V2_RESTART'
+import {createRiskCohort,executeRiskTask} from './bridge/shell/multi-task/risk_coordinator.js';
+const state=new Map(),outcomes=[],sent=[];
+const io={shell:'/bin/bash',running:new Map(),seen:new Set(),logger:console,
+ emit:e=>outcomes.push(e),
+ mkdir:async()=>{},upload:async(path,data)=>{state.set(path,String(data));},
+ download:async(path)=>{if(!state.has(path))throw Error('not_found');return Buffer.from(state.get(path));},
+ remove:async(path)=>state.delete(path),
+ publish:async(task,name,text)=>sent.push({task:task.name,name,text}),
+ removeSource:async task=>outcomes.push({kind:'source-removed',taskName:task.name})};
+const folder='V2-recovery-simulation';
+const task={name:'S9001.txt',folder,path:'/processing/'+folder+'/S9001.txt',
+ source:{kind:'test',path:'test-source'},content:Buffer.from("printf 'must-not-prepare\\n'\n# SHELL_RISK_CHECKPOINT\nprintf 'resumed-risk\\n'")};
+state.set('/outbox/'+folder+'/'+task.name+'.checkpoint.json',JSON.stringify({phase:'prepared',code:null,log:'[previous preparation complete]\n'}));
+let cohort=createRiskCohort([task],()=>{});
+await executeRiskTask(task,cohort,io);
+const final=state.get('/outbox/'+folder+'/'+task.name);
+if(!final?.includes('resumed-risk')||final.includes('must-not-prepare\n[stdout]'))throw Error('Prepared-stage restart failed');
+if(!sent.some(x=>x.name==='S9001.txt_raw_log.txt'&&x.text.includes('[exit code] 0')))throw Error('Finished source raw log not durable');
+console.log('RECOVERY_FROM_PREPARED_OK');
+const blocked={...task,name:'S9002.txt',path:'/processing/'+folder+'/S9002.txt',content:Buffer.from("# SHELL_RISK_CHECKPOINT\nprintf 'forbidden-retry\\n'")};
+state.set('/outbox/'+folder+'/'+blocked.name+'.checkpoint.json',JSON.stringify({phase:'risk_running',log:'[started before crash]\n'}));
+cohort=createRiskCohort([blocked],()=>{});
+await executeRiskTask(blocked,cohort,io);
+if(state.has('/outbox/'+folder+'/'+blocked.name))throw Error('Interrupted-risk stage incorrectly reexecuted');
+if(!sent.some(x=>x.name==='S9002.txt_raw_log.txt'&&x.text.endsWith('Pending, to be continued.\n')))throw Error('Pending raw log missing');
+console.log('RISK_RUNNING_INTERRUPTION_HELD_OK');
+console.log('V2_RESTART_TESTS_PASSED');
+TEST_V2_RESTART
