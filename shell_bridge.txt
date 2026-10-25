@@ -1,6 +1,0 @@
-cd /home/runner/workspace/ai-agent && node --input-type=module <<'SAFE_INSPECT'
-import fs from 'node:fs';
-const p='bridge/shell/multi-task/shell_command.js',s=fs.readFileSync(p,'utf8').split('\n');
-for(let i=0;i<s.length;i++)if(/SIGTERM|SIGKILL|setTimeout|hasTerminationCommand|Pending, to be continued|checkpoint|startShellCommand|SEQUENCE_FLOOR/.test(s[i]))console.log('LINE',i+1,s.slice(Math.max(0,i-9),Math.min(s.length,i+14)).map((x,j)=>String(Math.max(0,i-9)+j+1).padStart(4)+' '+x).join('\n'));
-console.log('SAFE_INSPECT_DONE');
-SAFE_INSPECT
