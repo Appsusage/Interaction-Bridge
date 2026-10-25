@@ -1,0 +1,9 @@
+printf 'LEGACY_BRIDGE_POST_RESTART_CHECK_20261025\n'
+printf 'PROCESS_SNAPSHOT_BEGIN\n'
+ps -eo pid=,args= | rg 'bridge/shell/(github_adaptor|server)\.js|backend/server\.js' || true
+printf 'PROCESS_SNAPSHOT_END\n'
+printf 'HEALTH_STATUS=' 
+curl -sS -o /dev/null -w '%{http_code}\n' --max-time 8 http://127.0.0.1:3000/health
+printf 'V2_STATUS=' 
+curl -sS --max-time 8 http://127.0.0.1:3000/shell-multi/status
+printf '\nLEGACY_BRIDGE_CHECK_COMPLETE\n'
