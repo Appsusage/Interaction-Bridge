@@ -1,0 +1,6 @@
+POST_RESTART_SERVER_PIDS [163438]
+POST_RESTART_SESSIONS [{"sessionId":"1792889433109-66wm5hqnow8","url":"https://chatgpt.com/"}]
+SERVER_STARTUP_SIGNALS ["AI Server running on port 3000","AI Server running on port 3000"]
+
+[exit code] 0
+Progress: Completed
