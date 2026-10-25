@@ -1,0 +1,25 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'V2_SOURCE_RECOVERY'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+s=p.read_text()
+assert "entry.path_display + '.source.json'" not in s
+old="           result.push({ folder: folder.name, path: entry.path_display, name: entry.name, content: await download(entry.path_display) });"
+assert old in s
+new="""           let source = null;
+           try { source = JSON.parse((await download(entry.path_display + '.source.json')).toString('utf8')); }
+           catch (error) { if (!/not_found/i.test(error.message)) throw error; }
+           result.push({ folder: folder.name, path: entry.path_display, name: entry.name, content: await download(entry.path_display), source });"""
+s=s.replace(old,new,1)
+old="       if (this.seen.has(signature)) continue;"
+assert old in s
+s=s.replace(old,old+"\n       if (tasks.some(t => t.source?.path === source.path && t.source?.repo === source.repo)) continue;",1)
+old='await upload(path, source.content);'
+assert s.count(old)==1
+new="await upload(path + '.source.json', JSON.stringify({ kind:source.kind, repo:source.repo, folder:source.folder, path:source.path, sha:source.sha, rev:source.rev }));\n       "+old
+s=s.replace(old,new,1)
+p.write_text(s)
+print('V2_PROCESSING_SOURCE_SIDECAR_ADDED')
+V2_SOURCE_RECOVERY
+node --check bridge/shell/multi-task/shell_command.js
