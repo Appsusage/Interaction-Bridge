@@ -1,4 +1,0 @@
-cd /home/runner/workspace/ai-agent || exit 1
-echo 'BASELINE_CHECK_BEGIN'
-for p in backend/extension/browser/browser_service.js backend/extension/browser/browser_live.js backend/extension/browser/chatgpt_live.js backend/server.js backend/extension/browser/experience/recorder.js backend/extension/browser/experience/analyzer.js backend/extension/browser/experience/strategy_selector.js backend/extension/browser/experience/experience_learning.js backend/extension/browser/experience/research.js backend/extension/browser/experience/index.js backend/extension/browser/experience/experience.test.js; do if test -f "$p"; then printf '%s ' "$p"; git hash-object "$p"; else echo "$p MISSING"; fi; done
-echo 'BASELINE_CHECK_END'
