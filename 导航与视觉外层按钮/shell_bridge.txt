@@ -1,0 +1,22 @@
+node --input-type=module -e 'import { chromium } from "playwright";
+const b=await chromium.launch({executablePath:"/repl/tools/bin/chromium",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
+try {
+ const p=await b.newPage({viewport:{width:390,height:780}});
+ const errors=[];p.on("pageerror",e=>errors.push(e.message));
+ await p.goto("http://127.0.0.1:3000/",{waitUntil:"domcontentloaded",timeout:15000});
+ await p.waitForFunction(()=>typeof window.AIAgentVision?.open==="function"&&typeof window.setFloatMenuOpen==="function",null,{timeout:15000});
+ await p.locator("#dockToggle").click();
+ const prep=await p.evaluate(()=>{
+  window.__visionButtonTest={clicks:0,pointers:0,calls:0};
+  const btn=document.getElementById("visionFloatButton");
+  btn.addEventListener("click",()=>window.__visionButtonTest.clicks++);
+  btn.addEventListener("pointerdown",()=>window.__visionButtonTest.pointers++);
+  const original=window.AIAgentVision.open;
+  window.AIAgentVision.open=()=>{window.__visionButtonTest.calls++};
+  return {tag:btn.tagName,onclick:btn.getAttribute("onclick"),assigned:window.AIAgentVision.open!==original,property:Object.getOwnPropertyDescriptor(window.AIAgentVision,"open")?.writable};
+ });
+ await p.locator("#visionFloatButton").click({timeout:5000});
+ console.log("VISION_DIAGNOSTIC "+JSON.stringify({prep,result:await p.evaluate(()=>window.__visionButtonTest),open:await p.locator("#floatMenu").evaluate(e=>e.classList.contains("open")),errors}));
+ await p.close();
+}finally{await b.close()}
+'
