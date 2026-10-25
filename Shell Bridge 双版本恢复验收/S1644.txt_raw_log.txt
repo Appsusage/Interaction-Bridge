@@ -19,4 +19,7 @@ printf 'V2_NEXT_RISK_TASK_FINISHED_OK\n'
 [stdout] V2_NEXT_RISK_TASK_FINISHED_OK
 [phase_exit] exit=0 signal=none
 
+[exit code] 0
+[finished] 2026-10-25T13:23:11.518Z
+
 Pending, to be continued.
