@@ -1,9 +1,0 @@
-cd /home/runner/workspace/ai-agent
-printf '=== LOGIN SIGNALS ===\n'
-rg -n 'loginFlowActive|emitStatus|startChatGPTLive|browser/recognition/inspect|browser/open' backend/extension/browser/chatgpt_live.js backend/extension/browser/browser_service.js backend/server.js | head -85
-printf '\n=== INITIAL STATE ===\n'
-sed -n '115,151p' backend/extension/browser/chatgpt_live.js
-printf '\n=== END OF MODULE ===\n'
-sed -n '307,390p' backend/extension/browser/chatgpt_live.js
-printf '\n=== PUBLIC CHALLENGE HTTP ===\n'
-curl -sS -o /dev/null -w 'http_code=%{http_code} url=%{url_effective} content_type=%{content_type}\n' --max-time 15 https://chatgpt.com/
