@@ -1,0 +1,12 @@
+cd /home/runner/workspace/ai-agent && python3 - <<'CHECK_SEQUENCE'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+source=p.read_text()
+needle='       await scan(' + chr(96) + '$' + '{ROOT}/processing' + chr(96) + ');'
+assert source.count(needle)==1, 'Unexpected source version'
+addition=needle + '\n       await scan(' + chr(96) + '$' + '{ROOT}/archive' + chr(96) + ');'
+new=source.replace(needle,addition,1)
+p.write_text(new)
+print('CHANGED_ONLY',p,'ARCHIVE_INCLUDED',True)
+CHECK_SEQUENCE
+node --check bridge/shell/multi-task/shell_command.js
