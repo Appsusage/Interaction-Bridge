@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && sed -n '100,270p' bridge/shell/multi-task/shell_command.js && sed -n '370,415p' bridge/shell/multi-task/shell_command.js
