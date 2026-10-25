@@ -1,0 +1,11 @@
+[command]
+printf 'NEW_V2_REAL_PIPELINE_OK\n'
+printf 'NEW_V2_STDERR_CAPTURE_OK\n' >&2
+node -p "'NODE_RUNTIME_' + process.version"
+[streams]
+[stdout] NEW_V2_REAL_PIPELINE_OK
+[stderr] NEW_V2_STDERR_CAPTURE_OK
+[stdout] NODE_RUNTIME_v24.22.1
+
+[exit code] 0
+Progress: Completed
