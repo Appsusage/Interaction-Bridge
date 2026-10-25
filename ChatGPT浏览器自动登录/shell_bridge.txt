@@ -1,0 +1,13 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import fs from 'node:fs';import {spawn} from 'node:child_process';
+async function health(){try{let r=await fetch('http://127.0.0.1:3000/health',{signal:AbortSignal.timeout(1200)});return r.status}catch{return 0}}
+console.log('RECOVERY_HEALTH_BEFORE',await health());
+if((await health())!==200){
+ const fd=fs.openSync('/tmp/ai-agent-chat-server-recovery.log','a');
+ const child=spawn(process.execPath,['backend/server.js'],{cwd:process.cwd(),env:process.env,detached:true,stdio:['ignore',fd,fd]});
+ child.unref();fs.closeSync(fd);console.log('RECOVERY_SERVER_SPAWNED',child.pid);
+}
+await new Promise(r=>setTimeout(r,1700));
+console.log('RECOVERY_HEALTH_AFTER',await health());
+NODE
