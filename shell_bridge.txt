@@ -1,1 +1,0 @@
-cd /home/runner/workspace/ai-agent && node --check bridge/shell/multi-task/shell_command.js && echo MULTITASK_RESTART_CHECK_OK
