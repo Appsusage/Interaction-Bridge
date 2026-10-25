@@ -1,0 +1,59 @@
+[command]
+printf 'NAVIGATION_SYNC_READ_ONLY_CHECK_20261025\n'
+printf 'TIME='; date -Is
+printf 'PROJECT_DIR='; pwd
+printf 'FILES_BEGIN\n'
+for f in capabilities/navigation/navigation.js capabilities/navigation/gps.js capabilities/navigation/map.js capabilities/navigation/app.js capabilities/navigation/index.html capabilities/navigation/style.css capabilities/navigation/data/.gitkeep; do
+  if test -f "$f"; then printf 'PRESENT %s\n' "$f"; else printf 'MISSING %s\n' "$f"; fi
+done
+printf 'FILES_END\n'
+printf 'ROUTE_MATCHES_BEGIN\n'
+rg -n '/navigation|Navigation preview' backend/server.js || true
+printf 'ROUTE_MATCHES_END\n'
+printf 'MAP_VERSION_MATCHES_BEGIN\n'
+rg -n 'createMapViewport|topright' capabilities/navigation/map.js || true
+printf 'MAP_VERSION_MATCHES_END\n'
+printf 'LOCAL_HTTP_STATUS='
+curl -sS -o /dev/null -w '%{http_code}\n' --max-time 8 http://127.0.0.1:3000/navigation/
+printf 'SYNC_SUPERVISOR_STATUS_BEGIN\n'
+node backend/sync/sync_supervisor.js status
+printf 'SYNC_SUPERVISOR_STATUS_END\n'
+printf 'SYNC_REPORT_BEGIN\n'
+if test -f backend/sync/sync_last_report.json; then head -c 3500 backend/sync/sync_last_report.json; else printf 'NO_SYNC_REPORT\n'; fi
+printf '\nSYNC_REPORT_END\n'
+printf 'NAVIGATION_SYNC_DIAGNOSTIC_COMPLETE\n'
+[streams]
+[stdout] NAVIGATION_SYNC_READ_ONLY_CHECK_20261025
+[stdout] TIME=[stdout] 2026-10-25T15:21:19+00:00
+[stdout] PROJECT_DIR=[stdout] /home/runner/workspace/ai-agent
+FILES_BEGIN
+[stdout] MISSING capabilities/navigation/navigation.js
+MISSING capabilities/navigation/gps.js
+[stdout] MISSING capabilities/navigation/map.js
+MISSING capabilities/navigation/app.js
+MISSING capabilities/navigation/index.html
+MISSING capabilities/navigation/style.css
+MISSING capabilities/navigation/data/.gitkeep
+FILES_END
+ROUTE_MATCHES_BEGIN
+[stdout] ROUTE_MATCHES_END
+MAP_VERSION_MATCHES_BEGIN
+[stderr] rg: capabilities/navigation/map.js: IO error for operation on capabilities/navigation/map.js: No such file or directory (os error 2)
+[stdout] MAP_VERSION_MATCHES_END
+LOCAL_HTTP_STATUS=[stdout] 404
+[stdout] SYNC_SUPERVISOR_STATUS_BEGIN
+[stdout] {"status":"running","pid":23598}
+[stdout] SYNC_SUPERVISOR_STATUS_END
+SYNC_REPORT_BEGIN
+[stdout] {
+  "status": "error",
+  "executed": false,
+  "error": "Command failed: git add -- backend/props/01手机/props.txt\nThe following paths are ignored by one of your .gitignore files:\nbackend/props/01手机\nhint: Use -f if you really want to add them.\nhint: Disable this message with \"git config set advice.addIgnoredFile false\"\n",
+  "checkedAt": "2026-10-25T15:20:43.570Z"
+}
+[stdout] 
+SYNC_REPORT_END
+NAVIGATION_SYNC_DIAGNOSTIC_COMPLETE
+
+[exit code] 0
+Progress: Completed
