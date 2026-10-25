@@ -1,0 +1,256 @@
+[command]
+printf 'LIVE_MENU_HTML\n'
+sed -n '208,286p' frontend/index.html
+printf 'LIVE_MENU_APP\n'
+sed -n '1884,1976p' frontend/app.js
+printf 'LIVE_MENU_STYLES\n'
+sed -n '905,948p' frontend/style.css
+sed -n '1100,1118p' frontend/style.css
+printf 'LIVE_FRONT_HASH\n'
+git hash-object frontend/index.html
+printf 'LIVE_MENU_DONE\n'
+[streams]
+[stdout] LIVE_MENU_HTML
+[stdout] <!-- =====================
+     可拖动悬浮按钮
+===================== -->
+<div id="floatMenu" class="float-menu" aria-label="快捷功能">
+  <button id="dockToggle" class="dock-toggle" type="button" aria-label="展开功能菜单" aria-expanded="false" title="展开功能菜单">☰</button>
+
+
+
+     <button id="backgroundFloatButton" type="button" class="float-item" aria-label="更换背景" title="更换背景"
+     onclick="document.getElementById('bgInput').click()">
+
+     🖼️
+
+     </button>
+
+
+
+
+
+<button id="avatarFloatButton" type="button" class="float-item" aria-label="更换头像" title="更换头像"
+onclick="document.getElementById('avatarInput').click()"
+
+>
+
+🐻
+
+</button>
+
+
+
+
+
+
+<button id="reconnectFloatButton" type="button" class="float-item" aria-label="重新连接" title="重新连接"
+onclick="reconnectServer()"
+
+>
+
+🔗
+
+</button>
+
+
+
+
+
+
+
+<button id="voiceFloatButton" type="button" class="float-item" aria-label="语音输入" title="语音输入"
+onclick="toggleVoice()"
+
+>
+
+🎤
+
+</button>
+
+
+
+
+
+
+
+<button id="browserFloatButton" type="button" class="float-item" aria-label="显示/隐藏实时浏览器" title="显示/隐藏实时浏览器" onclick="toggleBrowserViewer()">🌐</button>
+
+<button
+
+id="mainFloat"
+
+class="float-main"
+
+>
+
+
+
+</button>
+
+
+
+[stdout] LIVE_MENU_APP
+[stdout] // 贴边快捷功能 Dock
+// =======================
+const floatMenu = document.getElementById("floatMenu");
+const mainFloat = document.getElementById("mainFloat");
+const dockToggle = document.getElementById("dockToggle");
+
+function setFloatMenuOpen(open) {
+  if (!floatMenu) return;
+  floatMenu.classList.toggle("open", !!open);
+  if (dockToggle) dockToggle.setAttribute("aria-expanded", String(!!open));
+  if (dockToggle) dockToggle.setAttribute("aria-label", open ? "功能菜单已展开" : "展开功能菜单");
+  if (mainFloat) mainFloat.setAttribute("aria-label", open ? "收起功能菜单" : "展开功能菜单");
+  if (open) positionFloatDockItems();
+}
+
+function positionFloatDockItems() {
+  if (!floatMenu || !mainFloat || !floatMenu.classList.contains("open")) return;
+  const items = Array.from(floatMenu.querySelectorAll(".float-item"));
+  if (!items.length) return;
+  const size = 44;
+  const center = 29;
+  const viewportW = window.innerWidth || document.documentElement.clientWidth;
+  const viewportH = window.innerHeight || document.documentElement.clientHeight;
+  const anchorRight = window.matchMedia("(max-width: 600px)").matches ? 22 : 28;
+  const anchorBottom = window.matchMedia("(max-width: 600px)").matches ? 112 : 140;
+  const cx = viewportW - anchorRight - center;
+  const cy = viewportH - anchorBottom - center;
+  const radius = Math.max(58, Math.min(94, viewportW * 0.22, viewportH * 0.19));
+  const arcAngles = items.length === 1
+    ? [180]
+    : items.map((_, i) => 90 + (180 * i / (items.length - 1)));
+  items.forEach((item, i) => {
+    const angle = arcAngles[i] * Math.PI / 180;
+    let x = center + Math.cos(angle) * radius - size / 2;
+    let y = center + Math.sin(angle) * radius - size / 2;
+    // Keep each circular button inside the visible viewport.
+    const minX = center - cx;
+    const maxX = viewportW - size - cx + center;
+    const minY = center - cy;
+    const maxY = viewportH - size - cy + center;
+    x = Math.max(minX, Math.min(x, maxX));
+    y = Math.max(minY, Math.min(y, maxY));
+    item.style.transform = `translate(${x}px, ${y}px)`;
+  });
+}
+if (floatMenu && mainFloat && dockToggle) {
+  dockToggle.addEventListener("click", () => setFloatMenuOpen(true));
+  mainFloat.addEventListener("click", () => setFloatMenuOpen(!floatMenu.classList.contains("open")));
+  // Tap outside the expanded dock to dismiss it without affecting the chat.
+  document.addEventListener("pointerdown", event => {
+    if (floatMenu.classList.contains("open") && !floatMenu.contains(event.target)) setFloatMenuOpen(false);
+  });
+}
+window.addEventListener("resize", () => {
+  if (floatMenu && floatMenu.classList.contains("open")) positionFloatDockItems();
+});
+window.setFloatMenuOpen = setFloatMenuOpen;
+
+// Like the Console float, keep the quick-action dock as a direct body child.
+// Re-append when another floating window is mounted later so equal z-index
+// elements do not paint over the edge tab.
+if (floatMenu && document.body) {
+  // Native browser top layer outranks ordinary 3D windows. First move to
+  // the end of body, then show as manual popover so DOM moves cannot undo it.
+  const keepDockFront = () => {
+    floatMenu.style.setProperty("z-index", "2147483647", "important");
+    if (floatMenu.parentElement !== document.body || document.body.lastElementChild !== floatMenu) {
+      document.body.appendChild(floatMenu);
+    }
+    if (typeof floatMenu.showPopover === "function" && !floatMenu.matches(":popover-open")) {
+      try {
+        floatMenu.setAttribute("popover", "manual");
+        floatMenu.showPopover();
+      } catch (error) {
+        floatMenu.removeAttribute("popover");
+      }
+    }
+  };
+  keepDockFront();
+  const dockLayerObserver = new MutationObserver(records => {
+    if (records.some(record => record.type === "childList" && record.addedNodes.length)) {
+      keepDockFront();
+    }
+  });
+  dockLayerObserver.observe(document.body, {childList: true});
+}
+
+// Independent floating-ball gestures. The existing five quick actions remain untouched.
+(() => {
+  const ball = document.getElementById("mainFloat");
+  const settings = document.getElementById("aiAgentSettingsPanel");
+  const outerRing = document.getElementById("futureOuterRing");
+  if (!ball) return;
+[stdout] LIVE_MENU_STYLES
+[stdout] 
+
+/* =====================
+悬浮按钮
+===================== */
+
+
+.float-menu{
+
+
+position:fixed;
+
+
+
+right:25px;
+
+
+
+bottom:120px;
+
+
+
+z-index:9999;
+
+
+
+display:flex;
+
+
+
+flex-direction:column;
+
+
+
+align-items:center;
+
+
+
+gap:12px;
+
+
+
+touch-action:none;
+
+[stdout] 
+
+
+
+
+
+/* 修正展开 */
+
+
+.float-menu.open .float-item{
+
+
+opacity:1;
+
+
+
+pointer-events:auto;
+
+
+[stdout] LIVE_FRONT_HASH
+[stdout] 028fdaf522573214a31f54bccc6d022a3ef5a783
+[stdout] LIVE_MENU_DONE
+
+[exit code] 0
+Progress: Completed
