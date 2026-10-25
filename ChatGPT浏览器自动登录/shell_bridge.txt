@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent
+printf '=== LIVE MODULE SLICES ===\n'
+sed -n '1,120p' backend/extension/browser/chatgpt_live.js
+sed -n '145,310p' backend/extension/browser/chatgpt_live.js
+printf '\n=== BRIDGE PROCESS ===\n'
+ps -eo pid,etime,args | grep -E 'multi-task/shell_command|github_adaptor|backend/server.js' | grep -v grep | head -15
+printf '\n=== BROWSER STATUS ===\n'
+curl -fsS --max-time 5 http://127.0.0.1:3000/health | head -c 250
+printf '\n'
