@@ -1,0 +1,21 @@
+[command]
+printf 'DUAL_BRIDGE_RUNTIME_DIAG_20261025\n'
+printf 'PROCESS_LIST_BEGIN\n'
+ps -eo pid=,ppid=,args= | grep -E 'bridge/shell/(github_adaptor|server)\.js|backend/server\.js|multi-task' | grep -v grep || true
+printf 'PROCESS_LIST_END\n'
+printf 'HTTP_HEALTH=' 
+curl -sS -o /dev/null -w '%{http_code}\n' --max-time 8 http://127.0.0.1:3000/health
+printf 'HTTP_V2_STATUS=' 
+curl -sS --max-time 8 http://127.0.0.1:3000/shell-multi/status
+printf '\nDUAL_BRIDGE_DIAG_COMPLETE\n'
+[streams]
+[stdout] DUAL_BRIDGE_RUNTIME_DIAG_20261025
+[stdout] PROCESS_LIST_BEGIN
+[stdout]     111      26 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+[stdout] PROCESS_LIST_END
+HTTP_HEALTH=[stdout] 200
+[stdout] HTTP_V2_STATUS=[stdout] {"primary":true,"running":true,"active":1,"queued":0,"stopping":false}[stdout] 
+DUAL_BRIDGE_DIAG_COMPLETE
+
+[exit code] 0
+Progress: Completed
