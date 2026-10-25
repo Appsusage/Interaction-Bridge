@@ -1,0 +1,41 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+import {spawn,execFileSync} from 'node:child_process';
+import fs from 'node:fs';
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const ids=()=>execFileSync('ps',['-eo','pid,args'],{encoding:'utf8'}).split('\n')
+ .map(l=>l.trim()).filter(l=>/^\d+\s+.*node backend\/server\.js$/.test(l))
+ .map(l=>Number(l.match(/^\d+/)[0]));
+const get=async p=>{try{return (await fetch('http://127.0.0.1:3000'+p,{signal:AbortSignal.timeout(2500)})).status}catch{return 0}};
+console.log('SIGINT_RESTART_PREP',JSON.stringify(ids()));
+if(ids().length!==1||ids()[0]!==9907)throw Error('Process identity changed; no signal issued');
+process.kill(9907,'SIGINT');
+console.log('SIGINT_SENT',9907);
+await wait(2400);
+let after=ids();console.log('AFTER_GRACEFUL_SIGNAL',JSON.stringify(after));
+if(after.length===1&&after[0]===9907){
+ console.log('GRACEFUL_STOP_FAILED; no forced kill or additional signal');
+ process.exitCode=2;
+}else{
+ if(after.length===0){
+  const log='/home/runner/workspace/.browser-experience-backups/server-restart.log';
+  fs.mkdirSync('/home/runner/workspace/.browser-experience-backups',{recursive:true,mode:0o700});
+  const fd=fs.openSync(log,'a',0o600);
+  const child=spawn(process.execPath,['backend/server.js'],{cwd:process.cwd(),detached:true,stdio:['ignore',fd,fd]});
+  child.unref();fs.closeSync(fd);
+  console.log('NEW_SERVER_SPAWNED',child.pid);
+ }
+ let ok=false;
+ for(let i=0;i<12;i++){
+  await wait(900);
+  const h=await get('/health');
+  if(h!==200)continue;
+  const p=await get('/extension/browser/chatgpt/experience/successful_cases.json');
+  const g=await get('/extension/browser/experience/data/successful_cases.json');
+  console.log('ROUTES',{health:h,chatgpt:p,general:g,pids:ids()});
+  if(p===404&&g===404){ok=true;break}
+ }
+ console.log('RESTART_VERIFICATION',ok?'PASS':'FAIL');
+ if(!ok)process.exitCode=2;
+}
+NODE
