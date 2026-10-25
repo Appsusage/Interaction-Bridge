@@ -1,0 +1,8 @@
+printf 'SYNC_HOTFIX_PREFLIGHT\n'
+printf 'LOCAL_MAIN_BLOB='; git hash-object backend/sync/whole_project_sync.js
+printf 'LOCAL_TEST_BLOB='; git hash-object backend/sync/tests/whole_project_sync.test.js
+printf 'GIT_STATUS_BEGIN\n'; git status --short -- backend/sync/whole_project_sync.js backend/sync/tests/whole_project_sync.test.js; printf 'GIT_STATUS_END\n'
+printf 'APPLY_PATCH='; command -v apply_patch || true
+printf 'GIT_APPLY='; command -v git
+printf 'SYNC_WORKER_PROCESS\n'; ps -eo pid=,args= | rg 'sync_(supervisor|daemon)\.js' || true
+printf 'SYNC_HOTFIX_PREFLIGHT_COMPLETE\n'
