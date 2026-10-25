@@ -1,0 +1,29 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import fs from 'node:fs';import {spawn,execFileSync} from 'node:child_process';
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const source=fs.readFileSync('backend/extension/browser/chatgpt_live.js','utf8');
+if(!source.includes('let loginMonitorBusy = false;')) throw Error('New login fix not found, refusing server restart');
+execFileSync('node',['--check','backend/extension/browser/chatgpt_live.js']);
+function servers(){let ids=[];for(let id of fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x)))try{let a=fs.readFileSync('/proc/'+id+'/cmdline','utf8').split('\u0000').filter(Boolean);if(a.length>1&&/(^|\/)node$/.test(a[0])&&/^\/?(?:home\/runner\/workspace\/ai-agent\/)?backend\/server\.js$/.test(a[1]))ids.push(Number(id))}catch{}return ids;}
+async function health(){try {const r=await fetch('http://127.0.0.1:3000/health',{signal:AbortSignal.timeout(1200)});return r.status}catch{return 0}}
+const before=servers();
+console.log('BEFORE_RESTART',JSON.stringify({pids:before,health:await health()}));
+if(before.length!==1)throw Error('Expected exactly one Chat Server; no restart performed');
+const oldPid=before[0];let ppid=Number((fs.readFileSync('/proc/'+oldPid+'/status','utf8').match(/^PPid:\s*(\d+)/m)||[])[1]);
+const parent=fs.readFileSync('/proc/'+ppid+'/cmdline','utf8').split('\u0000')[0];
+if(!/pid2/.test(parent))throw Error('Server is not pid2-managed, refusing restart');
+process.kill(oldPid,'SIGTERM');console.log('SIGTERM_TO_OLD_CHAT_SERVER',oldPid);
+let fresh=[];
+for(let i=0;i<12;i++){await pause(1000);fresh=servers().filter(x=>x!==oldPid);if(fresh.length&&await health()===200)break;}
+if(!fresh.length){
+ console.log('PID2_DID_NOT_RESTART_SERVER_STARTING_FALLBACK');
+ const fd=fs.openSync('/tmp/ai-agent-chat-server-recovery.log','a');
+ const child=spawn(process.execPath,['backend/server.js'],{cwd:process.cwd(),env:process.env,detached:true,stdio:['ignore',fd,fd]});
+ child.unref();fs.closeSync(fd);
+ for(let i=0;i<8;i++){await pause(1000);fresh=servers().filter(x=>x!==oldPid);if(fresh.length&&await health()===200)break;}
+}
+console.log('AFTER_RESTART',JSON.stringify({pids:servers(),health:await health()}));
+if((await health())!==200||servers().every(x=>x===oldPid))throw Error('Server not recovered with new process');
+console.log('PATCHED_SERVER_RESTART_VERIFIED');
+NODE
