@@ -1,0 +1,5 @@
+CURRENT_BROWSER {"status":400,"text":"","candidates":0}
+DIRECT_HTTP {"status":403,"server":"cloudflare","cfMitigated":"challenge","location":null,"contentType":"text/html; charset=UTF-8"}
+
+[exit code] 0
+Progress: Completed
