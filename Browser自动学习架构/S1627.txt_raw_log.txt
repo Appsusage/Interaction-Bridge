@@ -1,0 +1,44 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+echo 'SYNC_DIAG_BEGIN'
+printf 'LOCAL_HEAD '; git rev-parse HEAD
+printf 'LOCAL_BRANCH '; git branch --show-current
+printf 'LOCAL_STATUS_SCOPED\n'; git status --porcelain -- backend/extension/browser backend/server.js | head -50
+printf 'REMOTE_NAMES\n'; git remote | head -12
+printf 'FILES\n'; for x in backend/extension/browser/experience/index.js backend/extension/browser/experience/experience.test.js backend/extension/browser/experience/recorder.js backend/extension/browser/chatgpt/experience/README.md; do if test -f "$x"; then stat -c "%n %s bytes" "$x"; else echo "MISSING $x"; fi; done
+printf 'SYNC_MODULES\n'; find backend -maxdepth 5 -iname '*github*sync*' -o -iname '*sync*github*' | head -30
+printf 'RELEVANT_PROCESSES\n'; ps -eo pid,args | grep -E 'github_sync|shell_command|backend/server.js' | grep -v grep | cut -c 1-200 | head -30
+printf 'SYNC_DIAG_END\n'
+[streams]
+[stdout] SYNC_DIAG_BEGIN
+[stdout] LOCAL_HEAD [stdout] 614286bb3f1872f341170641597f68cf382cdfac
+[stdout] LOCAL_BRANCH [stdout] main
+[stdout] LOCAL_STATUS_SCOPED
+[stdout]  M ai-agent/backend/extension/browser/browser_live.js
+ M ai-agent/backend/extension/browser/browser_service.js
+ M ai-agent/backend/extension/browser/chatgpt_live.js
+ M ai-agent/backend/server.js
+?? ai-agent/backend/extension/browser/chatgpt/
+?? ai-agent/backend/extension/browser/experience/
+[stdout] REMOTE_NAMES
+[stdout] gitsafe-backup
+[stdout] FILES
+[stdout] MISSING backend/extension/browser/experience/index.js
+[stdout] MISSING backend/extension/browser/experience/experience.test.js
+[stdout] backend/extension/browser/experience/recorder.js 546 bytes
+[stdout] backend/extension/browser/chatgpt/experience/README.md 1119 bytes
+[stdout] SYNC_MODULES
+[stdout] backend/migration/.github-sync-files.json
+backend/migration/.github-sync-state.json
+backend/sync/github_sync.js
+backend/sync/github_sync_state.js
+backend/sync/tests/github_sync.test.js
+backend/sync/tests/github_sync_state.test.js
+backend/sync/.github-sync-files.json
+backend/sync/.github-sync-state.json
+[stdout] RELEVANT_PROCESSES
+[stdout]    9907 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+[stdout] SYNC_DIAG_END
+
+[exit code] 0
+Progress: Completed
