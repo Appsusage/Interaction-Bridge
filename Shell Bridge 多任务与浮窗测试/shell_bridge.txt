@@ -1,0 +1,4 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e "const r=await fetch('http://127.0.0.1:3102/health');console.log('V2_LIVE',await r.text())"
+ps -eo pid,ppid,args | grep -E '(multi-task|github_adaptor|bridge/shell/server)' | grep -v grep || true
