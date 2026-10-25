@@ -1,8 +1,0 @@
-cd /home/runner/workspace/ai-agent
-ps -o pid,ppid,stat,etime,args -p 113980,161990 2>&1
-node --input-type=module <<'NODE'
-import fs from 'node:fs';
-const rows=[];
-for(const p of [113980,161990])try{const s=fs.readFileSync('/proc/'+p+'/status','utf8');rows.push({pid:p,state:(s.match(/^State:\s*(.*)$/m)||[])[1],ppid:(s.match(/^PPid:\s*(.*)$/m)||[])[1]})}catch(e){rows.push({pid:p,missing:true})}
-console.log('SERVER_PROCESS_STATES',JSON.stringify(rows));
-NODE
