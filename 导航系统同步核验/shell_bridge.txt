@@ -1,0 +1,11 @@
+printf 'SYNC_RESTART_BEGIN\n'
+node backend/sync/sync_supervisor.js stop
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  status=$(node backend/sync/sync_supervisor.js status)
+  printf 'WAIT_STATUS=%s\n' "$status"
+  case "$status" in *'"stopped"'*) break;; esac
+  sleep 1
+done
+node backend/sync/sync_supervisor.js start
+node backend/sync/sync_supervisor.js status
+printf 'SYNC_RESTART_COMPLETE\n'
