@@ -1,0 +1,27 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --check bridge/shell/multi-task/shell_command.js
+node --check bridge/shell/multi-task/risk_coordinator.js
+node --check bridge/shell/multi-task/server.js
+node --check bridge/shell/multi-task/supervisor.js
+if test -e /proc/$(cat bridge/shell/multi-task/.multi-task-supervisor.pid)/cmdline 2>/dev/null && tr '\0' ' ' < /proc/$(cat bridge/shell/multi-task/.multi-task-supervisor.pid)/cmdline | grep -Fq 'multi-task/supervisor.js'; then
+ echo V2_SUPERVISOR_ALREADY_RUNNING
+else
+ nohup node bridge/shell/multi-task/supervisor.js >> bridge/shell/multi-task/supervisor.log 2>&1 </dev/null &
+ echo V2_SUPERVISOR_SPAWN=$!
+fi
+sleep 5
+node --input-type=module <<'VERIFY_NEW_DAEMON'
+import fs from 'node:fs';
+const dir='./bridge/shell/multi-task/';
+for(const [file,part] of [['.multi-task-supervisor.pid','multi-task/supervisor.js'],['.multi-task-server.pid','multi-task/server.js']]){
+ const pid=Number(fs.readFileSync(dir+file,'utf8'));
+ if(!fs.readFileSync('/proc/'+pid+'/cmdline','utf8').includes(part))throw Error('Unexpected PID owner '+file+' '+pid);
+ console.log('V2_PID_VERIFIED',file,pid);
+}
+const response=await fetch('http://127.0.0.1:3102/health');
+const status=await response.json();
+console.log('V2_HEALTH',status);
+if(!status.ok||!status.running)throw Error('V2 not ready');
+VERIFY_NEW_DAEMON
+tail -n 12 bridge/shell/multi-task/server.log
