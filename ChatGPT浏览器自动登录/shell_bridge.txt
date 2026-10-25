@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+const ids=[];
+for(let n of fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x)))try{
+let a=fs.readFileSync('/proc/'+n+'/cmdline','utf8').split('\u0000').filter(Boolean);
+if(a.length>1&&/(^|\/)node$/.test(a[0])&&/^(?:\/home\/runner\/workspace\/ai-agent\/)?backend\/server\.js$/.test(a[1]))ids.push(Number(n));
+}catch{}
+console.log('ACTIVE_SERVER_PIDS',JSON.stringify(ids));
+const WebSocket=(await import('ws')).default;
+const ws=new WebSocket('ws://127.0.0.1:3000/browser/live');
+ws.on('message',raw=>{const m=JSON.parse(raw.toString());if(m.type==='sessions'){console.log('SESSIONS',JSON.stringify(m.sessions));let s=m.sessions.find(x=>/chatgpt\.com/.test(x.url));if(s)ws.send(JSON.stringify({type:'attach',sessionId:s.sessionId}));else ws.close();}
+if(m.type==='status'){console.log('LIVE_CHATGPT_PAGE',JSON.stringify({url:m.url,title:m.title,state:m.state}));ws.close();}});
+const alarm=setTimeout(()=>ws.terminate(),5000);alarm.unref();
+await new Promise(r=>ws.on('close',r));
+NODE
