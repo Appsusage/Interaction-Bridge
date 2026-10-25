@@ -1,0 +1,25 @@
+[command]
+printf 'SYNC_HOTFIX_PREFLIGHT\n'
+printf 'LOCAL_MAIN_BLOB='; git hash-object backend/sync/whole_project_sync.js
+printf 'LOCAL_TEST_BLOB='; git hash-object backend/sync/tests/whole_project_sync.test.js
+printf 'GIT_STATUS_BEGIN\n'; git status --short -- backend/sync/whole_project_sync.js backend/sync/tests/whole_project_sync.test.js; printf 'GIT_STATUS_END\n'
+printf 'APPLY_PATCH='; command -v apply_patch || true
+printf 'GIT_APPLY='; command -v git
+printf 'SYNC_WORKER_PROCESS\n'; ps -eo pid=,args= | rg 'sync_(supervisor|daemon)\.js' || true
+printf 'SYNC_HOTFIX_PREFLIGHT_COMPLETE\n'
+[streams]
+[stdout] SYNC_HOTFIX_PREFLIGHT
+[stdout] LOCAL_MAIN_BLOB=[stdout] af1df27ff24b3fa6e6b295c1e796544ff6e78d41
+[stdout] LOCAL_TEST_BLOB=[stdout] 8c51b19dc3228f870648db4a60cccc34584e5227
+[stdout] GIT_STATUS_BEGIN
+[stdout] ?? backend/sync/tests/whole_project_sync.test.js
+?? backend/sync/whole_project_sync.js
+[stdout] GIT_STATUS_END
+APPLY_PATCH=[stdout] GIT_APPLY=/nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/git
+SYNC_WORKER_PROCESS
+[stdout]   23598 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/sync/sync_supervisor.js run
+  23627 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node /home/runner/workspace/ai-agent/backend/sync/sync_daemon.js --daemon
+[stdout] SYNC_HOTFIX_PREFLIGHT_COMPLETE
+
+[exit code] 0
+Progress: Completed
