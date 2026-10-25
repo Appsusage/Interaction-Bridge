@@ -1,0 +1,32 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'TEST_RISK_COHORT'
+import {ShellCommand} from './bridge/shell/multi-task/shell_command.js';
+const events=[];
+const w=new ShellCommand({maxConcurrent:3,pollMs:250,onEvent:e=>{
+  if(e.kind!=='chunk')events.push({kind:e.kind,name:e.taskName,progress:e.progress||null});
+}});
+const one=await w.getNextTaskName();
+const two=await w.getNextTaskName();
+const folder='Shell Bridge 多任务与浮窗测试';
+const tasks=[
+ {name:one,folder,path:'/processing/'+folder+'/'+one,dangerous:true,
+ content:Buffer.from("printf 'prepare-A\\n'\n# SHELL_RISK_CHECKPOINT\nprintf 'risk-A\\n'")},
+ {name:two,folder,path:'/processing/'+folder+'/'+two,dangerous:true,
+ content:Buffer.from("printf 'prepare-B\\n'\n# SHELL_RISK_CHECKPOINT\nprintf 'risk-B\\n'")}
+];
+for(const t of tasks)w.queued.set(t.path,t);
+w.schedule();
+console.log('RISK_TEST_STARTED',one,two);
+const limit=Date.now()+90000;
+while(w.activeCohort&&Date.now()<limit)await new Promise(r=>setTimeout(r,350));
+if(w.activeCohort)throw Error('Risk test batch did not finish');
+if(w.running.size||w.queued.size)throw Error('Risk task state not cleaned');
+const progress=events.filter(e=>e.kind==='risk-progress').map(e=>e.progress);
+if(!progress.includes('2/2'))throw Error('Barrier never reached all checkpoints');
+const failed=events.filter(e=>e.kind==='notice');
+if(failed.length)throw Error('Risk test returned notices '+JSON.stringify(failed));
+const finished=events.filter(e=>e.kind==='finish');
+if(finished.length!==2)throw Error('Expected two completed tasks, got '+finished.length);
+console.log('RISK_TEST_PASSED',JSON.stringify({tasks:[one,two],progress:[...new Set(progress)],finished:finished.length}));
+TEST_RISK_COHORT
