@@ -51,5 +51,64 @@ for(let n=0;n<13;n++){
 if(!successful)process.exitCode=2;
 console.log('RESTART_END',successful?'OK':'INCOMPLETE');
 NODE
+[system] begin high-risk
+$ cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import {spawn,execFileSync} from 'node:child_process';
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const processes=()=>execFileSync('ps',['-eo','pid,args'],{encoding:'utf8'}).split('\n')
+  .map(l=>l.trim()).filter(l=>/^\d+\s+.*node backend\/server\.js$/.test(l))
+  .map(l=>Number(l.match(/^\d+/)[0]));
+const status=async route=>{
+ try{return (await fetch('http://127.0.0.1:3000'+route,{signal:AbortSignal.timeout(1500)})).status}
+ catch{return 0}
+};
+console.log('RESTART_BEGIN');
+let old=processes();
+console.log('SERVER_PIDS_BEFORE',JSON.stringify(old));
+if(old.length!==1)throw Error('Expected exactly one existing server process');
+const oldPid=old[0];
+console.log('HEALTH_BEFORE',await status('/health'));
+if(!(fs.readFileSync('backend/server.js','utf8').includes('app.use("/extension/browser/chatgpt/experience"')))throw Error('Privacy guard missing');
+const logfile='/home/runner/workspace/.browser-experience-backups/server-restart.log';
+fs.mkdirSync('/home/runner/workspace/.browser-experience-backups',{recursive:true,mode:0o700});
+const fd=fs.openSync(logfile,'a',0o600);
+process.kill(oldPid,'SIGTERM');
+console.log('STOP_SIGNAL_SENT',oldPid);
+await wait(1500);
+let current=processes();
+if(current.length===0){
+ const child=spawn(process.execPath,['backend/server.js'],{cwd:process.cwd(),detached:true,stdio:['ignore',fd,fd],env:process.env});
+ child.unref();
+ console.log('STARTED_REPLACEMENT',child.pid);
+}else{
+ console.log('REPLACEMENT_ALREADY_RUNNING',JSON.stringify(current));
+}
+fs.closeSync(fd);
+let successful=false;
+for(let n=0;n<13;n++){
+ await wait(900);
+ const health=await status('/health');
+ const privateSite=health===200?await status('/extension/browser/chatgpt/experience/successful_cases.json'):0;
+ const privateShared=health===200?await status('/extension/browser/experience/data/successful_cases.json'):0;
+ const ps=processes();
+ if(health===200&&privateSite===404&&privateShared===404&&ps.length===1&&ps[0]!==oldPid){
+  console.log('RESTART_VERIFIED',{health,privateSite,privateShared,pid:ps[0]});
+  successful=true;break;
+ }
+ if(n===12)console.log('LAST_DIAGNOSTIC',{health,privateSite,privateShared,pids:ps});
+}
+if(!successful)process.exitCode=2;
+console.log('RESTART_END',successful?'OK':'INCOMPLETE');
+NODE
+[stdout] RESTART_BEGIN
+[stdout] SERVER_PIDS_BEFORE [9907]
+[stdout] HEALTH_BEFORE 200
+[stdout] STOP_SIGNAL_SENT 9907
+[stdout] REPLACEMENT_ALREADY_RUNNING [9907]
+[stdout] LAST_DIAGNOSTIC { health: 200, privateSite: 200, privateShared: 200, pids: [ 9907 ] }
+[stdout] RESTART_END INCOMPLETE
+[phase_exit] exit=2 signal=none
 
 Pending, to be continued.
