@@ -1,0 +1,7 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'READ_ONLY_BOOT_AUDIT'
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+console.log('BOOT_AUDIT_START',new Date().toISOString());
+for(const p of ['bridge/shell/multi-task/shell_command.js','bridge/shell/multi-task/shell_floats.js','backend/sync/github_sync.js','backend/sync/sync_supervisor.js','backend/sync/sync_controller.js']){const ok=fs.existsSync(p);const r=ok?spawnSync(process.execPath,['--check',p],{encoding:'utf8'}):null;console.log('FILE',p,'exists',ok,'syntax',r?.status??'missing','error',r?.stderr?.slice(0,500)??'');}
+const p=spawnSync('ps',['-eo','pid,ppid,args'],{encoding:'utf8'});console.log('PROCESS_MATCHES',p.stdout.split('\n').filter(x=>/github_sync|sync_supervisor|sync_controller|shell_command|github_adaptor|bridge\/shell\/server/.test(x)&&!/READ_ONLY_BOOT_AUDIT/.test(x)).join('\n'));
+console.log('BOOT_AUDIT_END');
+READ_ONLY_BOOT_AUDIT
