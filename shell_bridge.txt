@@ -1,0 +1,11 @@
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'CHECK_V2_PENDING_SOURCES'
+import {ShellCommand,hasTerminationCommand} from './bridge/shell/multi-task/shell_command.js';
+const worker=new ShellCommand();
+const sources=await worker.sourceCandidates();
+const processing=await worker.processingTasks();
+console.log('V2_SOURCE_DISCOVERY',JSON.stringify(sources.map(s=>({kind:s.kind,repo:s.repo||'',folder:s.folder,risky:hasTerminationCommand(s.content.toString('utf8'))}))));
+console.log('V2_PROCESSING_PRESERVED',JSON.stringify(processing.map(s=>({name:s.name,folder:s.folder,source:s.source?.path||null}))));
+console.log('V2_DRYRUN_COMPLETE');
+CHECK_V2_PENDING_SOURCES
