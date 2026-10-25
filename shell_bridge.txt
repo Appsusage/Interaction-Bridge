@@ -1,7 +1,0 @@
-set -e
-cd /home/runner/workspace/ai-agent
-echo V2_DIAGNOSTIC_START
-tail -n 100 bridge/shell/multi-task/server.log
-node --input-type=module -e "const r=await fetch('http://127.0.0.1:3102/health');console.log('HEALTH',await r.text())"
-ps -eo pid,ppid,args | grep -E '(multi-task|github_adaptor|bridge/shell/server)' | grep -v grep || true
-echo V2_DIAGNOSTIC_END
