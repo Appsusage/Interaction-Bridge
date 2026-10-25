@@ -1,0 +1,30 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+echo 'BROWSER_EXPERIENCE_VERIFICATION_START'
+node --version
+git rev-parse HEAD 2>/dev/null || true
+for f in backend/extension/browser/experience/recorder.js backend/extension/browser/experience/analyzer.js backend/extension/browser/experience/strategy_selector.js backend/extension/browser/experience/experience_learning.js backend/extension/browser/experience/index.js backend/extension/browser/experience/research.js backend/extension/browser/browser_service.js backend/extension/browser/browser_live.js backend/extension/browser/chatgpt_live.js backend/server.js; do
+  node --check "$f" || exit 2
+done
+node --test backend/extension/browser/experience/experience.test.js
+echo "TEST_EXIT:$?"
+echo 'BROWSER_EXPERIENCE_VERIFICATION_END'
+[streams]
+[stdout] BROWSER_EXPERIENCE_VERIFICATION_START
+[stdout] v24.22.1
+[stdout] 614286bb3f1872f341170641597f68cf382cdfac
+[stderr] node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/workspace/ai-agent/backend/extension/browser/experience/index.js'
+    at node:internal/modules/cjs/loader:1564:15
+    at node:internal/main/check_syntax:33:20 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.22.1
+
+[exit code] 2
+Progress: Completed
