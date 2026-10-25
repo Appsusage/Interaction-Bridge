@@ -1,0 +1,5 @@
+RECOVERY_HEALTH_BEFORE 200
+RECOVERY_HEALTH_AFTER 200
+
+[exit code] 0
+Progress: Completed
