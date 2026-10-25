@@ -1,0 +1,62 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'READ_ONLY_BRIDGE_STATUS'
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+for (const [name,url] of [
+ ['AI_HEALTH','http://127.0.0.1:3000/health'],
+ ['AI_V2_STATUS','http://127.0.0.1:3000/shell-multi/status'],
+ ['STANDALONE_V2_HEALTH','http://127.0.0.1:3102/health']
+]) {
+ try {
+  const r=await fetch(url,{signal:AbortSignal.timeout(3000)});
+  console.log(name,JSON.stringify({status:r.status,body:(await r.text()).slice(0,600)}));
+ } catch(e) { console.log(name,JSON.stringify({error:e.message})); }
+}
+const lines=execFileSync('ps',['-eo','pid,ppid,stat,args'],{encoding:'utf8'}).split('\n');
+for (const line of lines) {
+ if (/node.*(backend\/server\.js|bridge\/shell\/(?:multi-task\/|github_adaptor\.js|server\.js))/.test(line) &&
+     !line.includes('READ_ONLY_BRIDGE_STATUS')) console.log('BRIDGE_PROCESS',line.trim());
+}
+for (const dir of ['bridge/shell/multi-task','bridge/shell']) {
+ try { console.log('DIRECTORY',dir,fs.readdirSync(dir).filter(n=>/(risk|task|state|queue|lock|command|server|supervisor)/i.test(n)).slice(0,40)); }
+ catch(e) { console.log('DIRECTORY_ERROR',dir,e.code); }
+}
+console.log('READ_ONLY_DIAGNOSTIC_COMPLETE');
+READ_ONLY_BRIDGE_STATUS
+
+[streams]
+[stdout] AI_HEALTH {"status":200,"body":"{\"status\":\"ok\"}"}
+[stdout] AI_V2_STATUS {"status":200,"body":"{\"primary\":true,\"running\":true,\"active\":1,\"queued\":2,\"stopping\":false}"}
+[stdout] STANDALONE_V2_HEALTH {"error":"fetch failed"}
+[stdout] BRIDGE_PROCESS 111      28 Ssl+ /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/github_adaptor.js
+[stdout] BRIDGE_PROCESS 113      28 Ssl+ /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node bridge/shell/server.js
+[stdout] BRIDGE_PROCESS 362       1 Ssl  /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node backend/server.js
+[stdout] DIRECTORY bridge/shell/multi-task [
+  'risk_coordinator.js',
+  'server.js',
+  'server.log',
+  'shell_command.js',
+  'supervisor.js',
+  'supervisor.log'
+]
+[stdout] DIRECTORY bridge/shell [
+  'bridge_server.js',
+  'github_adaptor.js.backup-before-final-state-flow-20260930-024902',
+  'github_adaptor.js.backup-before-state-flow-2',
+  'multi-task',
+  'server.js',
+  'server.js.backup',
+  'server.js.backup-S018-20260926-071534',
+  'server.js.backup-S022-20260926-075543',
+  'server.js.backup-S025-20260926-081941',
+  'server.js.backup-supervisor-20260926-093032',
+  'server.js.backup.archive-fix',
+  'server.js.backup.s-prefix',
+  'server.js.backup.s018',
+  'task.json'
+]
+READ_ONLY_DIAGNOSTIC_COMPLETE
+
+[exit code] 0
+Progress: Completed
