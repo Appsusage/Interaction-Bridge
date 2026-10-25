@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+const W=(await import('ws')).default;
+let ws=new W('ws://127.0.0.1:3000/browser/live');
+ws.on('message',raw=>{let o=JSON.parse(raw.toString());if(o.type==='sessions'){let c=o.sessions.find(x=>/chatgpt\.com/.test(x.url));if(c){console.log('ATTACH_CHATGPT',c.sessionId);ws.send(JSON.stringify({type:'attach',sessionId:c.sessionId}))}else{console.log('CHATGPT_SESSION_MISSING');ws.close()}}else if(['status','error','navigation','interaction-blocked'].includes(o.type)){console.log('ATTACH_EVENT',JSON.stringify({type:o.type,sessionId:o.sessionId,state:o.state,title:o.title,url:o.url,error:o.error}));if(o.type==='status'||o.type==='error')ws.close()}});ws.on('error',e=>console.log('LIVE_ERROR',e.message));const t=setTimeout(()=>ws.terminate(),5000);t.unref();await new Promise(r=>ws.on('close',r))
+NODE
