@@ -17,3 +17,10 @@ printf 'V2_RISK_BARRIER_RELEASED_OK\n'
 
 [exit code] 0
 [finished] 2026-10-25T07:15:55.215Z
+[error] Error: Dropbox upload: 409 {"error":{".tag":"path","reason":{".tag":"conflict","conflict":{".tag":"file"}},"upload_session_id":"pid_upload_session:ABILQLya2LnbgA9BrG6h4V_eAQfrLIvwDlMD8MC2Wz8Jl9aBJA"},"error_summary":"path/conflict/file/"}
+    at db (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/shell_command.js:58:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:133:5)
+    at async Promise.allSettled (index 0)
+
+Pending, to be continued.
