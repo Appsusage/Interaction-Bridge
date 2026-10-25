@@ -4,5 +4,10 @@
 printf 'V2_RISK_PREPARED_OK\n'
 # SHELL_RISK_CHECKPOINT
 printf 'V2_RISK_BARRIER_RELEASED_OK\n'
+[system] begin prepare
+$ printf 'V2_RISK_PREPARED_OK\n'
+
+[stdout] V2_RISK_PREPARED_OK
+[phase_exit] exit=0 signal=none
 
 Pending, to be continued.
