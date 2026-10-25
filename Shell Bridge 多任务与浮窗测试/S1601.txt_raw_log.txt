@@ -9,5 +9,10 @@ $ printf 'V2_RISK_PREPARED_OK\n'
 
 [stdout] V2_RISK_PREPARED_OK
 [phase_exit] exit=0 signal=none
+[system] begin high-risk
+$ 
+printf 'V2_RISK_BARRIER_RELEASED_OK\n'
+[stdout] V2_RISK_BARRIER_RELEASED_OK
+[phase_exit] exit=0 signal=none
 
 Pending, to be continued.
