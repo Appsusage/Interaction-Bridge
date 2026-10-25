@@ -1,0 +1,48 @@
+[command]
+set -e
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'CHECK_MAIN_SERVER_V2_INTEGRATION'
+import fs from 'node:fs';
+const file='backend/server.js', lines=fs.readFileSync(file,'utf8').split('\n');
+for(let i=0;i<lines.length;i++){
+ if(lines[i].includes('installMultiTaskShellFloats')){
+   console.log('INTEGRATION_OCCURRENCE',i+1);
+   for(let j=Math.max(0,i-4);j<Math.min(lines.length,i+6);j++)console.log(j+1,lines[j].slice(0,300));
+ }
+}
+for(const [port,route] of [[3000,'/health'],[3000,'/shell-multi/status'],[3102,'/health']]){
+ try{
+  const res=await fetch('http://127.0.0.1:'+port+route);
+  console.log('HTTP',port,route,res.status,(await res.text()).slice(0,750));
+ }catch(e){console.log('HTTP_ERROR',port,route,e.message);}
+}
+CHECK_MAIN_SERVER_V2_INTEGRATION
+[streams]
+[stdout] INTEGRATION_OCCURRENCE 55
+[stdout] 51 from "./ai_core.js";
+[stdout] 52 
+[stdout] 53 import { attachBrowserLive } from "./extension/browser/browser_live.js";
+[stdout] 54 import { attachBackendConsole } from "./console_live.js";
+55 import { installMultiTaskShellFloats } from "../bridge/shell/multi-task/shell_floats.js";
+56 import { startChatGPTLive } from "./extension/browser/chatgpt_live.js";
+[stdout] 57 
+[stdout] 58 import {
+[stdout] 59   createBrowserSession,
+[stdout] 60   getBrowserPage,
+INTEGRATION_OCCURRENCE 1424
+1420     console.log("AI Server running on port " + (process.env.PORT || 3000));
+1421 });
+1422 attachBrowserLive(httpServer);
+[stdout] 1423 attachBackendConsole(httpServer);
+[stdout] 1424 installMultiTaskShellFloats(app, httpServer);
+[stdout] 1425 startChatGPTLive().catch(error => {
+1426   console.error("[ChatGPT Live] startup failed:", error.message);
+[stdout] 1427 });
+1428 
+[stdout] 1429 
+[stdout] HTTP 3000 /health 200 {"status":"ok"}
+[stdout] HTTP 3000 /shell-multi/status 200 {"running":false,"active":0,"queued":0,"stopping":false}
+[stdout] HTTP 3102 /health 200 {"ok":true,"mode":"multi-task","pid":5370,"running":true,"active":1,"queued":0,"stopping":false}
+
+[exit code] 0
+Progress: Completed
