@@ -1,0 +1,19 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'V2_MARKER_DETECTION'
+from pathlib import Path
+p=Path('bridge/shell/multi-task/shell_command.js')
+s=p.read_text()
+needle="  return script.split('\\n').some(line => CONTROL.test(line.replace(/^\\s*#.*$/, '')));"
+assert s.count(needle)==1
+s=s.replace(needle,"  return /^\\s*#\\s*(?:SHELL_RISK_CHECKPOINT|HIGH_RISK_CHECKPOINT)\\s*$/im.test(script) ||\n    script.split('\\n').some(line => CONTROL.test(line.replace(/^\\s*#.*$/, '')));",1)
+p.write_text(s)
+print('V2_MARKED_CHECKPOINTS_CLASSIFIED_AS_HIGH_RISK')
+V2_MARKER_DETECTION
+node --check bridge/shell/multi-task/shell_command.js
+node --input-type=module <<'CLASSIFIER_CHECK'
+import {hasTerminationCommand} from './bridge/shell/multi-task/shell_command.js';
+if(!hasTerminationCommand("printf 'prepare'\n# SHELL_RISK_CHECKPOINT\nprintf 'risk'"))throw Error('Risk marker not detected');
+if(hasTerminationCommand("printf 'safe'"))throw Error('Ordinary command misclassified');
+console.log('V2_MARKER_CLASSIFIER_TEST_PASSED');
+CLASSIFIER_CHECK
