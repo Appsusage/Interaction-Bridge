@@ -1,0 +1,10 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'SAFE_RISK_GUARD'
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+const p='bridge/shell/multi-task/shell_command.js';let s=fs.readFileSync(p,'utf8');
+const old='const eligible = safe.length || [...this.running.values()].some(t => !t.dangerous) ? safe : pending;';
+const replacement='// High-risk tasks require durable cohort checkpoints before execution.\n    // Keep them queued rather than running without the required synchronization.\n    const eligible = safe;';
+if(!s.includes(old))throw Error('GUARD_TARGET_NOT_FOUND');
+s=s.replace(old,replacement);
+const tmp=p+'.check-'+process.pid+'.mjs';fs.writeFileSync(tmp,s);const chk=spawnSync(process.execPath,['--check',tmp],{encoding:'utf8'});fs.unlinkSync(tmp);console.log('SYNTAX_EXIT',chk.status,chk.stderr);if(chk.status!==0)throw Error('SYNTAX_FAILED');
+fs.writeFileSync(p,s);console.log('RISK_GUARD_ENABLED',true,'HIGH_RISK_TASKS_REMAIN_QUEUED',true,'LEGACY_UNTOUCHED',true);
+SAFE_RISK_GUARD
