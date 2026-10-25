@@ -1,0 +1,8 @@
+[v2 high-risk] S1601.txt
+[original source] Shell Bridge 多任务与浮窗测试/shell_bridge.txt
+[full command]
+printf 'V2_RISK_PREPARED_OK\n'
+# SHELL_RISK_CHECKPOINT
+printf 'V2_RISK_BARRIER_RELEASED_OK\n'
+
+Pending, to be continued.
