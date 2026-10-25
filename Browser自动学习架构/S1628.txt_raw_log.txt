@@ -1,0 +1,22 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+echo 'BASELINE_CHECK_BEGIN'
+for p in backend/extension/browser/browser_service.js backend/extension/browser/browser_live.js backend/extension/browser/chatgpt_live.js backend/server.js backend/extension/browser/experience/recorder.js backend/extension/browser/experience/analyzer.js backend/extension/browser/experience/strategy_selector.js backend/extension/browser/experience/experience_learning.js backend/extension/browser/experience/research.js backend/extension/browser/experience/index.js backend/extension/browser/experience/experience.test.js; do if test -f "$p"; then printf '%s ' "$p"; git hash-object "$p"; else echo "$p MISSING"; fi; done
+echo 'BASELINE_CHECK_END'
+[streams]
+[stdout] BASELINE_CHECK_BEGIN
+backend/extension/browser/browser_service.js [stdout] ee9832d451b4414d8c1f831004305c92ef96873b
+[stdout] backend/extension/browser/browser_live.js [stdout] d0d858d28d7ebe3bffe1d164ef06807ed6f18e9a
+[stdout] backend/extension/browser/chatgpt_live.js [stdout] e2bb37b69a723a8a409e418dd4bc8a555da3d987
+[stdout] backend/server.js [stdout] 58548e34962af81028d3aa15ae15b508820dedd1
+[stdout] backend/extension/browser/experience/recorder.js [stdout] 6ab4d03ac29ac39511fdb1dae2cb0cf6635eda94
+[stdout] backend/extension/browser/experience/analyzer.js [stdout] 2471bb4ec34e1084b97d770621ffa88dceb0621e
+[stdout] backend/extension/browser/experience/strategy_selector.js [stdout] 5cb64a82d2b3d0766dc559b2183bf720ee53f0b9
+[stdout] backend/extension/browser/experience/experience_learning.js [stdout] c254a6fccd6bb82bfde812536cc2b4361ca7ebb8
+[stdout] backend/extension/browser/experience/research.js [stdout] 2d843447faefbc745c9fae3c74137cb0375bcef0
+[stdout] backend/extension/browser/experience/index.js MISSING
+[stdout] backend/extension/browser/experience/experience.test.js [stdout] 6b0b31ad533c92ee91360bc53296ca501189308a
+[stdout] BASELINE_CHECK_END
+
+[exit code] 0
+Progress: Completed
