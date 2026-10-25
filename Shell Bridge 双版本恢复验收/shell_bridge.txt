@@ -1,0 +1,6 @@
+cd /home/runner/workspace/ai-agent || exit 1
+printf 'LEGACY_FILES\n'
+ls -l bridge/shell/server.js bridge/shell/github_adaptor.js
+printf 'LEGACY_STARTUP_REFS\n'
+rg -n 'listen\(|PORT|setInterval|setTimeout|main\(|process\.env|dotenv|worker|poll|start\(' bridge/shell/server.js bridge/shell/github_adaptor.js | head -n 95
+printf 'LEGACY_COMMAND_PATHS_CHECKED\n'
