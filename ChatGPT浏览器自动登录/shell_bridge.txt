@@ -1,0 +1,8 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+const base="http://127.0.0.1:3000",sessionId="1792876670089-7qwl3y6041y";
+const r=await fetch(base+"/browser/recognition/inspect",{method:"POST",headers:{"content-type":"application/json","x-browser-key":process.env.BROWSER_API_KEY||""},body:JSON.stringify({sessionId})});
+const x=await r.json().catch(()=>({}));
+console.log("CURRENT_BROWSER",JSON.stringify({status:r.status,url:x.url,title:x.title,text:(x.text||"").slice(0,240),candidates:(x.candidates||[]).length}));
+try{const p=await fetch("https://chatgpt.com/",{redirect:"manual",signal:AbortSignal.timeout(13000)});console.log("DIRECT_HTTP",JSON.stringify({status:p.status,server:p.headers.get("server"),cfMitigated:p.headers.get("cf-mitigated"),location:p.headers.get("location"),contentType:p.headers.get("content-type")}));}catch(e){console.log("DIRECT_HTTP_ERROR",e.message);}
+NODE
