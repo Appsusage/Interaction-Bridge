@@ -1,0 +1,11 @@
+[command]
+set -e
+node -e "console.log('V2_PARALLEL_B_START',Date.now())"
+sleep 8
+node -e "console.log('V2_PARALLEL_B_END',Date.now())"
+[streams]
+[stdout] V2_PARALLEL_B_START 1792918173978
+[stdout] V2_PARALLEL_B_END 1792918182030
+
+[exit code] 0
+Progress: Completed
