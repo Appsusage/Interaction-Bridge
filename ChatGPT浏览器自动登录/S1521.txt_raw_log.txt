@@ -1,0 +1,8 @@
+LOGIN_MONITOR_PATCH_APPLIED
+SYNTAX_OK
+STATE_LOCK_RESET True
+NO_PAGE_RELOAD_ON_CHALLENGE True
+SOURCE_FILE backend/extension/browser/chatgpt_live.js
+
+[exit code] 0
+Progress: Completed
