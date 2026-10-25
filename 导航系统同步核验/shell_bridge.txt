@@ -1,0 +1,6 @@
+printf 'CHAT_SERVER_RESTART_CAPABILITY_CHECK\n'
+printf 'RESTART_REFERENCES\n'; rg -n 'restart|重启|process\.exit|SIGTERM|server\.close' backend/server.js backend/console_live.js bridge/shell/server.js | head -n 65 || true
+printf 'RUNNING_SERVER\n'; ps -eo pid=,args= | rg 'node backend/server\.js' || true
+printf 'HTTP_HEALTH='; curl -sS -o /dev/null -w '%{http_code}\n' --max-time 5 http://127.0.0.1:3000/health
+printf 'HTTP_NAV='; curl -sS -o /dev/null -w '%{http_code}\n' --max-time 5 http://127.0.0.1:3000/navigation/
+printf 'CHAT_SERVER_RESTART_CAPABILITY_CHECK_DONE\n'
