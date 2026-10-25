@@ -1,0 +1,5 @@
+printf 'SYNC_GH_FETCH_PREFLIGHT\n'
+printf 'GH_VERSION='; gh --version | head -n 1
+printf 'REMOTE_BLOB='; gh api repos/Appsusage/Genesis/contents/backend/sync/whole_project_sync.js --jq '.sha'
+printf 'LOCAL_BLOB='; git hash-object backend/sync/whole_project_sync.js
+printf 'SYNC_GH_FETCH_PREFLIGHT_COMPLETE\n'
