@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && sed -n '270,383p' bridge/shell/multi-task/shell_command.js && printf '\n=== FLOAT HEADER ===\n' && sed -n '1,130p' bridge/shell/multi-task/shell_floats.js
