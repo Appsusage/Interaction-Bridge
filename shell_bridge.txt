@@ -1,0 +1,9 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'RISK_COORDINATOR_READ_ONLY'
+import fs from 'node:fs';
+const p='bridge/shell/multi-task/risk_coordinator.js';
+const lines=fs.readFileSync(p,'utf8').split('\n');
+console.log('SOURCE',p,'LINES',lines.length);
+lines.forEach((line,i)=>console.log((i+1)+':'+line.slice(0,260)));
+console.log('RISK_COORDINATOR_READ_ONLY_DONE');
+RISK_COORDINATOR_READ_ONLY
