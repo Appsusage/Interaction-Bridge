@@ -1,0 +1,24 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'SAFE_MULTITASK_FIX'
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+const p='bridge/shell/multi-task/shell_command.js';let s=fs.readFileSync(p,'utf8');
+const a=s.indexOf('    let exitCode;\n    try {\n      while (exitCode === undefined) {',s.indexOf('  async run(task) {'));
+const b=s.indexOf('    } finally {',a);
+if(a<0||b<a)throw Error('EXPECTED_RUN_BLOCK_NOT_FOUND');
+const replacement=`    let exitCode;
+    try {
+      // Long-running commands are allowed to remain silent indefinitely.
+      // Never terminate a shell task just because it has no output.
+      exitCode = await end;
+    } catch (e) {
+      state.log += '\\n[worker error] ' + (e.stack ?? e) + '\\n';
+      exitCode = -1;
+    `;
+s=s.slice(0,a)+replacement+s.slice(b);
+const t=s.indexOf('  async terminate(child, closed) {');const u=s.indexOf('  schedule() {',t);
+if(t<0||u<t)throw Error('EXPECTED_TERMINATE_BLOCK_NOT_FOUND');
+s=s.slice(0,t)+s.slice(u);
+const tmp=p+'.validate-'+process.pid+'.mjs';fs.writeFileSync(tmp,s);const check=spawnSync(process.execPath,['--check',tmp],{encoding:'utf8'});fs.unlinkSync(tmp);console.log('SYNTAX',check.status,check.stderr);
+if(check.status!==0)throw Error('SYNTAX_FAILED');
+if(s.includes('process.kill(-child.pid')||s.includes('this.terminate(child'))throw Error('UNSAFE_TERMINATION_REMAINS');
+fs.writeFileSync(p,s);console.log('PATCHED_ONLY',p,'NO_IDLE_TERMINATION',true,'NO_PROCESS_GROUP_KILL',true);
+SAFE_MULTITASK_FIX
