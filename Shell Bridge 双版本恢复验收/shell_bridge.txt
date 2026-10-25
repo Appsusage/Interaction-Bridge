@@ -1,4 +1,0 @@
-printf 'V2_NEXT_RISK_TASK_PREP_OK\n'
-# SHELL_RISK_CHECKPOINT
-# process.kill(123456) is only a classification marker; this line is a shell comment and sends no signal.
-printf 'V2_NEXT_RISK_TASK_FINISHED_OK\n'
