@@ -1,0 +1,56 @@
+[command]
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'LEGACY_START'
+import {spawn,execFileSync} from 'node:child_process';
+import fs from 'node:fs';
+const root=process.cwd();
+const before=execFileSync('ps',['-eo','pid=,args='],{encoding:'utf8'});
+for(const [script,log] of [['bridge/shell/server.js','/tmp/ai-agent-legacy-shell-server.log'],['bridge/shell/github_adaptor.js','/tmp/ai-agent-legacy-github-adaptor.log']]){
+ const marker='node '+script;
+ if(before.split('\n').some(x=>x.includes(marker))){console.log('ALREADY_RUNNING '+script);continue;}
+ const fd=fs.openSync(log,'a',0o600);
+ const child=spawn(process.execPath,[script],{cwd:root,detached:true,stdio:['ignore',fd,fd],env:process.env});
+ child.unref();fs.closeSync(fd);
+ console.log('STARTED '+script+' pid='+child.pid+' log='+log);
+}
+LEGACY_START
+sleep 3
+printf 'LEGACY_PROCESS_CHECK\n'
+ps -eo pid=,ppid=,args= | grep -E 'bridge/shell/(github_adaptor|server)\.js|backend/server\.js' | grep -v grep || true
+printf 'LEGACY_LOG_CHECK\n'
+tail -n 12 /tmp/ai-agent-legacy-shell-server.log /tmp/ai-agent-legacy-github-adaptor.log 2>/dev/null || true
+printf 'LEGACY_BOOTSTRAP_CHECK_COMPLETE\n'
+[streams]
+[stdout] STARTED bridge/shell/server.js pid=3638 log=/tmp/ai-agent-legacy-shell-server.log
+[stdout] STARTED bridge/shell/github_adaptor.js pid=3639 log=/tmp/ai-agent-legacy-github-adaptor.log
+[stdout] LEGACY_PROCESS_CHECK
+[stdout]     111      26 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+   3638       1 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node bridge/shell/server.js
+   3639       1 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node bridge/shell/github_adaptor.js
+[stdout] LEGACY_LOG_CHECK
+[stdout] ==> /tmp/ai-agent-legacy-shell-server.log <==
+
+========================================
+Shell Bridge Server
+Dropbox ↔ Shell
+Codex: 未使用
+Replit Agent: 未使用
+Poll: 3 秒
+任务: S001.txt / S002.txt / S003.txt...
+最终日志: outbox/Sxxx.txt
+旧日志: archive/Sxxx.txt
+========================================
+
+
+==> /tmp/ai-agent-legacy-github-adaptor.log <==
+[github_adaptor] Started
+[github_adaptor] Poll interval: 5 seconds
+[github_adaptor] Watching Appsusage/Interaction-Bridge/shell_bridge.txt
+[github_adaptor] 检测到 shell_bridge.txt
+[github_adaptor] 5 秒监听已停止
+[github_adaptor] GitHub SHA: 1069824b632c666d53ae58811a7c79c9f2c87e15
+[github_adaptor] 查询 Dropbox Shell Bridge 记录
+[stdout] LEGACY_BOOTSTRAP_CHECK_COMPLETE
+
+[exit code] 0
+Progress: Completed
