@@ -1,0 +1,11 @@
+[command]
+printf 'SYNC_ATOMIC_HOTFIX_BEGIN\n'
+node -e 'const fs=require("node:fs"),cp=require("node:child_process"),crypto=require("node:crypto");const p="backend/sync/whole_project_sync.js",oldSha="af1df27ff24b3fa6e6b295c1e796544ff6e78d41",newSha="1d3cfa3c5d8ba68ddb998db6487dd81a5d804579";const hash=b=>crypto.createHash("sha1").update("blob "+b.length+"\0").update(b).digest("hex");const before=fs.readFileSync(p);if(hash(before)!==oldSha)throw Error("LOCAL_SOURCE_CHANGED");const encoded=cp.execFileSync("gh",["api","repos/Appsusage/Genesis/contents/backend/sync/whole_project_sync.js","--jq",".content"],{encoding:"utf8",timeout:30000});const after=Buffer.from(encoded.replace(/\s/g,""),"base64");if(hash(after)!==newSha)throw Error("REMOTE_HASH_MISMATCH");const tmp=p+".hotfix-"+crypto.randomUUID()+".js",backup=p+".hotfix-backup-"+Date.now()+".js";try{fs.writeFileSync(tmp,after,{flag:"wx",mode:0o600});cp.execFileSync(process.execPath,["--check",tmp],{timeout:10000});if(hash(fs.readFileSync(p))!==oldSha)throw Error("CONCURRENT_LOCAL_CHANGE");fs.writeFileSync(backup,before,{flag:"wx",mode:0o600});fs.renameSync(tmp,p);const test=cp.spawnSync(process.execPath,["--test","backend/sync/tests/whole_project_sync.test.js"],{encoding:"utf8",timeout:60000});if(test.status!==0){fs.writeFileSync(p,before);throw Error("TEST_FAILURE_ROLLED_BACK "+test.stderr+" "+test.stdout)}console.log("SYNC_HOTFIX_INSTALLED",hash(fs.readFileSync(p)),"TEST_PASS","BACKUP",backup)}finally{try{fs.unlinkSync(tmp)}catch(e){if(e.code!=="ENOENT")throw e}}'
+printf 'SYNC_ATOMIC_HOTFIX_END\n'
+[streams]
+[stdout] SYNC_ATOMIC_HOTFIX_BEGIN
+[stdout] SYNC_HOTFIX_INSTALLED 1d3cfa3c5d8ba68ddb998db6487dd81a5d804579 TEST_PASS BACKUP backend/sync/whole_project_sync.js.hotfix-backup-1792945204209.js
+[stdout] SYNC_ATOMIC_HOTFIX_END
+
+[exit code] 0
+Progress: Completed
