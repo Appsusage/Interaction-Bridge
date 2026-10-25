@@ -1,4 +1,0 @@
-set -e
-node -e "console.log('V2_PARALLEL_A_START',Date.now())"
-sleep 8
-node -e "console.log('V2_PARALLEL_A_END',Date.now())"
