@@ -111,4 +111,7 @@ NODE
 [stdout] RESTART_END INCOMPLETE
 [phase_exit] exit=2 signal=none
 
+[exit code] 2
+[finished] 2026-10-25T10:44:17.155Z
+
 Pending, to be continued.
