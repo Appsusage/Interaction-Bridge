@@ -1,0 +1,21 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'DUAL_SERVICE_PRIVACY_VERIFY'
+import {execFileSync} from 'node:child_process';
+for(const [label,path] of [
+ ['HEALTH','/health'],
+ ['V2_STATUS','/shell-multi/status'],
+ ['PRIVATE_CHATGPT_CASES','/extension/browser/chatgpt/experience/successful_cases.json'],
+ ['PRIVATE_GENERAL_CASES','/extension/browser/experience/data/successful_cases.json']
+]){
+ try{
+  const r=await fetch('http://127.0.0.1:3000'+path,{signal:AbortSignal.timeout(2500)});
+  console.log('ROUTE_STATUS',label,r.status);
+  if(label==='V2_STATUS')console.log('V2_STATUS_VALUE',(await r.text()).slice(0,300));
+ }catch(e){console.log('ROUTE_ERROR',label,e.message)}
+}
+const lines=execFileSync('ps',['-eo','pid,args'],{encoding:'utf8'}).split('\n');
+for(const [label,re] of [['OLD_GITHUB',/node bridge\/shell\/github_adaptor\.js$/],['OLD_DROPBOX',/node bridge\/shell\/server\.js$/],['AI_SERVER',/node backend\/server\.js$/]]){
+ console.log('PROCESS',label,lines.filter(x=>re.test(x)).map(x=>x.trim().match(/^\d+/)?.[0]));
+}
+console.log('DUAL_SERVICE_PRIVACY_VERIFY_DONE');
+DUAL_SERVICE_PRIVACY_VERIFY
