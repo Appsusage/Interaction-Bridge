@@ -1,0 +1,21 @@
+[command]
+node --input-type=module -e 'import { chromium } from "playwright";
+const b=await chromium.launch({executablePath:"/repl/tools/bin/chromium",headless:true,args:["--no-sandbox","--disable-dev-shm-usage","--use-fake-ui-for-media-stream","--use-fake-device-for-media-stream"]});
+try {
+ const p=await b.newPage({viewport:{width:390,height:780}});
+ const errors=[];p.on("pageerror",e=>errors.push(e.message));
+ await p.goto("http://127.0.0.1:3000/",{waitUntil:"domcontentloaded",timeout:15000});
+ await p.waitForFunction(()=>typeof window.AIAgentVision?.open==="function"&&typeof window.setFloatMenuOpen==="function",null,{timeout:15000});
+ await p.locator("#dockToggle").click();
+ await p.locator("#visionFloatButton").click();
+ await p.waitForTimeout(750);
+ const panel=p.locator("#aiVisionPanel");
+ console.log("VISION_UI_TEST "+JSON.stringify({present:await panel.count(),visible:await panel.isVisible().catch(()=>false),errors,status:await p.locator("#aiVisionPanel").innerText().then(s=>s.slice(0,130)).catch(()=>null)}));
+ await p.close();
+} finally {await b.close()}
+'
+[streams]
+[stdout] VISION_UI_TEST {"present":1,"visible":true,"errors":[],"status":"AI 视觉 · 摄像头\n关闭\n环境未确定\n\n摄像头已开启 · 3840 × 2160\n\n切换镜头\n重试"}
+
+[exit code] 0
+Progress: Completed
