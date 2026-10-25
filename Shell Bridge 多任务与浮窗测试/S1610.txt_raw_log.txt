@@ -48,10 +48,11 @@ printf 'V2_CUTOVER_PREPARATION_OK\n'
 [stdout] V2_CUTOVER_PREPARATION_OK
 [phase_exit] exit=0 signal=none
 
-[continued at] 2026-10-25T08:46:45.456Z
+[continued at] 2026-10-25T08:56:00.937Z
  server","needle":"bridge/shell/server.js","pid":170}]}
 [stdout] SIGTERM_SENT_TO_VERIFIED_OLD_PID legacy GitHub adaptor 163
 [stdout] SIGTERM_SENT_TO_VERIFIED_OLD_PID legacy Dropbox Shell server 170
+[system] Unconfirmed previous execution at risk_running; manual review required.
 [system] Unconfirmed previous execution at risk_running; manual review required.
 
 Pending, to be continued.
