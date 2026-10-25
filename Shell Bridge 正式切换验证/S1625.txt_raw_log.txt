@@ -1,0 +1,23 @@
+[command]
+set -e
+printf 'V2_FINAL_PRIMARY_ACCEPTANCE_OK\n'
+printf 'V2_FINAL_STDERR_OK\n' >&2
+node --input-type=module <<'V2_FINAL_PRIMARY_CHECK'
+const main=await fetch('http://127.0.0.1:3000/health');
+const status=await fetch('http://127.0.0.1:3000/shell-multi/status');
+const primary=await status.json();
+console.log('V2_PRIMARY_STATUS',JSON.stringify(primary),'AI_HEALTH',main.status);
+if(!main.ok||!status.ok||!primary.running)throw Error('V2 is not active in main AI Server');
+let duplicate=false;
+try{const other=await fetch('http://127.0.0.1:3102/health');duplicate=other.ok;}catch{}
+if(duplicate)throw Error('Independent worker unexpectedly active');
+console.log('V2_ONLY_MAIN_INSTANCE_CONFIRMED');
+V2_FINAL_PRIMARY_CHECK
+[streams]
+[stdout] V2_FINAL_PRIMARY_ACCEPTANCE_OK
+[stderr] V2_FINAL_STDERR_OK
+[stdout] V2_PRIMARY_STATUS {"primary":true,"running":true,"active":1,"queued":0,"stopping":false} AI_HEALTH 200
+[stdout] V2_ONLY_MAIN_INSTANCE_CONFIRMED
+
+[exit code] 0
+Progress: Completed
