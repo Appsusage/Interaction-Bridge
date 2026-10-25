@@ -1,0 +1,17 @@
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+const WebSocket=(await import('ws')).default;
+const ws=new WebSocket('ws://127.0.0.1:3000/browser/live');
+let sessions=[];
+ws.on('message',raw=>{const m=JSON.parse(raw.toString());if(m.type==='sessions'){sessions=m.sessions;ws.close();}});
+const timer=setTimeout(()=>ws.terminate(),3500);timer.unref();await new Promise(resolve=>ws.on('close',resolve));
+const chat=sessions.find(x=>x.url.includes('chatgpt.com'));console.log('CURRENT_CHAT_SESSION',JSON.stringify(chat||null));
+const k=process.env.BROWSER_API_KEY;
+if(chat&&k)for (const ep of ['/browser/read','/browser/recognition/inspect']){
+try{const r=await fetch('http://127.0.0.1:3000'+ep,{method:'POST',headers:{'Content-Type':'application/json','x-browser-key':k},body:JSON.stringify({sessionId:chat.sessionId}),signal:AbortSignal.timeout(8000)});const data=await r.json();const s=JSON.stringify(data);console.log('BROWSER_API',JSON.stringify({endpoint:ep,status:r.status,keys:Object.keys(data),url:data.url||null,title:data.title||null,challenge:/cloudflare|just a moment|checking your browser|verify you are human/i.test(s),buttons:Array.isArray(data.buttons)?data.buttons.length:null,error:data.error||null}));}catch(e){console.log('BROWSER_API_ERROR',ep,e.message)}}
+const p='/repl/tools/bin/chromium';try{console.log('CHROME_BIN_EXISTS',fs.existsSync(p))}catch{}
+console.log('BROWSER_FLAGS',JSON.stringify({display:!!process.env.DISPLAY,headless:process.env.CHATGPT_BROWSER_HEADLESS==='true',httpProxy:!!process.env.HTTP_PROXY,httpsProxy:!!process.env.HTTPS_PROXY,allProxy:!!process.env.ALL_PROXY,noProxy:!!process.env.NO_PROXY}));
+for(const host of ['https://chatgpt.com/','https://challenges.cloudflare.com/'])try{const r=await fetch(host,{redirect:'manual',signal:AbortSignal.timeout(7000)});console.log('HTTP_CHECK',JSON.stringify({host,status:r.status,server:r.headers.get('server'),mitigated:r.headers.get('cf-mitigated'),contentType:r.headers.get('content-type')}))}catch(e){console.log('HTTP_CHECK_ERROR',host,e.name)}
+NODE
+/repl/tools/bin/chromium --version 2>/dev/null | head -c 120
