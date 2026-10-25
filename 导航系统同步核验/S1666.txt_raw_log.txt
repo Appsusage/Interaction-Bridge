@@ -1,0 +1,35 @@
+[command]
+printf 'NAVIGATION_HEADLESS_RENDER_TEST\n'
+node --input-type=module -e '
+import { chromium } from "playwright";
+const browser = await chromium.launch({ executablePath:"/repl/tools/bin/chromium", headless:true, args:["--no-sandbox","--disable-dev-shm-usage"] });
+const page = await browser.newPage({ viewport:{width:393,height:852} });
+const errors=[];
+page.on("pageerror",err=>errors.push("page:"+err.message));
+page.on("console",msg=>{ if(msg.type()==="error") errors.push("console:"+msg.text().slice(0,240)); });
+try {
+  const response=await page.goto("http://127.0.0.1:3000/navigation/",{waitUntil:"domcontentloaded",timeout:15000});
+  await page.waitForTimeout(2800);
+  console.log("RENDER_RESULT "+JSON.stringify({
+    http:response?.status(),
+    title:await page.title(),
+    statusText:await page.locator("#status").innerText(),
+    mapExists:await page.locator(".leaflet-container").count(),
+    tileLoaded:await page.locator(".leaflet-tile-loaded").count(),
+    visibleButtons:await page.locator("button:visible").allTextContents(),
+    errors
+  }));
+} finally { await browser.close(); }
+'
+printf 'SYNC_REPORT_STATUS\n'
+node -e 'const r=require("./backend/sync/sync_last_report.json");console.log(JSON.stringify({status:r.status,blockedCount:r.blockedCount,pendingCount:r.pendingCount,executed:r.executed,revision:r.revision,path:r.execution?.path??r.path}).slice(0,1100))'
+printf 'NAVIGATION_HEADLESS_RENDER_TEST_DONE\n'
+[streams]
+[stdout] NAVIGATION_HEADLESS_RENDER_TEST
+[stdout] RENDER_RESULT {"http":200,"title":"AI 导航 · GPS 地图预览","statusText":"地图已就绪 · 点击开始定位","mapExists":1,"tileLoaded":8,"visibleButtons":["开始实时定位","停止","回到位置"],"errors":["console:Failed to load resource: the server responded with a status of 404 (Not Found)"]}
+[stdout] SYNC_REPORT_STATUS
+[stdout] {"status":"blocked","blockedCount":6,"pendingCount":0,"executed":false,"revision":"a44768a303df06bdddf734dd82a9803d35e1b190"}
+[stdout] NAVIGATION_HEADLESS_RENDER_TEST_DONE
+
+[exit code] 0
+Progress: Completed
