@@ -1,0 +1,31 @@
+[command]
+node -e 'const fs=require("fs"),path=require("path"),crypto=require("crypto");
+const expected={"frontend/index.html":"6fcf5edb1d9093d6cdf04d2ae8afe5958564eb6b","frontend/app.js":"d1854ad80d0184347d7e0981874ce8c9a2243564","frontend/style.css":"3d72304197e7844ce5e620c786df235a44621837"};
+const files=Object.keys(expected);
+const snapshots=new Map();
+for(const file of files){const bytes=fs.readFileSync(file);const hash=crypto.createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");if(hash!==expected[file])throw new Error("Unexpected source "+file+" "+hash);snapshots.set(file,bytes);}
+function exactly(source,find,replacement){if(source.split(find).length!==2)throw new Error("Anchor missing or duplicated");return source.replace(find,replacement)}
+let html=snapshots.get("frontend/index.html").toString("utf8");
+html=exactly(html,"<button id=\"navigationFloatButton\" type=\"button\" class=\"float-item\" aria-label=\"打开导航地图\" title=\"导航\" onclick=\"window.open(&quot;/navigation/&quot;, &quot;_blank&quot;, &quot;noopener,noreferrer&quot;)\">🧭</button>\n\n","");
+html=exactly(html,"<button id=\"visionFloatButton\" type=\"button\" class=\"float-item\" aria-label=\"打开 AI 视觉\" title=\"视觉\" onclick=\"window.AIAgentVision?.open()\">👁️</button>\n\n","");
+html=exactly(html,"<button\n\nid=\"mainFloat\"","<!-- Outer ring shortcuts: original inner buttons remain in place. -->\n<button id=\"navigationFloatButton\" type=\"button\" class=\"float-outer-item\" aria-label=\"打开导航地图\" title=\"导航\" onclick=\"window.open(&quot;/navigation/&quot;, &quot;_blank&quot;, &quot;noopener,noreferrer&quot;)\">🧭</button>\n\n<button id=\"visionFloatButton\" type=\"button\" class=\"float-outer-item\" aria-label=\"打开 AI 视觉\" title=\"视觉\" onclick=\"window.AIAgentVision?.open()\">👁️</button>\n\n\n<button\n\nid=\"mainFloat\"");
+let app=snapshots.get("frontend/app.js").toString("utf8");
+app=exactly(app,"  const minSpacingRadius = items.length > 1\n    ? (size + 4) / (2 * Math.sin(Math.PI / (2 * (items.length - 1))))\n    : 0;\n  const radius = Math.max(58, minSpacingRadius, Math.min(94, viewportW * 0.22, viewportH * 0.19));","  const radius = Math.max(58, Math.min(94, viewportW * 0.22, viewportH * 0.19));");
+app=exactly(app,"    item.style.transform = `translate(${x}px, ${y}px)`;\n  });\n}","    item.style.transform = `translate(${x}px, ${y}px)`;\n  });\n  // Second ring: align each shortcut between its two neighboring inner actions.\n  const outerPairs = [\n    [\"navigationFloatButton\", \"reconnectFloatButton\", \"voiceFloatButton\"],\n    [\"visionFloatButton\", \"voiceFloatButton\", \"browserFloatButton\"]\n  ];\n  const outerRadius = radius + 68;\n  for (const [outerId, firstId, secondId] of outerPairs) {\n    const outer = document.getElementById(outerId);\n    const first = items.findIndex(item => item.id === firstId);\n    const second = items.findIndex(item => item.id === secondId);\n    if (!outer || first < 0 || second < 0) continue;\n    const angle = (arcAngles[first] + arcAngles[second]) * Math.PI / 360;\n    let x = center + Math.cos(angle) * outerRadius - size / 2;\n    let y = center + Math.sin(angle) * outerRadius - size / 2;\n    x = Math.max(center - cx, Math.min(x, viewportW - size - cx + center));\n    y = Math.max(center - cy, Math.min(y, viewportH - size - cy + center));\n    outer.style.transform = `translate(${x}px, ${y}px)`;\n  }\n}");
+let css=snapshots.get("frontend/style.css").toString("utf8");
+if(css.includes(".float-menu .float-outer-item"))throw new Error("Outer CSS already present");
+css+="\n/* Outer dock shortcuts, separate from the five unchanged inner-ring buttons. */\n.float-menu .float-outer-item {\n  display: none;\n  position: absolute;\n  left: 0;\n  top: 0;\n  box-sizing: border-box;\n  width: 44px;\n  height: 44px;\n  padding: 0;\n  align-items: center;\n  justify-content: center;\n  border-radius: 50%;\n  border: 1px solid rgba(72, 111, 147, .85);\n  background: rgba(239, 248, 255, .94);\n  color: #34495f;\n  font: 21px system-ui, sans-serif;\n  box-shadow: 0 3px 12px rgba(14, 30, 48, .2);\n  opacity: 0;\n  pointer-events: none;\n  cursor: pointer;\n  transform: translate(0, 0);\n  transition: transform .2s ease, opacity .2s ease;\n}\n.float-menu.open .float-outer-item { display: flex; opacity: 1; pointer-events: auto; }\n";
+const updated=new Map([["frontend/index.html",html],["frontend/app.js",app],["frontend/style.css",css]]);
+const backup="backend/sync/.sync-backups/navigation-outer-"+Date.now();
+fs.mkdirSync(backup,{recursive:true});
+for(const file of files){fs.copyFileSync(file,path.join(backup,path.basename(file)),fs.constants.COPYFILE_EXCL);}
+for(const file of files){if(!fs.readFileSync(file).equals(snapshots.get(file)))throw new Error("Concurrent change "+file);}
+for(const file of files){const temp=file+".outer-"+process.pid;fs.writeFileSync(temp,updated.get(file),"utf8");fs.renameSync(temp,file);}
+console.log("OUTER_RING_INSTALLED "+JSON.stringify({backup,innerCount:(html.match(/class="float-item"/g)||[]).length,outerCount:(html.match(/class="float-outer-item"/g)||[]).length,files:files.map(f=>({path:f,bytes:Buffer.byteLength(updated.get(f))}))}));
+'
+node --check frontend/app.js
+[streams]
+[stdout] OUTER_RING_INSTALLED {"backup":"backend/sync/.sync-backups/navigation-outer-1792970473321","innerCount":5,"outerCount":2,"files":[{"path":"frontend/index.html","bytes":6310},{"path":"frontend/app.js","bytes":34447},{"path":"frontend/style.css","bytes":15373}]}
+
+[exit code] 0
+Progress: Completed
