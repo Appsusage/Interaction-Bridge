@@ -1,0 +1,36 @@
+[command]
+node --input-type=module -e 'import { chromium } from "playwright";
+const browser=await chromium.launch({executablePath:"/repl/tools/bin/chromium",headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
+try {
+ for(const width of [390,320]) {
+  const page=await browser.newPage({viewport:{width,height:780}});
+  const errors=[];
+  page.on("pageerror",e=>errors.push(e.message));
+  const response=await page.goto("http://127.0.0.1:3000/",{waitUntil:"domcontentloaded",timeout:15000});
+  await page.waitForFunction(()=>typeof window.setFloatMenuOpen==="function",null,{timeout:12000});
+  await page.locator("#dockToggle").click({timeout:6000});
+  const items=await page.locator("#floatMenu .float-item").evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {id:el.id,cx:r.x+r.width/2,cy:r.y+r.height/2,w:r.width,h:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom}}));
+  const overlaps=[];
+  for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const a=items[i],b=items[j];if(Math.hypot(a.cx-b.cx,a.cy-b.cy)<43.5)overlaps.push(a.id+"/"+b.id);}
+  const offscreen=items.filter(x=>x.left<0||x.right>width||x.top<0||x.bottom>780).map(x=>x.id);
+  const visionCallable=await page.evaluate(()=>typeof window.AIAgentVision?.open==="function");
+  const navHandler=await page.locator("#navigationFloatButton").getAttribute("onclick");
+  console.log("MENU_RENDER "+JSON.stringify({width,http:response?.status(),open:await page.locator("#floatMenu").evaluate(el=>el.classList.contains("open")),order:items.map(x=>x.id),overlaps,offscreen,visionCallable,navHandler,errors:errors.slice(0,3)}));
+  if(width===390) {
+    const p=page.waitForEvent("popup",{timeout:7000}).catch(e=>null);
+    await page.locator("#navigationFloatButton").click({timeout:5000});
+    const popup=await p;
+    console.log("NAV_CLICK "+JSON.stringify({popup:!!popup,url:popup?await popup.url():null}));
+    if(popup)await popup.close();
+  }
+  await page.close();
+ }
+} finally { await browser.close(); }
+'
+[streams]
+[stdout] MENU_RENDER {"width":390,"http":200,"open":true,"order":["backgroundFloatButton","avatarFloatButton","reconnectFloatButton","navigationFloatButton","voiceFloatButton","visionFloatButton","browserFloatButton"],"overlaps":[],"offscreen":[],"visionCallable":true,"navHandler":"window.open(\"/navigation/\", \"_blank\", \"noopener,noreferrer\")","errors":[]}
+[stdout] NAV_CLICK {"popup":true,"url":"http://127.0.0.1:3000/navigation/"}
+[stdout] MENU_RENDER {"width":320,"http":200,"open":true,"order":["backgroundFloatButton","avatarFloatButton","reconnectFloatButton","navigationFloatButton","voiceFloatButton","visionFloatButton","browserFloatButton"],"overlaps":["backgroundFloatButton/avatarFloatButton","avatarFloatButton/reconnectFloatButton","reconnectFloatButton/navigationFloatButton","navigationFloatButton/voiceFloatButton","voiceFloatButton/visionFloatButton","visionFloatButton/browserFloatButton"],"offscreen":[],"visionCallable":true,"navHandler":"window.open(\"/navigation/\", \"_blank\", \"noopener,noreferrer\")","errors":[]}
+
+[exit code] 0
+Progress: Completed
