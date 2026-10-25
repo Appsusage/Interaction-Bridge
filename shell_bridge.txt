@@ -1,0 +1,23 @@
+cd /home/runner/workspace/ai-agent && node --input-type=module <<'MULTITASK_SAFE_PATCH'
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const p='bridge/shell/multi-task/shell_command.js';
+if(!fs.existsSync(p))throw Error('NEW_FILE_MISSING');
+let s=fs.readFileSync(p,'utf8');
+const changes=[
+ ["const TASK_SEQUENCE = /^S(\\d{1,6})\\.txt$/i;","const TASK_SEQUENCE = /^S(\\d{1,6})\\.txt$/i;"],
+ ["const SEQUENCE_FLOOR = 1492;","const SEQUENCE_FLOOR = 1562;"],
+ ["const SEQUENCE_FLOOR = 1532;","const SEQUENCE_FLOOR = 1562;"]
+];
+let modified=false;
+for(const [a,b] of changes){if(a!==b&&s.includes(a)){s=s.replace(a,b);modified=true;}}
+console.log('NEW_FILE_EXISTS',true,'PATCHED',modified);
+const temp=p+'.syntax-check-'+process.pid+'.mjs';
+fs.writeFileSync(temp,s);
+const chk=spawnSync(process.execPath,['--check',temp],{encoding:'utf8'});
+fs.unlinkSync(temp);
+console.log('SYNTAX_EXIT',chk.status,chk.stderr);
+if(chk.status!==0)throw Error('SYNTAX_FAILED');
+if(modified){fs.writeFileSync(p,s);console.log('NEW_FILE_UPDATED',p);}
+console.log('NO_LEGACY_FILES_MODIFIED');
+MULTITASK_SAFE_PATCH
