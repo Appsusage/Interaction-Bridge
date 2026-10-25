@@ -1,0 +1,5 @@
+printf 'SERVER_NAV_ROUTE_INSPECTION\n'
+printf 'SERVER_HASH='; git hash-object backend/server.js
+printf 'SERVER_ROUTE_LINES\n'; rg -n 'capabilities/vision|/navigation|app.use\(' backend/server.js | head -n 28
+printf 'SERVER_ROUTE_CONTEXT\n'; sed -n '112,160p' backend/server.js
+printf 'SERVER_NAV_ROUTE_INSPECTION_DONE\n'
