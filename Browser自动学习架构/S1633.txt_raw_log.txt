@@ -42,5 +42,6 @@ if(after.length===1&&after[0]===9907){
  if(!ok)process.exitCode=2;
 }
 NODE
+[system] Batch not ready; task held.
 
 Pending, to be continued.
