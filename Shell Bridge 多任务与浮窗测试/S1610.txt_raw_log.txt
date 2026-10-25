@@ -40,5 +40,12 @@ const reappeared=processes().filter(p=>exactTargets.some(t=>p.args.includes(t.ne
 if(reappeared.length)throw Error('Legacy listener auto-respawn detected '+JSON.stringify(reappeared.map(p=>p.pid)));
 console.log('V2_OFFICIAL_RUNTIME_CUTOVER_OK',JSON.stringify({v2Pid:after.pid,stoppedLegacyPids:targets.map(t=>t.pid)}));
 V2_CUTOVER
+[system] begin prepare
+$ set -e
+cd /home/runner/workspace/ai-agent
+printf 'V2_CUTOVER_PREPARATION_OK\n'
+
+[stdout] V2_CUTOVER_PREPARATION_OK
+[phase_exit] exit=0 signal=none
 
 Pending, to be continued.
