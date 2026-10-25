@@ -1,0 +1,16 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'V2_READ_ONLY_ERROR_CHECK'
+import fs from 'node:fs';
+const p='bridge/shell/multi-task/main-recovery.log';
+const logs=fs.existsSync(p)?fs.readFileSync(p,'utf8').split('\n'):[];
+console.log('V2_RELEVANT_LOG_TAIL',logs.filter(l=>/\[v2\]|multi-task|shell-command|polling|error|Error|quarantine|GitHub|Dropbox|AI Server running/.test(l)).slice(-55).map(x=>x.slice(0,280)).join('\n'));
+const f='bridge/shell/multi-task/shell_command.js';
+const lines=fs.readFileSync(f,'utf8').split('\n');
+for(const [a,b] of [[1,95],[240,300],[365,445]]){
+ console.log('SOURCE_RANGE',a,b);
+ for(let i=a-1;i<Math.min(b,lines.length);i++)console.log((i+1)+':'+lines[i].slice(0,230));
+}
+const r=await fetch('http://127.0.0.1:3000/shell-multi/status',{signal:AbortSignal.timeout(2500)});
+console.log('STATUS',r.status,await r.text());
+console.log('V2_ERROR_CHECK_DONE');
+V2_READ_ONLY_ERROR_CHECK
