@@ -1,0 +1,102 @@
+cd /home/runner/workspace/ai-agent
+python3 - <<'PY'
+from pathlib import Path
+import subprocess
+p=Path('backend/extension/browser/chatgpt_live.js')
+old=p.read_text()
+assert old.count('let loginFlowActive = false;')==1
+assert old.count('async function monitorLoginState() {')==1
+assert 'let loginMonitorBusy = false;' not in old, 'monitor patch already exists or unexpected file version'
+updated=old.replace(
+ 'let loginFlowActive = false;',
+ 'let loginFlowActive = false;\nlet loginMonitorBusy = false;\nlet lastLoginAttemptSignature = "";\nlet lastLoginAttemptAt = 0;',
+ 1
+)
+marker='''      const homepageLoginButton = page.getByRole("button", { name: /^(log in|sign in|登录)$/i }).first();'''
+assert updated.count(marker)==1
+updated=updated.replace(marker,'''      const initialTitle = await page.title().catch(() => "");
+      if (/just a moment|verify you are human|security check|captcha/i.test(initialTitle) || /__cf_chl/i.test(page.url())) {
+        emitStatus("waiting", { step: "security-check", title: initialTitle, note: "官方安全检查尚未完成，保留当前会话，不刷新挑战页。" });
+        return;
+      }
+''' + marker,1)
+oldEnd='''  } catch (error) {
+    emitStatus("失败", { step: "login-flow", error: error.message, note: "自动登录步骤已停止，不会持续重试。" });
+  }
+}
+
+async function monitorLoginState() {'''
+newEnd='''  } catch (error) {
+    emitStatus("失败", { step: "login-flow", error: error.message, note: "自动登录步骤已停止，不会持续重试。" });
+  } finally {
+    // Waiting is a state, not a permanent lock. The monitor can resume after the page changes.
+    loginFlowActive = false;
+  }
+}
+
+async function monitorLoginState() {'''
+assert updated.count(oldEnd)==1
+updated=updated.replace(oldEnd,newEnd,1)
+start=updated.index('async function monitorLoginState() {')
+end=updated.index('\n/**\n * Persistent ChatGPT login playbook:',start)
+newMonitor='''async function monitorLoginState() {
+  if (!pageRef || loginMonitorBusy || loginFlowActive) return;
+  loginMonitorBusy = true;
+  try {
+    if (await isLoggedIn(pageRef)) {
+      lastLoginAttemptSignature = "";
+      emitStatus("完成", { step: "logged-in", url: pageRef.url() });
+      return;
+    }
+    const url = pageRef.url();
+    const title = await pageRef.title().catch(() => "");
+    const content = await pageText(pageRef);
+    const combined = title + " " + content;
+    if (/just a moment|captcha|verify you are human|security check|unusual activity/i.test(combined) || /__cf_chl/i.test(url)) {
+      emitStatus("waiting", { step: "security-check", title, note: "安全检查仍在进行；不会重复导航或刷新。" });
+      return;
+    }
+    if (/Check your inbox|verification code|Enter the code|email-verification/i.test(combined + " " + url)) {
+      emitStatus("waiting", { step: "email-verification", note: "等待完成邮箱验证；保留原会话。" });
+      return;
+    }
+    if (/accounts\\.google\\.com/i.test(url) || /password|choose an account|verify it's you/i.test(combined)) {
+      emitStatus("waiting", { step: "provider-auth", note: "等待账号授权或密码验证，保留当前页面。" });
+      return;
+    }
+    const loginButton = pageRef.getByRole("button", { name: /^(log in|sign in|登录)$/i }).first();
+    const loginLink = pageRef.getByRole("link", { name: /^(log in|sign in|登录)$/i }).first();
+    const emailField = pageRef.locator('input[type="email"], input[name="email"], input[autocomplete="username"]').first();
+    const homepageReady = await loginButton.isVisible().catch(() => false) || await loginLink.isVisible().catch(() => false);
+    const formReady = await emailField.isVisible().catch(() => false);
+    if (!homepageReady && !formReady) {
+      emitStatus("waiting", { step: "page-not-ready", title, url, note: "页面尚未显示登录控件；等待真实页面变化，不刷新。" });
+      return;
+    }
+    const fingerprint = url + "|" + title + "|" + (homepageReady ? "homepage-login" : "email-form");
+    const now = Date.now();
+    if (fingerprint === lastLoginAttemptSignature && now - lastLoginAttemptAt < 120000) return;
+    lastLoginAttemptSignature = fingerprint;
+    lastLoginAttemptAt = now;
+    await beginEmailLogin(pageRef);
+  } catch (error) {
+    emitStatus("失败", { step: "state-check", error: error.message });
+  } finally {
+    loginMonitorBusy = false;
+  }
+}
+'''
+updated=updated[:start]+newMonitor+updated[end:]
+assert updated!=old
+p.write_text(updated)
+result=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
+if result.returncode!=0:
+ p.write_text(old)
+ print('ROLLED_BACK_SYNTAX_ERROR',result.stderr[:600])
+ raise SystemExit(1)
+print('LOGIN_MONITOR_PATCH_APPLIED')
+print('SYNTAX_OK')
+print('STATE_LOCK_RESET', 'loginFlowActive = false;\n  }\n}' in updated)
+print('NO_PAGE_RELOAD_ON_CHALLENGE', '安全检查仍在进行；不会重复导航或刷新。' in updated)
+print('SOURCE_FILE',str(p))
+PY
