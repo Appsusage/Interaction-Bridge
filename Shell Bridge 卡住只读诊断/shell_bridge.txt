@@ -1,0 +1,25 @@
+cd /home/runner/workspace/ai-agent || exit 1
+node --input-type=module <<'READ_ONLY_BRIDGE_STATUS'
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+for (const [name,url] of [
+ ['AI_HEALTH','http://127.0.0.1:3000/health'],
+ ['AI_V2_STATUS','http://127.0.0.1:3000/shell-multi/status'],
+ ['STANDALONE_V2_HEALTH','http://127.0.0.1:3102/health']
+]) {
+ try {
+  const r=await fetch(url,{signal:AbortSignal.timeout(3000)});
+  console.log(name,JSON.stringify({status:r.status,body:(await r.text()).slice(0,600)}));
+ } catch(e) { console.log(name,JSON.stringify({error:e.message})); }
+}
+const lines=execFileSync('ps',['-eo','pid,ppid,stat,args'],{encoding:'utf8'}).split('\n');
+for (const line of lines) {
+ if (/node.*(backend\/server\.js|bridge\/shell\/(?:multi-task\/|github_adaptor\.js|server\.js))/.test(line) &&
+     !line.includes('READ_ONLY_BRIDGE_STATUS')) console.log('BRIDGE_PROCESS',line.trim());
+}
+for (const dir of ['bridge/shell/multi-task','bridge/shell']) {
+ try { console.log('DIRECTORY',dir,fs.readdirSync(dir).filter(n=>/(risk|task|state|queue|lock|command|server|supervisor)/i.test(n)).slice(0,40)); }
+ catch(e) { console.log('DIRECTORY_ERROR',dir,e.code); }
+}
+console.log('READ_ONLY_DIAGNOSTIC_COMPLETE');
+READ_ONLY_BRIDGE_STATUS
