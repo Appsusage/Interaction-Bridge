@@ -1,0 +1,18 @@
+printf 'ROLLBACK_INSPECT_BEGIN\n'
+for pid in 3638 3639; do
+ if [ -r /proc/$pid/cmdline ]; then
+  printf 'PID=%s CMD=' "$pid"
+  tr '\000' ' ' < /proc/$pid/cmdline
+  printf '\nPID=%s PARENT_AND_START=' "$pid"
+  ps -p "$pid" -o ppid=,lstart=,stat=
+  printf 'PID=%s STDOUT=' "$pid"
+  readlink /proc/$pid/fd/1 || true
+  printf 'PID=%s CWD=' "$pid"
+  readlink /proc/$pid/cwd || true
+ else
+  printf 'PID=%s NOT_RUNNING\n' "$pid"
+ fi
+done
+printf 'ALL_RELATED_PROCESSES\n'
+ps -eo pid=,ppid=,args= | grep -E 'bridge/shell/(github_adaptor|server)\.js|backend/server\.js' | grep -v grep || true
+printf 'ROLLBACK_INSPECT_END\n'
