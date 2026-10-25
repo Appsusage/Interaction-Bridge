@@ -17,5 +17,3 @@ printf 'V2_RISK_BARRIER_RELEASED_OK\n'
 
 [exit code] 0
 [finished] 2026-10-25T07:15:55.215Z
-
-Pending, to be continued.
