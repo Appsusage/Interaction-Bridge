@@ -1,0 +1,17 @@
+[command]
+set -e
+mkdir -p capabilities/navigation/data/raw
+test -s capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf || curl --fail --location --retry 2 --connect-timeout 15 --max-time 95 --continue-at - --output capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf.part 'https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf'
+if [ -f capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf.part ]; then mv capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf.part capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf; fi
+wc -c capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
+sha256sum capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
+[streams]
+[stderr]   % Total    % Received % Xferd  Average Speed  Time    Time    Time [stderr]   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0[stderr] 100    285 100    285   0      0    523      0                              0100    285 100    285   0      0    522      0                              0
+[stderr]   0      0   0      0   0      0      0      0                              0[stderr]   0 240.6M   0 431.5k   0      0 266.9k      0   15:23   00:01   15:22 402.8k[stderr]   4 240.6M   4 10.28M   0      0  3.92M      0   01:01   00:02   00:59  4.96M[stderr]   9 240.6M   9 23.38M   0      0  6.46M      0   00:37   00:03   00:34  7.61M[stderr]  15 240.6M  15 36.98M   0      0  8.00M      0   00:30  [stderr]  00:04   00:26  9.08M[stderr]  20 240.6M  20 49.91M   0      0  8.88M      0   00:27   00:05   00:22  9.83M[stderr]  26 240.6M  26 63.40M   0      0  9.58M      0   00:25   00:06   00:19 12.59M[stderr]  31 240.6M  [stderr] 31 76.53M   0      0 10.04M      0   00:23   00:07   00:16 13.24M[stderr]  37 240.6M  37 89.93M   0      0 10.43M      0   00:23   00:08   00:15 13.30M[stderr]  42 240.6M  42 102.4M   0      0 10.64M      0   00:22   00:09   00:13 13.07M[stderr]  47 240.6M  47 115.4M   0      0 10.86M      0   00:22   00:10   00:12 13.08M[stderr]  53 240.6M  53 128.2M   0      0 11.03M      0   00:21   00:11   00:10 12.94M[stderr]  58 240.6M  58 141.3M   0      0 11.19M      0   00:21   00:12   00:09 12.93[stderr] M[stderr]  64 240.6M  64 154.6M   0      0 11.34M      0   00:21   00:13   00:08 12.91M[stderr]  69 240.6M  69 167.6M   0      0 11.45M      0   00:21   00:14   00:07 13.02M[stderr]  75 240.6M  75 180.7M   0      0 11.56M      0   00:20   00:15   00:05 13.04M[stderr]  80 240.6M  80 194.2M   0      0 11.68M      0   00:20   00:16   00:04 13.19M[stderr]  86 240.6M  86 207.7M   0      0 11.78M      0   00:20   00:17   00:03 13.27M[stderr]  91 240.6M  91 220.9M [stderr]   0      0 11.85M      0   00:20   00:18   00:02 13.24M[stderr]  97 240.6M  97 234.4M   0      0 11.94M      0   00:20   00:19   00:01 13.35M[stderr] 100 240.6M 100 240.6M   0      0 11.97M      0   00:20   00:20         13.35M100 240.6M 100 240.6M   0      0 11.97M      0   00:20 [stderr]   00:20         13.35M100 240.6M 100 240.6M   0      0 11.97M      0   00:20   00:20         13.35M
+[stdout] 252386711 capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
+[stdout] 92e10b7d3d6b415758fa8e5720411fcb20e431e1f7d7f3e1420a2703289edd23  capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
+
+[exit code] 0
+Progress: Completed
