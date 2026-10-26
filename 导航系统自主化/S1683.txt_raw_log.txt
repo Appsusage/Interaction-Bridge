@@ -1,0 +1,71 @@
+[command]
+for n in python3 pip3 nix-shell git; do command -v "$n" || true; done
+python3 --version
+docker version --format '{{.Server.Version}}' 2>&1 | head -5
+curl -IL --max-time 15 'https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf' 2>&1 | head -22
+git remote -v
+rg -n 'node:sqlite|sqlite|osrm|maplibre' capabilities/navigation backend | head -35
+[streams]
+[stdout] /repl/tools/bin/python3
+[stdout] /nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/nix-shell
+[stdout] /nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/git
+[stdout] Python 3.14.6
+[stdout] 
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+[stdout]   % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0           00:01              0  0      0   0      0   0      0      0      0           00:01              0
+  0      0   0      0   0      0      0      0           00:01              0  0 240.6M   0      0   0      0      0      0           00:01              0  0 240.6M   0      0   0      0      0      0           00:01              0  0 240.6M   0      0   0      0      0      0           00:01              0
+HTTP/1.1 307 Temporary Redirect
+Date: Mon, 26 Oct 2026 05:26:25 GMT
+Server: Apache
+Cache-Control: max-age=600, public
+Location: https://download.geofabrik.de/asia/malaysia-singapore-brunei-261025.osm.pbf
+Content-Type: text/html; charset=iso-8859-1
+Cache-Status: download-proxy12;fwd=stale;detail=match
+Via: 1.1 download-proxy12 (squid/6.14)
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 00:25:26 GMT
+Server: Apache
+Last-Modified: Mon, 26 Oct 2026 00:10:12 GMT
+ETag: "f0b1d97-65eb32758f892"
+Accept-Ranges: bytes
+Content-Length: 252386711
+Cache-Control: max-age=63072000, public
+[stdout] gitsafe-backup	git://gitsafe:5418/backup.git (fetch)
+gitsafe-backup	git://gitsafe:5418/backup.git (push)
+[stdout] backend/sync/full_project_inventory.js:55: if(/(\.log(\.|$)|\.bak($|[-.])|\.backup($|[-.])|\.old$|\.tmp$|\.lock$|\.sqlite($|[.-])|\.db($|[.-])|\.pem$|\.key$|\.p12$|\.pfx$|\.enc$|\.aifull$)/i.test(lower))return false;
+backend/backup/portable_migration.js:35:  if (/\.(?:pem|key|p12|pfx|crt|db|sqlite|sqlite3|zip|tar|gz|log|map|bin|pt|pth|safetensors)$/i.test(basename))return false;
+backend/migration/migration_snapshot_stager.js:11:import { DatabaseSync, backup as sqliteBackup } from 'node:sqlite';
+backend/migration/migration_snapshot_stager.js:21:async function sqliteFile(path){
+backend/migration/migration_snapshot_stager.js:40:  try{db=new DatabaseSync(source,{readOnly:true,timeout:3000});await sqliteBackup(db,dest,{pagesPerStep:64});}
+backend/migration/migration_snapshot_stager.js:56:  let fileCount=0,total=0,sqliteCount=0,excluded=0;
+backend/migration/migration_snapshot_stager.js:69:        if(!ent.isFile()||SKIP_FILE.has(ent.name)||/\.(?:sqlite|db)-(?:wal|shm)$/.test(ent.name)||/-wal$|-shm$/.test(ent.name)){excluded++;continue;}
+backend/migration/migration_snapshot_stager.js:73:        const isSqlite=await sqliteFile(sourceFile);
+backend/migration/migration_snapshot_stager.js:78:        if(isSqlite)sqliteCount++;
+backend/migration/migration_snapshot_stager.js:86:    return {...result,sourceMode:'live-staged',stagedFiles:fileCount,sqliteOnlineBackups:sqliteCount,
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:11:import { DatabaseSync, backup as sqliteBackup } from 'node:sqlite';
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:20:async function sqliteFile(path){
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:39:  try{await sqliteBackup(db,dest,{pagesPerStep:64});}
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:54:  let fileCount=0,total=0,sqliteCount=0,excluded=0;
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:67:        if(!ent.isFile()||SKIP_FILE.has(ent.name)||/\.(?:sqlite|db)-(?:wal|shm)$/.test(ent.name)||/-wal$|-shm$/.test(ent.name)){excluded++;continue;}
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:71:        const isSqlite=await sqliteFile(sourceFile);
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:76:        if(isSqlite)sqliteCount++;
+backend/migration/migration_snapshot_stager.js.before-sqlite-diagnostics:83:    return {...result,sourceMode:'live-staged',stagedFiles:fileCount,sqliteOnlineBackups:sqliteCount,
+backend/migration/migration_snapshot_stager.js.backup-pathguard:11:import { DatabaseSync, backup as sqliteBackup } from 'node:sqlite';
+backend/migration/migration_snapshot_stager.js.backup-pathguard:20:async function sqliteFile(path){
+backend/migration/migration_snapshot_stager.js.backup-pathguard:39:  try{await sqliteBackup(db,dest,{pagesPerStep:64});}
+backend/migration/migration_snapshot_stager.js.backup-pathguard:54:  let fileCount=0,total=0,sqliteCount=0,excluded=0;
+backend/migration/migration_snapshot_stager.js.backup-pathguard:67:        if(!ent.isFile()||SKIP_FILE.has(ent.name)||/\.(?:sqlite|db)-(?:wal|shm)$/.test(ent.name)||/-wal$|-shm$/.test(ent.name)){excluded++;continue;}
+backend/migration/migration_snapshot_stager.js.backup-pathguard:71:        const isSqlite=await sqliteFile(sourceFile);
+backend/migration/migration_snapshot_stager.js.backup-pathguard:76:        if(isSqlite)sqliteCount++;
+backend/migration/migration_snapshot_stager.js.backup-pathguard:83:    return {...result,sourceMode:'live-staged',stagedFiles:fileCount,sqliteOnlineBackups:sqliteCount,
+backend/migration/tests/migration_snapshot_stager.test.js:6:import {DatabaseSync} from 'node:sqlite';
+backend/migration/tests/migration_snapshot_stager.test.js:29:  assert.equal(x.sourceMode,'live-staged');assert.equal(x.sqliteOnlineBackups,1);assert.equal(x.includedMemory,true);assert.equal(x.includedBridge,true);
+backend/migration/tests/migration_snapshot_stager.test.js.before-layout-fix:6:import {DatabaseSync} from 'node:sqlite';
+backend/migration/tests/migration_s[stdout] napshot_stager.test.js.before-layout-fix:29:  assert.equal(x.sourceMode,'live-staged');assert.equal(x.sqliteOnlineBackups,1);assert.equal(x.includedMemory,true);assert.equal(x.includedBridge,true);
+
+[exit code] 0
+Progress: Completed
