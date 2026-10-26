@@ -1,9 +1,0 @@
-set -eu
-cd /home/runner/workspace/ai-agent
-printf 'PROJECT_DELIVERY_DRY_RUN_START\n'
-node --input-type=module <<'NODE'
-import { uploadProjectDeliveryOnce } from './backend/sync/project_delivery_uploader.js';
-const r=await uploadProjectDeliveryOnce({root:'/home/runner/workspace/ai-agent',apply:false});
-console.log(JSON.stringify({status:r.status,examined:r.examined,pending:r.pending,blacklistedCandidates:r.blacklisted,alreadyBlacklisted:r.skippedBlacklisted}));
-NODE
-printf 'PROJECT_DELIVERY_DRY_RUN_END\n'
