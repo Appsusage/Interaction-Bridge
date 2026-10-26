@@ -1,0 +1,22 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'GEN_LIVE_DRY_RUN_START\n'
+node --input-type=module <<'NODE'
+import { synchronizeGenOnce } from './backend/sync/gen_bidirectional_sync.js';
+const r=await synchronizeGenOnce({
+  root:'/home/runner/workspace/ai-agent',
+  cachePath:'/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo',
+  statePath:'/home/runner/workspace/.gen-sync-state.json',
+  apply:false
+});
+console.log(JSON.stringify({status:r.status,pendingCount:r.pendingCount,blockedCount:r.blockedCount,revision:r.revision,actions:(r.pending??[]).reduce((a,x)=>(a[x.action]=(a[x.action]??0)+1,a),{})}));
+NODE
+printf 'GEN_LIVE_DRY_RUN_END\n'
+[streams]
+[stdout] GEN_LIVE_DRY_RUN_START
+[stdout] {"status":"dry_run","pendingCount":63,"blockedCount":0,"revision":"67479fb9cd3d3525afdccae158a69601d7388641","actions":{"push":2,"create":13}}
+[stdout] GEN_LIVE_DRY_RUN_END
+
+[exit code] 0
+Progress: Completed
