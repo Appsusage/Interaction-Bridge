@@ -1,0 +1,39 @@
+[command]
+set -e
+nix-shell -p osmium-tool --run 'osmium --version' | head -3
+nix-shell -p osmium-tool --run 'osmium fileinfo -e capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf' | head -22
+curl -fsSL --max-time 20 'https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf.md5' | head -2
+mkdir -p capabilities/navigation/data/regions
+nix-shell -p osmium-tool --run 'osmium extract --strategy=simple -b 101.50,2.75,102.05,3.45 -o capabilities/navigation/data/regions/selangor-pilot.osm.pbf capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf'
+wc -c capabilities/navigation/data/regions/selangor-pilot.osm.pbf
+[streams]
+[stdout] osmium version 1.13.1
+libosmium version 2.17.0
+Supported PBF compression types: none zlib lz4
+[stdout] File:
+  Name: capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
+  Format: PBF
+  Compression: none
+  Size: 252386711
+Header:
+  Bounding boxes:
+    (99.25611,0.830813,119.668278,7.736849)
+  With history: no
+  Options:
+    generator=osmium/1.16.0
+    osmosis_replication_base_url=https://download.geofabrik.de/asia/malaysia-singapore-brunei-updates
+    osmosis_replication_sequence_number=4950
+    osmosis_replication_timestamp=2026-10-25T21:21:21Z
+    pbf_dense_nodes=true
+    pbf_optional_feature_0=Sort.Type_then_ID
+    sorting=Type_then_ID
+    timestamp=2026-10-25T21:21:21Z
+Data:
+  Bounding box: (71.8024993,-6.1205549,140.6689398,34.9706497)
+  Timestamps:
+    First: 2007-07-20T21:19:47Z
+[stdout] b606fbc29d561aeeb5dab4d952ae5350  malaysia-singapore-brunei-latest.osm.pbf
+[stdout] 39157343 capabilities/navigation/data/regions/selangor-pilot.osm.pbf
+
+[exit code] 0
+Progress: Completed
