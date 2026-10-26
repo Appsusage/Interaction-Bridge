@@ -1,0 +1,29 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'GEN_ACTIONS_PREFLIGHT\n'
+node --input-type=module <<'NODE'
+import {readdir,readFile} from 'node:fs/promises';
+const base='.github/workflows';
+let files=[];
+try{files=await readdir(base)}catch{}
+const meta=[];
+for(const f of files){let s=await readFile(base+'/'+f,'utf8');meta.push({extension:f.split('.').at(-1),pushTrigger:/^\s*push\s*:/m.test(s)||/^on\s*:\s*\[?push/m.test(s),hasWorkflowDispatch:/workflow_dispatch/.test(s),hasSecretReference:/secrets\./.test(s)});}
+console.log(JSON.stringify(meta));
+NODE
+if gh api repos/Appsusage/Gen/actions/permissions --jq '.enabled' >/dev/null 2>&1; then
+  printf 'GEN_ACTIONS_ENABLED='
+  gh api repos/Appsusage/Gen/actions/permissions --jq '.enabled'
+else
+  printf 'GEN_ACTIONS_PERMISSION_UNKNOWN\n'
+fi
+printf 'GEN_ACTIONS_PREFLIGHT_END\n'
+
+[streams]
+[stdout] GEN_ACTIONS_PREFLIGHT
+[stdout] [{"extension":"yml","pushTrigger":false,"hasWorkflowDispatch":true,"hasSecretReference":false}]
+[stdout] GEN_ACTIONS_ENABLED=[stdout] true
+[stdout] GEN_ACTIONS_PREFLIGHT_END
+
+[exit code] 0
+Progress: Completed
