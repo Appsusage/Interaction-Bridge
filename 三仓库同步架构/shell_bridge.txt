@@ -1,0 +1,13 @@
+set -eu
+REAL=/home/runner/workspace/ai-agent
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+printf 'STAGED_CLEAN_STATUS\n'
+git -C "$STAGED" status --porcelain | head -30
+printf 'GEN_CACHE_STATUS\n'
+if [ -e /home/runner/workspace/.gen-sync-cache ]; then printf 'cache_exists\n'; else printf 'cache_absent\n'; fi
+printf 'WORKFLOW_REFERENCES\n'
+if [ -f /home/runner/workspace/.replit ]; then rg -n 'Genesis Sync|sync_supervisor|tri_repo_supervisor|workflow' /home/runner/workspace/.replit | head -50 || true; fi
+if [ -f "$REAL/.replit" ]; then rg -n 'Genesis Sync|sync_supervisor|tri_repo_supervisor|workflow' "$REAL/.replit" | head -50 || true; fi
+printf 'RUNNING_PID_METADATA\n'
+node "$REAL/backend/sync/sync_supervisor.js" status
+printf 'END\n'
