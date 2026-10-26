@@ -1,0 +1,16 @@
+#!/bin/bash
+set -uo pipefail
+C=/home/runner/workspace/.gen-sync-cache
+test -d "$C/.git" || exit 2
+printf 'STATUS\n'
+git -C "$C" status --short
+printf 'COUNTS head-only remote-only\n'
+git -C "$C" rev-list --left-right --count HEAD...origin/main
+printf 'LOCAL COMMITS\n'
+git -C "$C" log --format='%h %s' origin/main..HEAD -12
+printf 'REMOTE COMMITS\n'
+git -C "$C" log --format='%h %s' HEAD..origin/main -12
+printf 'DIFF NAMES LOCAL\n'
+git -C "$C" diff --name-only "$(git -C "$C" merge-base HEAD origin/main)" HEAD
+printf 'DIFF NAMES REMOTE\n'
+git -C "$C" diff --name-only "$(git -C "$C" merge-base HEAD origin/main)" origin/main
