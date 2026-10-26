@@ -1,0 +1,70 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'REPLIT_SECRET_WRITE_CAPABILITY_CHECK\n'
+for name in replit repl replit-cli rpl; do
+  if command -v "$name" >/dev/null 2>&1; then printf '%s=available\n' "$name"; else printf '%s=missing\n' "$name"; fi
+done
+printf 'REPLIT_RELEVANT_ENV_NAMES_ONLY\n'
+node --input-type=module <<'NODE'
+const names=Object.keys(process.env).filter(n=>/^REPLIT|^REPL_|^REPL_ID$/.test(n)).sort();
+console.log(names.map(n=>n+'=configured').join('\n'));
+NODE
+printf 'CAPABILITY_CHECK_DONE\n'
+[streams]
+[stdout] REPLIT_SECRET_WRITE_CAPABILITY_CHECK
+[stdout] replit=available
+[stdout] repl=missing
+[stdout] replit-cli=missing
+[stdout] rpl=missing
+REPLIT_RELEVANT_ENV_NAMES_ONLY
+[stdout] REPLIT_ARTIFACT_ROUTER=configured
+REPLIT_BASHRC=configured
+REPLIT_CLI=configured
+REPLIT_CLUSTER=configured
+REPLIT_CONNECTORS_HOSTNAME=configured
+REPLIT_CONNECTOR_TOOLS_PATH=configured
+REPLIT_CONTAINER=configured
+REPLIT_DB_URL=configured
+REPLIT_DEV_DOMAIN=configured
+REPLIT_DISABLE_DOCKER=configured
+REPLIT_DOMAINS=configured
+REPLIT_ENVIRONMENT=configured
+REPLIT_EXPO_DEV_DOMAIN=configured
+REPLIT_GENERATED_SSL_CERT_DIR=configured
+REPLIT_GIT_PROXY=configured
+REPLIT_GIT_PROXY_SOURCE_ORIGINS=configured
+REPLIT_HELIUM_ENABLED=configured
+REPLIT_HELIUM_USER_QUOTA_BYTES=configured
+REPLIT_LD_AUDIT=configured
+REPLIT_MODE=configured
+REPLIT_NIX_CHANNEL=configured
+REPLIT_NIX_PACKAGE_STORE_ROOT=configured
+REPLIT_PID1_FLAG_NO_SNIX=configured
+REPLIT_PID1_NIX_BIN_DIR=configured
+REPLIT_PID1_VERSION=configured
+REPLIT_PID2=configured
+REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE=configured
+REPLIT_RIPPKGS_INDICES=configured
+REPLIT_RTLD_LOADER=configured
+REPLIT_SEMGREP_RUNTIME_PATH=configured
+REPLIT_SESSION=configured
+REPLIT_USER=configured
+REPLIT_USERID=configured
+REPL_HOME=configured
+REPL_ID=configured
+REPL_IDENTITY=configured
+REPL_IDENTITY_KEY=configured
+REPL_IN_MICROVM=configured
+REPL_LANGUAGE=configured
+REPL_ORG_ID=configured
+REPL_ORG_IS_ENTERPRISE=configured
+REPL_ORG_TYPE=configured
+REPL_OWNER=configured
+REPL_OWNER_ID=configured
+REPL_PUBKEYS=configured
+REPL_SLUG=configured
+[stdout] CAPABILITY_CHECK_DONE
+
+[exit code] 0
+Progress: Completed
