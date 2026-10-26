@@ -1,0 +1,14 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+cd /home/runner/workspace/ai-agent || exit 2
+node -e 'const fs=require("node:fs"); const p="backend/sync/migration_key_custody.js"; console.log("KEY_MODULE_PRESENT="+fs.existsSync(p)); console.log("DROPBOX_CONFIG="+JSON.stringify({appKey:!!process.env.DROPBOX_APP_KEY,appSecret:!!process.env.DROPBOX_APP_SECRET,refreshToken:!!process.env.DROPBOX_REFRESH_TOKEN}));'
+node backend/sync/tri_repo_supervisor.js status
+
+[streams]
+[stdout] KEY_MODULE_PRESENT=false
+[stdout] DROPBOX_CONFIG={"appKey":true,"appSecret":true,"refreshToken":true}
+[stdout] {"status":"running","pid":41525,"workers":{"Gen":{"status":"error","executed":false,"error":"Command failed: git merge --ff-only --quiet origin/main\nhint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config set","at":"2026-10-26T23:54:06.134Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-26T23:53:51.002Z"},"Migration":{"status":"encryption_key_missing","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-26T22:29:04.682Z"}}}
+
+[exit code] 0
+Progress: Completed
