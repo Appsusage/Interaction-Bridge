@@ -1,0 +1,16 @@
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+test -s capabilities/navigation/data/regions/selangor-pilot.osm.pbf
+test ! -e capabilities/navigation/data/regions/selangor.sqlite
+region_stage_dir=$(mktemp -d capabilities/navigation/data/regions/.import-stage.XXXXXX)
+region_stage="$region_stage_dir/selangor.sqlite"
+nix-shell -p osmium-tool --run 'osmium export -f geojsonseq -u type_id capabilities/navigation/data/regions/selangor-pilot.osm.pbf' | node capabilities/navigation/local/import_osm.js "$region_stage"
+sqlite3 "$region_stage" 'PRAGMA quick_check;'
+sqlite3 "$region_stage" "SELECT 'features=' || COUNT(*) FROM features;"
+sqlite3 "$region_stage" "SELECT 'nodes=' || COUNT(*) FROM nav_nodes;"
+sqlite3 "$region_stage" "SELECT 'edges=' || COUNT(*) FROM nav_edges;"
+test "$(sqlite3 "$region_stage" 'SELECT COUNT(*) FROM nav_edges;')" -gt 1000
+mv "$region_stage" capabilities/navigation/data/regions/selangor.sqlite
+rmdir "$region_stage_dir" || true
+wc -c capabilities/navigation/data/regions/selangor.sqlite
+echo SELANGOR_DB_READY
