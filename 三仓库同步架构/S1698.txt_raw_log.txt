@@ -1,0 +1,28 @@
+[command]
+set -euo pipefail
+repo=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+test -d "$repo/.git"
+git -C "$repo" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
+git -C "$repo" merge --ff-only --quiet origin/main
+printf 'GEN_WORKTREE_SHA=%s\n' "$(git -C "$repo" rev-parse HEAD)"
+cd "$repo"
+node backend/sync/tests/project_delivery_uploader.test.js
+printf 'GEN_DELIVERY_TESTS_COMPLETE\n'
+
+[streams]
+[stdout] GEN_WORKTREE_SHA=c077bebdf0d7325b23f288fbf843cabd1cd199e4
+[stdout] ✔ upload inventory independently finds numbered directories and regular files (12.787704ms)
+[stdout] ✔ blacklisted paths persist without replacement on repeated failure (4.013892ms)
+[stdout] ✔ invalid file is blacklisted while the next good file uploads; no remote pull (371.204532ms)
+[stdout] ℹ tests 3
+[stdout] ℹ suites 0
+[stdout] ℹ pass 3
+ℹ fail 0
+[stdout] ℹ cancelled 0
+[stdout] ℹ skipped 0
+[stdout] ℹ todo 0
+[stdout] ℹ duration_ms 394.970686
+[stdout] GEN_DELIVERY_TESTS_COMPLETE
+
+[exit code] 0
+Progress: Completed
