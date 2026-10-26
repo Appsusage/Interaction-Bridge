@@ -1,9 +1,0 @@
-set -euo pipefail
-repo=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
-test -d "$repo/.git"
-git -C "$repo" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
-git -C "$repo" merge --ff-only --quiet origin/main
-printf 'GEN_WORKTREE_SHA=%s\n' "$(git -C "$repo" rev-parse HEAD)"
-cd "$repo"
-node backend/sync/tests/project_delivery_uploader.test.js
-printf 'GEN_DELIVERY_TESTS_COMPLETE\n'
