@@ -1,0 +1,57 @@
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node --check backend/server.js
+if rg -q '^registerLocalNavigation\(app\);$' backend/server.js; then
+  echo "LOCAL_NAV_ALREADY_MOUNTED"
+else
+  git apply --check <<'NAV_MOUNT_PATCH'
+diff --git a/backend/server.js b/backend/server.js
+--- a/backend/server.js
++++ b/backend/server.js
+@@ -17,5 +17,6 @@
+ 
+ import express from "express";
+ import { registerVisionRoutes } from "./vision/routes.js";
++import { registerLocalNavigation } from "../capabilities/navigation/local/service.js";
+ 
+ console.log("RUNNING SERVER:", import.meta.url);
+@@ -136,8 +137,10 @@
+ app.get("/navigation/:asset", (req, res) => {
+   if (!["app.js", "style.css", "gps.js", "map.js"].includes(req.params.asset)) return res.sendStatus(404);
+   res.sendFile(path.join(__dirname, "../capabilities/navigation", req.params.asset));
+ });
+ 
++registerLocalNavigation(app);
++
+ app.use(
+ express.static(
+ path.join(
+NAV_MOUNT_PATCH
+  git apply <<'NAV_MOUNT_PATCH'
+diff --git a/backend/server.js b/backend/server.js
+--- a/backend/server.js
++++ b/backend/server.js
+@@ -17,5 +17,6 @@
+ 
+ import express from "express";
+ import { registerVisionRoutes } from "./vision/routes.js";
++import { registerLocalNavigation } from "../capabilities/navigation/local/service.js";
+ 
+ console.log("RUNNING SERVER:", import.meta.url);
+@@ -136,8 +137,10 @@
+ app.get("/navigation/:asset", (req, res) => {
+   if (!["app.js", "style.css", "gps.js", "map.js"].includes(req.params.asset)) return res.sendStatus(404);
+   res.sendFile(path.join(__dirname, "../capabilities/navigation", req.params.asset));
+ });
+ 
++registerLocalNavigation(app);
++
+ app.use(
+ express.static(
+ path.join(
+NAV_MOUNT_PATCH
+  node --check backend/server.js
+  echo "LOCAL_NAV_MOUNT_SOURCE_UPDATED"
+fi
+rg -n 'registerLocalNavigation' backend/server.js
+curl -sS -o /dev/null -w 'LIVE_STATUS_HTTP=%{http_code}\n' --max-time 4 http://127.0.0.1:3000/navigation/local/api/status || true
