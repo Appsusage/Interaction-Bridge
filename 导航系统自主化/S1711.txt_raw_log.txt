@@ -1,0 +1,253 @@
+[command]
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node -e '
+(async () => {
+const { DatabaseSync } = require("node:sqlite");
+const { calculateLocalRoute } = await import("./capabilities/navigation/local/route_worker_client.js");
+const file = "capabilities/navigation/data/regions/selangor.sqlite";
+const db = new DatabaseSync(file, { readOnly: true });
+const edge = db.prepare("SELECT a.lat AS a_lat,a.lon AS a_lon,b.lat AS b_lat,b.lon AS b_lon,e.meters FROM nav_edges e JOIN nav_nodes a ON a.id=e.src JOIN nav_nodes b ON b.id=e.dst WHERE (e.modes & 2)!=0 AND e.meters BETWEEN 80 AND 200 LIMIT 1").get();
+db.close();
+if (!edge) throw new Error("No eligible walking edge");
+const result = await calculateLocalRoute(file, { origin: { latitude: edge.a_lat, longitude: edge.a_lon }, destination: { latitude: edge.b_lat, longitude: edge.b_lon }, mode: "walking" });
+console.log(JSON.stringify({ edgeMeters: edge.meters, available: result.available, distanceMeters: result.distanceMeters, coordinatesCount: result.geometry?.coordinates?.length, reason: result.reason, error: result.error }));
+if (!result.available || result.geometry?.type !== "LineString") process.exitCode = 1;
+})().catch(error => { console.error(error); process.exitCode = 1; });
+'
+rg -n 'Navigation preview|app.use\(express.json|registerVisionRoutes|app.get\(\["/navigation"|app.get\("/navigation/:asset"|app.use\(' backend/server.js | head -35
+sed -n '1,125p' backend/server.js
+sed -n '125,215p' backend/server.js
+
+[streams]
+[stdout] {"edgeMeters":89.10250166950121,"available":true,"distanceMeters":89,"coordinatesCount":2}
+[stdout] 19:import { registerVisionRoutes } from "./vision/routes.js";
+116:registerVisionRoutes(app, express, { root: path.resolve(__dirname, "..") });
+118:app.use(express.json());
+121:app.use("/extension/browser/experience/data", (_req, res) => res.sendStatus(404));
+122:app.use("/extension/browser/chatgpt/experience", (_req, res) => res.sendStatus(404));
+123:app.use("/extension", express.static(path.join(__dirname, "extension")));
+131: // Navigation preview: serve only explicitly allowed public files.
+132:app.get(["/navigation", "/navigation/"], (req, res) => {
+136:app.get("/navigation/:asset", (req, res) => {
+141:app.use(
+156:app.use(
+[stdout] // backend/server.js
+import {
+callFishAudio
+}
+from "./provider/fish_audio.js";
+
+import {
+    autoLearn
+}
+from "./learning.js";
+
+import {
+    loadMemory,
+    updateMemory
+}
+from "./memory.js";
+
+import express from "express";
+import { registerVisionRoutes } from "./vision/routes.js";
+
+console.log("RUNNING SERVER:", import.meta.url);
+
+import dotenv from "dotenv";
+
+import path from "path";
+import { readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+
+import { fileURLToPath } from "url";
+
+import uploadRouter from "./upload.js";
+
+import {
+    generateTopicCombination
+}
+from "./extension/autonomy/topic_generator.js";
+
+
+dotenv.config();
+
+
+const __filename =
+fileURLToPath(import.meta.url);
+
+
+const __dirname =
+path.dirname(__filename);
+
+
+import { askAI }
+from "./ai_core.js";
+
+import { attachBrowserLive } from "./extension/browser/browser_live.js";
+import { attachBackendConsole } from "./console_live.js";
+import { installMultiTaskShellFloats } from "../bridge/shell/multi-task/shell_floats.js";
+import { startChatGPTLive } from "./extension/browser/chatgpt_live.js";
+
+import {
+  createBrowserSession,
+  getBrowserPage,
+  closeBrowserSession,
+  openPage,
+  readPage,
+  clickElement,
+  typeText,
+  scrollPage,
+  captureScreenshot
+ } from "./extension/browser/browser_service.js";
+
+import {
+  acquireControl as acquirePetCursor,
+  moveTo as movePetCursor,
+  click as clickPetCursor,
+  scroll as scrollPetCursor,
+  releaseControl as releasePetCursor,
+  getControlStatus as getPetCursorStatus
+} from "./extension/pet/cursor/index.js";
+import {
+  captureFrame as capturePetRecognitionFrame,
+  inspectPage as inspectPetRecognitionPage,
+  verifyAfterAction as verifyPetRecognitionAction
+} from "./extension/pet/recognition/index.js";
+
+
+import {
+    updateUserProfile
+}
+from "./profile.js";
+
+
+import {
+    receiveAIInstruction
+}
+from "./extension/nexus.js";
+
+
+import {
+    getGoogleAuthUrl,
+    getGoogleTokens
+}
+from "./extension/obsidian/google_auth.js";
+
+
+import {
+    findObsidianVault
+} from "./extension/obsidian/obsidian_connector.js";
+
+
+
+
+
+const app = express();
+
+console.log("Google OAuth routes loading...");
+
+registerVisionRoutes(app, express, { root: path.resolve(__dirname, "..") });
+
+app.use(express.json());
+
+// Keep Browser learning histories private; the rest of /extension stays unchanged.
+app.use("/extension/browser/experience/data", (_req, res) => res.sendStatus(404));
+app.use("/extension/browser/chatgpt/experience", (_req, res) => res.sendStatus(404));
+app.use("/extension", express.static(path.join(__dirname, "extension")));
+
+// Only the public camera assets are exposed from the vision capability.
+[stdout] // Only the public camera assets are exposed from the vision capability.
+app.get("/capabilities/vision/:asset", (req, res) => {
+  if (!["camera.js", "camera.css", "motion.js", "labels.js", "detector.js", "detector-worker.js", "text.js", "recognition.js"].includes(req.params.asset)) return res.sendStatus(404);
+  res.sendFile(path.join(__dirname, "../capabilities/vision", req.params.asset));
+});
+
+ // Navigation preview: serve only explicitly allowed public files.
+app.get(["/navigation", "/navigation/"], (req, res) => {
+  if (!req.path.endsWith("/")) return res.redirect(302, "/navigation/");
+  res.sendFile(path.join(__dirname, "../capabilities/navigation/index.html"));
+});
+app.get("/navigation/:asset", (req, res) => {
+  if (!["app.js", "style.css", "gps.js", "map.js"].includes(req.params.asset)) return res.sendStatus(404);
+  res.sendFile(path.join(__dirname, "../capabilities/navigation", req.params.asset));
+});
+
+app.use(
+express.static(
+path.join(
+__dirname,
+"../frontend"
+)
+)
+);
+
+
+
+
+
+
+// 上传功能
+app.use(
+uploadRouter
+);
+
+
+
+// 自主模式接口
+
+app.post(
+"/autonomy",
+
+async(req,res)=>{
+
+
+try{
+
+
+const {
+autonomyType,
+topic,
+stage
+}
+=
+req.body;
+
+
+
+let autonomyContext=null;
+
+
+
+if(
+autonomyType==="topic"
+){
+
+autonomyContext =
+topic ||
+generateTopicCombination(stage);
+
+
+console.log(
+"自主话题:",
+autonomyContext
+);
+
+
+}
+
+
+
+
+const memory =
+loadMemory();
+
+
+
+
+const aiResponse =
+await askAI(
+
+
+[exit code] 0
+Progress: Completed
