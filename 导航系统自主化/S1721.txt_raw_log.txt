@@ -50,5 +50,3 @@ console.log("RESTART_WATCHDOG_SCHEDULED "+JSON.stringify({chatPid:pid,watchdogPi
 
 [exit code] 0
 [finished] 2026-10-26T22:29:30.980Z
-
-Pending, to be continued.
