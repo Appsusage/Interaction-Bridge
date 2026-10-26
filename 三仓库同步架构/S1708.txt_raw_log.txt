@@ -1,0 +1,45 @@
+[command]
+set -eu
+REAL=/home/runner/workspace/ai-agent
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+git -C "$STAGED" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
+git -C "$STAGED" merge --ff-only --quiet origin/main
+printf 'GEN_STAGED_TESTS\n'
+cd "$STAGED"
+node --test --test-reporter=spec backend/sync/tests/gen_bidirectional_sync.test.js backend/sync/tests/project_delivery_uploader.test.js backend/sync/tests/migration_repository_sync.test.js backend/sync/tests/transition_replit_sync_workflow.test.js
+printf 'INSTALL_NEW_SYNC_MODULES\n'
+for path in backend/sync/project_delivery_uploader.js backend/sync/gen_bidirectional_sync.js backend/sync/migration_repository_sync.js backend/sync/tri_repo_supervisor.js backend/sync/transition_replit_sync_workflow.js backend/sync/tests/project_delivery_uploader.test.js backend/sync/tests/gen_bidirectional_sync.test.js backend/sync/tests/migration_repository_sync.test.js backend/sync/tests/transition_replit_sync_workflow.test.js; do
+  if [ -e "$REAL/$path" ]; then
+    if cmp -s "$STAGED/$path" "$REAL/$path"; then printf 'already_identical:%s\n' "$path"; else printf 'REFUSE_EXISTING_DIFFERENT:%s\n' "$path"; exit 1; fi
+  fi
+done
+for path in backend/sync/project_delivery_uploader.js backend/sync/gen_bidirectional_sync.js backend/sync/migration_repository_sync.js backend/sync/tri_repo_supervisor.js backend/sync/transition_replit_sync_workflow.js backend/sync/tests/project_delivery_uploader.test.js backend/sync/tests/gen_bidirectional_sync.test.js backend/sync/tests/migration_repository_sync.test.js backend/sync/tests/transition_replit_sync_workflow.test.js; do
+  install -D -m 644 "$STAGED/$path" "$REAL/$path"
+done
+printf 'LIVE_MODULE_SYNTAX\n'
+node --check "$REAL/backend/sync/tri_repo_supervisor.js"
+node "$REAL/backend/sync/transition_replit_sync_workflow.js" status
+printf 'NEW_MODULE_INSTALL_COMPLETED\n'
+[streams]
+[stdout] GEN_STAGED_TESTS
+[stdout] ✔ Gen independently uploads, downloads and preserves three-way conflicts (580.635435ms)
+[stdout] ✔ Migration publishes only ciphertext; restores a complete verified tree and secrets (1460.597121ms)
+[stdout] ✔ upload inventory independently finds numbered directories and regular files (9.058804ms)
+[stdout] ✔ blacklisted paths persist without replacement on repeated failure (3.863233ms)
+✔ invalid file is blacklisted while the next good file uploads; no remote pull (542.19267ms)
+✔ only the three exact legacy sync workflow references are updated (1.041979ms)
+[stdout] ℹ tests 6
+ℹ suites 0
+[stdout] ℹ pass 6
+[stdout] ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+[stdout] ℹ todo 0
+ℹ duration_ms 1546.069608
+[stdout] INSTALL_NEW_SYNC_MODULES
+[stdout] LIVE_MODULE_SYNTAX
+[stdout] {"status":"legacy_configured","changed":false}
+[stdout] NEW_MODULE_INSTALL_COMPLETED
+
+[exit code] 0
+Progress: Completed
