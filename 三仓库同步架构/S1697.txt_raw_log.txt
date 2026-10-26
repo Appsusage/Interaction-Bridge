@@ -1,0 +1,28 @@
+[command]
+set -euo pipefail
+stage=/home/runner/workspace/gen-bootstrap.QXOKgc6O
+repo="$stage/repo"
+test -d "$repo/.git"
+head="$(git -C "$repo" rev-parse HEAD)"
+test "$head" = d92978ca314d210e1c952befde8eca4221b4a654
+test -z "$(git -C "$repo" status --porcelain)"
+printf 'GEN_PUSH_BEGIN\n'
+if git -C "$repo" -c 'credential.helper=!gh auth git-credential' push --quiet --set-upstream origin HEAD:main 2>"$stage/push.stderr"; then
+  remote="$(gh api repos/Appsusage/Gen/commits/main --jq .sha)"
+  test "$remote" = "$head"
+  printf 'GEN_PUSH_VERIFIED=%s\n' "$remote"
+  printf 'GEN_PUSH_COMPLETE\n'
+else
+  rc=$?
+  printf 'GEN_PUSH_FAILED exit=%s (stderr retained privately in staging)\n' "$rc"
+  exit "$rc"
+fi
+
+[streams]
+[stdout] GEN_PUSH_BEGIN
+[stdout] Uploading LFS objects: 100% (2/2), 551 MB | 18 MB/s, done.
+[stdout] GEN_PUSH_VERIFIED=d92978ca314d210e1c952befde8eca4221b4a654
+GEN_PUSH_COMPLETE
+
+[exit code] 0
+Progress: Completed
