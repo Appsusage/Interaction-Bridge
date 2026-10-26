@@ -1,0 +1,14 @@
+set -eu
+REAL=/home/runner/workspace/ai-agent
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+cd "$REAL"
+printf 'LEGACY_SYNC_STATUS\n'
+node backend/sync/sync_supervisor.js status
+printf 'TRI_REPO_STAGE_CHECK\n'
+git -C "$STAGED" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
+git -C "$STAGED" merge --ff-only --quiet origin/main
+node --check "$STAGED/backend/sync/tri_repo_supervisor.js"
+node "$STAGED/backend/sync/tri_repo_supervisor.js" status
+printf 'EXISTING_LOCAL_KEY_METADATA_ONLY\n'
+find backend/secrets -maxdepth 2 -type f -printf '%P\n' | sort
+printf 'CHECK_COMPLETE\n'
