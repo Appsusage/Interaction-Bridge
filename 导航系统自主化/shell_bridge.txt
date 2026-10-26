@@ -1,0 +1,3 @@
+gh auth status
+GH_PROMPT_DISABLED=1 timeout 25 gh api repos/Appsusage/Genesis/contents/capabilities/navigation/local/service.js --jq '.sha'
+git ls-remote gitsafe-backup HEAD | head -1
