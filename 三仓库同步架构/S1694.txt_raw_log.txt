@@ -1,0 +1,43 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'GEN_SOURCE_EDGE_AUDIT\n'
+if test -d .github/workflows; then
+  printf 'WORKFLOW_FILES='
+  find .github/workflows -type f | wc -l
+else printf 'WORKFLOW_FILES=0\n'; fi
+printf 'NESTED_GIT_DIRS='
+find . -type d -name .git -prune | wc -l
+printf 'EXTERNAL_SYMLINKS='
+node --input-type=module <<'NODE'
+import{readdir,readlink,lstat}from'node:fs/promises';
+import{resolve,join,dirname,isAbsolute,relative}from'node:path';
+const root=process.cwd();let external=0,broken=0,total=0;
+const stack=[''];
+while(stack.length){
+ const rel=stack.pop();let items;
+ try{items=await readdir(join(root,rel),{withFileTypes:true})}catch{continue}
+ for(const entry of items){const p=rel?rel+'/'+entry.name:entry.name;
+ if(entry.isDirectory()){stack.push(p);continue}
+ if(!entry.isSymbolicLink())continue;
+ total++;
+ const target=await readlink(join(root,p));
+ const abs=isAbsolute(target)?target:resolve(dirname(join(root,p)),target);
+ const r=relative(root,abs);
+ if(r.startsWith('..')||isAbsolute(r))external++;
+ try{await lstat(abs)}catch{broken++}
+ }
+}
+console.log(JSON.stringify({total,external,broken}));
+NODE
+printf 'GEN_SOURCE_EDGE_AUDIT_END\n'
+
+[streams]
+[stdout] GEN_SOURCE_EDGE_AUDIT
+[stdout] WORKFLOW_FILES=[stdout] 1
+[stdout] NESTED_GIT_DIRS=[stdout] 0
+[stdout] EXTERNAL_SYMLINKS=[stdout] {"total":42,"external":13,"broken":27}
+[stdout] GEN_SOURCE_EDGE_AUDIT_END
+
+[exit code] 0
+Progress: Completed
