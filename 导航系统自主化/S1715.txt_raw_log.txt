@@ -1,0 +1,104 @@
+[command]
+set -u
+cd /home/runner/workspace/ai-agent
+date -u +'%Y-%m-%dT%H:%M:%SZ'
+node --check backend/server.js
+rg -n 'registerLocalNavigation|registerVisionRoutes|navigation/:asset' backend/server.js || true
+git diff --numstat -- backend/server.js
+git diff -- backend/server.js | tail -80
+curl -sS -o /dev/null -w 'LIVE_LOCAL_HTTP=%{http_code}\n' --max-time 4 http://127.0.0.1:3000/navigation/local/api/status || true
+ps -eo pid,comm,args | rg 'server.js|nodemon|github_sync' | head -20 || true
+
+[streams]
+[stdout] 2026-10-26T21:57:10Z
+[stdout] 19:import { registerVisionRoutes } from "./vision/routes.js";
+116:registerVisionRoutes(app, express, { root: path.resolve(__dirname, "..") });
+136:app.get("/navigation/:asset", (req, res) => {
+[stdout] 78	1	ai-agent/backend/server.js
+[stdout] +registerVisionRoutes(app, express, { root: path.resolve(__dirname, "..") });
++
+ app.use(express.json());
+ 
++// Keep Browser learning histories private; the rest of /extension stays unchanged.
++app.use("/extension/browser/experience/data", (_req, res) => res.sendStatus(404));
++app.use("/extension/browser/chatgpt/experience", (_req, res) => res.sendStatus(404));
++app.use("/extension", express.static(path.join(__dirname, "extension")));
++
++// Only the public camera assets are exposed from the vision capability.
++app.get("/capabilities/vision/:asset", (req, res) => {
++  if (!["camera.js", "camera.css", "motion.js", "labels.js", "detector.js", "detector-worker.js", "text.js", "recognition.js"].includes(req.params.asset)) return res.sendStatus(404);
++  res.sendFile(path.join(__dirname, "../capabilities/vision", req.params.asset));
++});
++
++ // Navigation preview: serve only explicitly allowed public files.
++app.get(["/navigation", "/navigation/"], (req, res) => {
++  if (!req.path.endsWith("/")) return res.redirect(302, "/navigation/");
++  res.sendFile(path.join(__dirname, "../capabilities/navigation/index.html"));
++});
++app.get("/navigation/:asset", (req, res) => {
++  if (!["app.js", "style.css", "gps.js", "map.js"].includes(req.params.asset)) return res.sendStatus(404);
++  res.sendFile(path.join(__dirname, "../capabilities/navigation", req.params.asset));
++});
++
+ app.use(
+ express.static(
+ path.join(
+@@ -1340,6 +1379,43 @@ app.post("/browser/screenshot", requireBrowserKey, async (req, res) => {
+   }
+ });
+ 
++app.post("/browser/cursor/acquire", requireBrowserKey, async (req, res) => {
++  try { res.json(await acquirePetCursor(req.body.sessionId)); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/cursor/status", requireBrowserKey, (req, res) => {
++  try { res.json(getPetCursorStatus(req.body.sessionId)); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/cursor/move", requireBrowserKey, async (req, res) => {
++  try { res.json(await movePetCursor(req.body.sessionId, req.body.x, req.body.y)); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/cursor/click", requireBrowserKey, async (req, res) => {
++  try { res.json(await clickPetCursor(req.body.sessionId, { button: req.body.button, clickCount: req.body.clickCount })); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/cursor/scroll", requireBrowserKey, async (req, res) => {
++  try { res.json(await scrollPetCursor(req.body.sessionId, req.body.deltaX, req.body.deltaY)); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/cursor/release", requireBrowserKey, async (req, res) => {
++  try { res.json(await releasePetCursor(req.body.sessionId)); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/recognition/capture", requireBrowserKey, async (req, res) => {
++  try { res.json(await capturePetRecognitionFrame(req.body.sessionId, req.body || {})); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/recognition/inspect", requireBrowserKey, async (req, res) => {
++  try { res.json(await inspectPetRecognitionPage(req.body.sessionId)); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++app.post("/browser/recognition/verify", requireBrowserKey, async (req, res) => {
++  try { res.json(await verifyPetRecognitionAction(req.body.sessionId, req.body.before || {})); }
++  catch (error) { res.status(400).json({ error: error.message }); }
++});
++
+ app.post("/browser/close", requireBrowserKey, async (req, res) => {
+   try {
+     res.json(await closeBrowserSession(req.body.sessionId));
+@@ -1358,6 +1434,7 @@ const httpServer = app.listen(Number(process.env.PORT || 3000), "0.0.0.0", () =>
+ });
+ attachBrowserLive(httpServer);
+ attachBackendConsole(httpServer);
++installMultiTaskShellFloats(app, httpServer);
+ startChatGPTLive().catch(error => {
+   console.error("[ChatGPT Live] startup failed:", error.message);
+ });
+[stdout] LIVE_LOCAL_HTTP=404
+[stdout]     468 MainThread      /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+  18705 bash            /bin/bash -c set -u cd /home/runner/workspace/ai-agent date -u +'%Y-%m-%dT%H:%M:%SZ' node --check backend/server.js rg -n 'registerLocalNavigation|registerVisionRoutes|navigation/:asset' backend/server.js || true git diff --numstat -- backend/server.js git diff -- backend/server.js | tail -80 curl -sS -o /dev/null -w 'LIVE_LOCAL_HTTP=%{http_code}\n' --max-time 4 http://127.0.0.1:3000/navigation/local/api/status || true ps -eo pid,comm,args | rg 'server.js|nodemon|github_sync' | head -20 || true 
+  18742 rg              rg server.js|nodemon|github_sync
+
+[exit code] 0
+Progress: Completed
