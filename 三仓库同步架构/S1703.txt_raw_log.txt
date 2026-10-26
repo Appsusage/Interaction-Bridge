@@ -1,0 +1,30 @@
+[command]
+set -eu
+REAL=/home/runner/workspace/ai-agent
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+cd "$REAL"
+printf 'LEGACY_SYNC_STATUS\n'
+node backend/sync/sync_supervisor.js status
+printf 'TRI_REPO_STAGE_CHECK\n'
+git -C "$STAGED" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
+git -C "$STAGED" merge --ff-only --quiet origin/main
+node --check "$STAGED/backend/sync/tri_repo_supervisor.js"
+node "$STAGED/backend/sync/tri_repo_supervisor.js" status
+printf 'EXISTING_LOCAL_KEY_METADATA_ONLY\n'
+find backend/secrets -maxdepth 2 -type f -printf '%P\n' | sort
+printf 'CHECK_COMPLETE\n'
+[streams]
+[stdout] LEGACY_SYNC_STATUS
+[stdout] {"status":"running","pid":464}
+[stdout] TRI_REPO_STAGE_CHECK
+[stdout] {"status":"stopped","pid":null,"workers":{}}
+[stdout] EXISTING_LOCAL_KEY_METADATA_ONLY
+[stdout] .gitignore
+README.md
+secrets_policy.json
+secrets_vault.js
+tests/secrets_vault.test.js
+[stdout] CHECK_COMPLETE
+
+[exit code] 0
+Progress: Completed
