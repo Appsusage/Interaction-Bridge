@@ -1,6 +1,0 @@
-for n in python3 pip3 nix-shell git; do command -v "$n" || true; done
-python3 --version
-docker version --format '{{.Server.Version}}' 2>&1 | head -5
-curl -IL --max-time 15 'https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf' 2>&1 | head -22
-git remote -v
-rg -n 'node:sqlite|sqlite|osrm|maplibre' capabilities/navigation backend | head -35
