@@ -1,0 +1,19 @@
+[v2 high-risk] S1721.txt
+[original source] 导航系统自主化/shell_bridge.txt
+[full command]
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node --check backend/server.js
+rg -q '^registerLocalNavigation\(app\);$' backend/server.js
+node --test capabilities/navigation/local/tests/local_navigation.test.mjs
+node -e 'const {spawn,execFileSync}=require("node:child_process");
+const out=execFileSync("ps",["-eo","pid=,ppid=,comm=,args="],{encoding:"utf8"});
+const candidates=out.split("\n").map(s=>s.trim().match(/^(\d+)\s+(\d+)\s+\S+\s+(.+)$/)).filter(Boolean).filter(m=>/\/node\s+backend\/server\.js$/.test(m[3]));
+if(candidates.length!==1){console.error("RESTART_ABORTED: Chat Server candidates="+candidates.length);process.exit(1);}
+const pid=Number(candidates[0][1]);
+const code="const fs = require(\"node:fs\");\nconst {spawn}=require(\"node:child_process\");\nconst pid=Number(process.argv[1]);\nconst log=(s)=>{try{fs.appendFileSync(\"/tmp/ai-agent-navigation-chat-restart.log\",new Date().toISOString()+\" \"+s+\"\\n\");}catch{}};\nconst wait=(ms)=>new Promise(r=>setTimeout(r,ms));\nasync function check(p){try{return (await fetch(\"http://127.0.0.1:3000\"+p,{signal:AbortSignal.timeout(3000)})).status;}catch{return 0;}}\n(async()=>{\nlog(\"WATCHDOG_READY pid=\"+pid);\nawait wait(14000);\nif((await check(\"/navigation/local/api/status\"))===200){log(\"ALREADY_LIVE\");return;}\ntry{process.kill(pid,\"SIGTERM\");log(\"SIGTERM_SENT pid=\"+pid);}catch(e){log(\"SIGTERM_FAILED \"+e.message);return;}\nfor(let i=0;i<12;i++){await wait(1000);if((await check(\"/navigation/local/api/status\"))===200){log(\"RESTART_SUCCESS seconds=\"+(i+1));return;}}\nif((await check(\"/health\"))===200){log(\"RESTART_INCOMPLETE health_ok route_missing\");return;}\nlog(\"NO_SUPERVISOR_RECOVERY launching_fallback\");\ntry{const child=spawn(process.execPath,[\"backend/server.js\"],{cwd:\"/home/runner/workspace/ai-agent\",detached:true,stdio:\"ignore\",env:process.env});child.unref();log(\"FALLBACK_PID \"+child.pid);\nfor(let i=0;i<15;i++){await wait(1000);if((await check(\"/navigation/local/api/status\"))===200){log(\"FALLBACK_SUCCESS\");return;}}log(\"FALLBACK_UNVERIFIED\");}\ncatch(e){log(\"FALLBACK_ERROR \"+e.message);}\n})().catch(e=>log(\"WATCHDOG_ERROR \"+e.message));";
+const child=spawn(process.execPath,["-e",code,String(pid)],{cwd:process.cwd(),detached:true,stdio:"ignore"});
+child.unref();
+console.log("RESTART_WATCHDOG_SCHEDULED "+JSON.stringify({chatPid:pid,watchdogPid:child.pid,delaySeconds:14}));'
+
+Pending, to be continued.
