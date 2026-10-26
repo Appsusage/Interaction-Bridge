@@ -1,0 +1,7 @@
+set -u
+cd /home/runner/workspace/ai-agent
+pwd
+git rev-parse --show-toplevel
+ls -l /home/runner/workspace/backend/server.js /home/runner/workspace/ai-agent/backend/server.js 2>&1 || true
+rg -n 'registerLocalNavigation' /home/runner/workspace/backend/server.js /home/runner/workspace/ai-agent/backend/server.js 2>&1 || true
+git status --short -- backend/server.js
