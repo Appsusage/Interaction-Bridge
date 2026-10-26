@@ -1,0 +1,6 @@
+set -eu
+printf 'REPLIT_CLI_HELP\n'
+replit --help 2>&1 | head -90
+printf 'REPLIT_SECRETS_SUBCOMMAND_HELP\n'
+replit secrets --help 2>&1 | head -90 || true
+printf 'CLI_HELP_COMPLETE\n'
