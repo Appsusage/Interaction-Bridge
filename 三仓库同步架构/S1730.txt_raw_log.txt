@@ -1,0 +1,37 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+C=/home/runner/workspace/.gen-sync-cache
+test -d "$C/.git" || exit 2
+printf 'STATUS\n'
+git -C "$C" status --short
+printf 'COUNTS head-only remote-only\n'
+git -C "$C" rev-list --left-right --count HEAD...origin/main
+printf 'LOCAL COMMITS\n'
+git -C "$C" log --format='%h %s' origin/main..HEAD -12
+printf 'REMOTE COMMITS\n'
+git -C "$C" log --format='%h %s' HEAD..origin/main -12
+printf 'DIFF NAMES LOCAL\n'
+git -C "$C" diff --name-only "$(git -C "$C" merge-base HEAD origin/main)" HEAD
+printf 'DIFF NAMES REMOTE\n'
+git -C "$C" diff --name-only "$(git -C "$C" merge-base HEAD origin/main)" origin/main
+
+[streams]
+[stdout] STATUS
+[stdout] COUNTS head-only remote-only
+[stdout] 1	2
+[stdout] LOCAL COMMITS
+[stdout] 698640f Gen: synchronize .chatgpt-profile/Default/Cache/Cache_Data/2617697360d33254_0
+[stdout] REMOTE COMMITS
+[stdout] f89c1d6 Migration: automatic 2-of-3 offsite key recovery; retain verified restore
+8f00fc9 接入自有导航服务到 Chat Server，仅增两处，不修改现有导航逻辑
+[stdout] DIFF NAMES LOCAL
+[stdout] .chatgpt-profile/Default/Cache/Cache_Data/2617697360d33254_0
+[stdout] DIFF NAMES REMOTE
+[stdout] backend/server.js
+backend/sync/migration_key_custody.js
+backend/sync/migration_repository_sync.js
+backend/sync/tests/migration_key_custody.test.js
+
+[exit code] 0
+Progress: Completed
