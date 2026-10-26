@@ -1,0 +1,9 @@
+set -u
+cd /home/runner/workspace/ai-agent
+date -u +'%Y-%m-%dT%H:%M:%SZ'
+node --check backend/server.js
+rg -n 'registerLocalNavigation|registerVisionRoutes|navigation/:asset' backend/server.js || true
+git diff --numstat -- backend/server.js
+git diff -- backend/server.js | tail -80
+curl -sS -o /dev/null -w 'LIVE_LOCAL_HTTP=%{http_code}\n' --max-time 4 http://127.0.0.1:3000/navigation/local/api/status || true
+ps -eo pid,comm,args | rg 'server.js|nodemon|github_sync' | head -20 || true
