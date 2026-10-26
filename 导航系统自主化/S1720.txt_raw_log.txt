@@ -1,0 +1,53 @@
+[command]
+set -u
+cd /home/runner/workspace/ai-agent
+date -u +'%Y-%m-%dT%H:%M:%SZ'
+ps -o pid,ppid,lstart,etime,comm,args -p 468 || true
+ps -eo pid,ppid,comm,args | rg 'heartbeat.js|bridge_server.js|bridge_adaptor.js|shell_command.js|replit|nodemon|node backend/server.js' | head -28 || true
+rg -n 'restart|heartbeat|health' backend/server.js backend/console_live.js backend/heartbeat/heartbeat.js | head -35 || true
+rg -n 'registerLocalNavigation' backend/server.js || true
+curl -sS -o /dev/null -w 'HEALTH_HTTP=%{http_code}\n' --max-time 5 http://127.0.0.1:3000/health || true
+
+[streams]
+[stdout] 2026-10-26T22:01:53Z
+[stdout]     PID    PPID                  STARTED     ELAPSED COMMAND         COMMAND
+    468      29 Mon Oct 26 20:27:37 2026    01:34:15 MainThread      /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+[stdout]      29      13 node            pid2 --no-deprecation --disable-warning=ExperimentalWarning --use-openssl-ca /mnt/pid2/bootstrap.cjs --start-timestamp=1793037058781 --socket-listener-fd=3 --pinger-socket-path=/run/replit/socks/pid2ping.0.sock --pooled-fd=4
+    468      29 MainThread      /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/server.js
+  24247     468 bash            /bin/bash -c set -u cd /home/runner/workspace/ai-agent date -u +'%Y-%m-%dT%H:%M:%SZ' ps -o pid,ppid,lstart,etime,comm,args -p 468 || true ps -eo pid,ppid,comm,args | rg 'heartbeat.js|bridge_server.js|bridge_adaptor.js|shell_command.js|replit|nodemon|node backend/server.js' | head -28 || true rg -n 'restart|heartbeat|health' backend/server.js backend/console_live.js backend/heartbeat/heartbeat.js | head -35 || true rg -n 'registerLocalNavigation' backend/server.js || true curl -sS -o /dev/null -w 'HEALTH_HTTP=%{http_code}\n' --max-time 5 http://127.0.0.1:3000/health || true 
+  24251   24247 rg              rg heartbeat.js|bridge_server.js|bridge_adaptor.js|shell_command.js|replit|nodemon|node backend/server.js
+[stdout] backend/server.js:517:app.get("/health",(req,res)=>{
+backend/server.js:528:app.get("/heartbeat/health", async (_req, res) => {
+backend/server.js:530:        const heartbeatPath = path.resolve(__dirname, "heartbeat", "heartbeat.js");
+backend/server.js:531:        const registryPath = path.join(__dirname, "heartbeat", "pid.json");
+backend/server.js:534:            item.targetKey === "file:" + heartbeatPath
+backend/server.js:538:            return res.status(503).json({ status: "error", heartbeat: "not_registered" });
+backend/server.js:549:        if (String(startTime) !== String(entry.pidStartTime) || !args.includes(heartbeatPath)) {
+backend/server.js:550:            return res.status(503).json({ status: "error", heartbeat: "not_running" });
+backend/server.js:553:        return res.json({ status: "ok", heartbeat: "running", pid: Number(entry.pid) });
+backend/server.js:555:        return res.status(503).json({ status: "error", heartbeat: "unavailable" });
+backend/server.js:560:let heartbeatStartInProgress = false;
+backend/server.js:562:app.post("/heartbeat/start", async (req, res) => {
+backend/server.js:570:    if (heartbeatStartInProgress) {
+backend/server.js:571:        return res.status(202).json({ status: "starting", heartbeat: "start_in_progress" });
+backend/server.js:574:    const heartbeatPath = path.resolve(__dirname, "heartbeat", "heartbeat.js");
+backend/server.js:584:                if (args.includes(heartbeatPath)) {
+backend/server.js:585:                    return res.json({ status: "ok", heartbeat: "already_running", pid: Number(entry.name) });
+backend/server.js:590:        heartbeatStartInProgress = true;
+backend/server.js:591:        const child = spawn(process.execPath, [heartbeatPath], {
+backend/server.js:598:            heartbeatStartInProgress = false;
+backend/server.js:607:            status: "error", heartbeat: "start_failed",
+backend/server.js:611:            status: "error", heartbeat: "start_failed",
+backend/server.js:618:                if (cmdline.includes(heartbeatPath)) {
+backend/server.js:620:                    finish(200, { status: "ok", heartbeat: "started", pid: child.pid, rawLog: rawChunks.join("") });
+backend/server.js:622:                    finish(500, { status: "error", heartbeat: "start_failed", rawLog: rawChunks.join("") + "\nprocess disappeared before verification" });
+backend/server.js:625:                finish(500, { status: "error", heartbeat: "start_failed", rawLog: rawChunks.join("") + "\n" + (error.stack || String(error)) });
+backend/server.js:629:        heartbeatStartInProgress = false;
+backend/server.js:630:        return res.status(500).json({ status: "error", heartbeat: "start_failed", rawLog: (error.stack || String(error)) + "\n" + rawChunks.join("") });
+backend/heartbeat/heartbeat.js:316:        appendFailure(result.rawLog, "PID restart failed; record removed; target blocked: " + key);
+[stdout] 20:import { registerLocalNavigation } from "../capabilities/navigation/local/service.js";
+142:registerLocalNavigation(app);
+[stdout] HEALTH_HTTP=200
+
+[exit code] 0
+Progress: Completed
