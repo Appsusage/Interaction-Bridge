@@ -1,0 +1,8 @@
+set -eu
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+if [ ! -d "$STAGED/.git" ]; then printf 'STAGED_CLONE_MISSING\n'; exit 1; fi
+git -C "$STAGED" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
+git -C "$STAGED" merge --ff-only --quiet origin/main
+cd "$STAGED"
+node --test --test-reporter=spec backend/sync/tests/project_delivery_uploader.test.js backend/sync/tests/gen_bidirectional_sync.test.js backend/sync/tests/migration_repository_sync.test.js
+printf 'THREE_REPOSITORY_TESTS_COMPLETED\n'
