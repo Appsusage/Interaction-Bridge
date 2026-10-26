@@ -1,0 +1,9 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'GEN_BOOTSTRAP_PREFLIGHT\n'
+if command -v git-lfs >/dev/null 2>&1; then git lfs version; else printf 'GIT_LFS_MISSING\n'; fi
+df -Pm /tmp | tail -1 | awk '{print "TMP_FREE_MB="$4}'
+df -Pm . | tail -1 | awk '{print "PROJECT_FREE_MB="$4}'
+if command -v rsync >/dev/null 2>&1; then printf 'RSYNC=present\n'; else printf 'RSYNC=missing\n'; fi
+if test -d .git; then printf 'LOCAL_GIT=present\n'; else printf 'LOCAL_GIT=absent\n'; fi
+printf 'GEN_BOOTSTRAP_PREFLIGHT_END\n'
