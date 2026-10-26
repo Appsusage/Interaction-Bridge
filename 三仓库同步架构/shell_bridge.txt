@@ -1,0 +1,8 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'MIGRATION_KEY_PREFLIGHT\n'
+node --input-type=module <<'NODE'
+const keys=['AI_AGENT_MIGRATION_PASSPHRASE','MIGRATION_PASSPHRASE','AI_AGENT_MASTER_PASSPHRASE','AI_AGENT_SECRET_MASTER_KEY','SECRETS_MASTER_PASSPHRASE'];
+for(const key of keys)console.log(key+'='+ (process.env[key]?'configured':'missing'));
+NODE
+printf 'MIGRATION_KEY_PREFLIGHT_END\n'
