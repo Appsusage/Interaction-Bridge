@@ -1,0 +1,15 @@
+[command]
+gh auth status
+GH_PROMPT_DISABLED=1 timeout 25 gh api repos/Appsusage/Genesis/contents/capabilities/navigation/local/service.js --jq '.sha'
+git ls-remote gitsafe-backup HEAD | head -1
+[streams]
+[stdout] github.com
+  ✓ Logged in to github.com account Appsusage (GITHUB_TOKEN)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: github_pat_**********************************************************************************
+[stdout] 84a101f147b35ae4e8149ff4129d28f8a10e358b
+[stdout] 614286bb3f1872f341170641597f68cf382cdfac	HEAD
+
+[exit code] 0
+Progress: Completed
