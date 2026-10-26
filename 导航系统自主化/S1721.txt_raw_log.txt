@@ -46,4 +46,14 @@ console.log("RESTART_WATCHDOG_SCHEDULED "+JSON.stringify({chatPid:pid,watchdogPi
 [stdout] RESTART_WATCHDOG_SCHEDULED {"chatPid":468,"watchdogPid":35560,"delaySeconds":14}
 [phase_exit] exit=0 signal=none
 
+[exit code] 0
+[finished] 2026-10-26T22:14:59.467Z
+[error] Error: GitHub Interaction-Bridge/导航系统自主化/S1721.txt_raw_log.txt: 409 {"message":"导航系统自主化/S1721.txt_raw_log.txt does not match 14f212d34d74f42a4b8d64c83e812653e862bbfd","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"409"}
+    at gh (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/shell_command.js:91:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async ShellCommand.publish (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/shell_command.js:292:7)
+    at async hold (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:48:22)
+    at async executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:134:5)
+    at async Promise.allSettled (index 0)
+
 Pending, to be continued.
