@@ -1,0 +1,7 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'OLD_SYNC_AUTO_START_REFERENCES\n'
+rg -n --glob '*.js' --glob '*.json' --glob '*.sh' 'sync_supervisor\\.js|sync_daemon\\.js|sync_supervisor' backend/server.js backend/heartbeat backend/sync package.json 2>/dev/null | head -80 || true
+printf 'OLD_SYNC_PROCESSES\n'
+ps -eo pid,ppid,comm,args | grep -E '[s]ync_supervisor\\.js|[s]ync_daemon\\.js' | cut -c 1-180
+printf 'END_CHECK\n'
