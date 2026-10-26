@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+C=/home/runner/workspace/.gen-sync-cache
+test -d "$C/.git"
+test -z "$(git -C "$C" status --porcelain)"
+git -C "$C" -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+BASE="$(git -C "$C" merge-base HEAD origin/main)"
+OVERLAP="$(comm -12 <(git -C "$C" diff --name-only "$BASE" HEAD | LC_ALL=C sort) <(git -C "$C" diff --name-only "$BASE" origin/main | LC_ALL=C sort))"
+if [ -n "$OVERLAP" ]; then
+  printf 'ABORT: overlapping changed paths, no merge performed\n'
+  exit 3
+fi
+printf 'SAFE_DISJOINT_MERGE\n'
+git -C "$C" -c user.name=ai-agent-gen -c user.email=ai-agent-gen@users.noreply.github.com merge --no-edit --quiet origin/main
+git -C "$C" -c credential.helper='!gh auth git-credential' push --quiet origin HEAD:main
+printf 'MERGED_AND_PUSHED\n'
+git -C "$C" log -1 --format='%h %s'
