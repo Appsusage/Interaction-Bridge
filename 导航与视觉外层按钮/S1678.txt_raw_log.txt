@@ -1,0 +1,8 @@
+[command]
+node -e 'const fs=require("fs");const p="frontend/app.js";const s=fs.readFileSync(p,"utf8");const old="const outerRadius = radius + 68;";const n=s.split(old).length-1;if(n!==1){console.error("PRECONDITION_FAILED currentOuterRadius",n);process.exit(2)}const next=s.replace(old,"const outerRadius = radius + 52;");fs.writeFileSync(p+".nav-adjust-tmp",next);fs.renameSync(p+".nav-adjust-tmp",p);console.log("UPDATED",p,"outerGap:68->52","innerRadius:unchanged");'
+node --check frontend/app.js
+[streams]
+[stdout] UPDATED frontend/app.js outerGap:68->52 innerRadius:unchanged
+
+[exit code] 0
+Progress: Completed
