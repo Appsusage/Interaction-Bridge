@@ -1,5 +1,0 @@
-#!/bin/bash
-set -uo pipefail
-cd /home/runner/workspace/ai-agent || exit 2
-node -e 'const fs=require("node:fs"); const p="backend/sync/migration_key_custody.js"; console.log("KEY_MODULE_PRESENT="+fs.existsSync(p)); console.log("DROPBOX_CONFIG="+JSON.stringify({appKey:!!process.env.DROPBOX_APP_KEY,appSecret:!!process.env.DROPBOX_APP_SECRET,refreshToken:!!process.env.DROPBOX_REFRESH_TOKEN}));'
-node backend/sync/tri_repo_supervisor.js status
