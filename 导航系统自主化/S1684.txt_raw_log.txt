@@ -1,0 +1,22 @@
+[command]
+command -v nix-instantiate || true
+command -v nix-env || true
+command -v nix || true
+nix-shell -p osmium-tool --run 'osmium --version' 2>&1 | head -10
+[streams]
+[stdout] /nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/nix-instantiate
+[stdout] /nix/store/l04jp1n8bin6gbdn1qfj5xj0zkd59rqc-pid1/bin/nix-env
+[stdout] /nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/nix
+[stdout] these 7 paths will be fetched (12.91 MiB download, 58.75 MiB unpacked):
+  /nix/store/w07a7k61dw5gnsyxj3kgcq3shr76jax8-bash-interactive-4.4-p23
+  /nix/store/jj3izhyy03wargjynlr1k0a3869g0kix-boost-1.69.0
+  /nix/store/irsmdyfvxkh67f2c1r7gm8r7b3lirv63-expat-2.4.1
+  /nix/store/prlakgp7pbjax2lpl6h4bjdxfj59bbnp-icu4c-69.1
+  /nix/store/7b12lpmsrj7kyymgc85bxfxzzxk9y3jn-lz4-1.9.3
+  /nix/store/x6j7d32y6lwf3arj90pa9i1d51gr5xl9-osmium-tool-1.13.1
+  /nix/store/r759ls1ah0cmqc8009q7b1xn91sg57q0-readline-7.0p5
+copying path '/nix/store/irsmdyfvxkh67f2c1r7gm8r7b3lirv63-expat-2.4.1' from 'https://cache.nixos.org' to 'local-overlay://'...
+copying path '/nix/store/7b12lpmsrj7kyymgc85bxfxzzxk9y3jn-lz4-1.9.3' from 'https://cache.nixos.org' to 'local-overlay://'...
+
+[exit code] 0
+Progress: Completed
