@@ -1,0 +1,10 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'REPLIT_PROJECT_PUBLIC_IDENTITY\n'
+node --input-type=module <<'NODE'
+for(const key of ['REPL_OWNER','REPL_SLUG','REPL_ID','REPL_ORG_TYPE']) {
+ const value=process.env[key]??'missing';
+ console.log(key+'='+value);
+}
+NODE
+printf 'IDENTITY_COMPLETE\n'
