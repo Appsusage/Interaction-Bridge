@@ -1,0 +1,7 @@
+set -e
+nix-shell -p osmium-tool --run 'osmium --version' | head -3
+nix-shell -p osmium-tool --run 'osmium fileinfo -e capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf' | head -22
+curl -fsSL --max-time 20 'https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf.md5' | head -2
+mkdir -p capabilities/navigation/data/regions
+nix-shell -p osmium-tool --run 'osmium extract --strategy=smart -b 101.50,2.75,102.05,3.45 -o capabilities/navigation/data/regions/selangor-pilot.osm.pbf capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf'
+wc -c capabilities/navigation/data/regions/selangor-pilot.osm.pbf
