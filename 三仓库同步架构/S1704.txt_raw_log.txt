@@ -1,0 +1,24 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'OLD_SYNC_AUTO_START_REFERENCES\n'
+rg -n --glob '*.js' --glob '*.json' --glob '*.sh' 'sync_supervisor\\.js|sync_daemon\\.js|sync_supervisor' backend/server.js backend/heartbeat backend/sync package.json 2>/dev/null | head -80 || true
+printf 'OLD_SYNC_PROCESSES\n'
+ps -eo pid,ppid,comm,args | grep -E '[s]ync_supervisor\\.js|[s]ync_daemon\\.js' | cut -c 1-180
+printf 'END_CHECK\n'
+[streams]
+[stdout] OLD_SYNC_AUTO_START_REFERENCES
+[stdout] backend/sync/.full-project-baseline.json:372:    "backend/sync/sync_supervisor.js": "84dc7ea39341eb309330290d4355878b85ec390967cbe94529dd75926ef8cbf8",
+backend/sync/setup_replit_workflow.js:16: const workflow='\n[[workflows.workflow]]\nname = "Genesis Sync"\nmode = "sequential"\n\n[[workflows.workflow.tasks]]\ntask = "shell.exec"\nargs = "cd ai-agent && node backend/sync/sync_supervisor.js run"\n';
+backend/sync/sync_settings.json:30:    "supervisor": "backend/sync/sync_supervisor.js"
+backend/sync/sync_supervisor.js:2: * node backend/sync/sync_supervisor.js start|run|status|stop
+backend/sync/sync_supervisor.js:40:   if(old&&await ownership(old.pid,'sync_supervisor.js'))throw Error('Sync supervisor already running pid '+old.pid);
+backend/sync/sync_supervisor.js:74: if(old&&await ownership(old.pid,'sync_supervisor.js'))return {status:'already_running',pid:old.pid};
+backend/sync/sync_supervisor.js:83:  if(!state||!await ownership(state.pid,'sync_supervisor.js'))throw Error('Sync supervisor did not start');
+backend/sync/sync_supervisor.js:91: if(cmd==='status')return {status:state&&await ownership(state.pid,'sync_supervisor.js')?'running':'stopped',
+backend/sync/sync_supervisor.js:95:  if(!state||!await ownership(state.pid,'sync_supervisor.js'))return {status:'not_running'};
+[stdout] OLD_SYNC_PROCESSES
+[stdout] END_CHECK
+
+[exit code] 0
+Progress: Completed
