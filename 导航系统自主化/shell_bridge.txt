@@ -1,6 +1,0 @@
-set -e
-mkdir -p capabilities/navigation/data/raw
-test -s capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf || curl --fail --location --retry 2 --connect-timeout 15 --max-time 95 --continue-at - --output capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf.part 'https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf'
-if [ -f capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf.part ]; then mv capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf.part capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf; fi
-wc -c capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
-sha256sum capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
