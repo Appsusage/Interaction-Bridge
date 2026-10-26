@@ -1,0 +1,27 @@
+[command]
+set -eu
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+if [ ! -d "$STAGED/.git" ]; then printf 'STAGED_CLONE_MISSING\n'; exit 1; fi
+git -C "$STAGED" -c 'credential.helper=!gh auth git-credential' fetch --quiet origin main
+git -C "$STAGED" merge --ff-only --quiet origin/main
+cd "$STAGED"
+node --test --test-reporter=spec backend/sync/tests/project_delivery_uploader.test.js backend/sync/tests/gen_bidirectional_sync.test.js backend/sync/tests/migration_repository_sync.test.js
+printf 'THREE_REPOSITORY_TESTS_COMPLETED\n'
+[streams]
+[stdout] ✔ Gen independently uploads, downloads and preserves three-way conflicts (525.669166ms)
+[stdout] ✔ Migration publishes only ciphertext; restores a complete verified tree and secrets (1435.908258ms)
+[stdout] ✔ upload inventory independently finds numbered directories and regular files (9.331913ms)
+✔ blacklisted paths persist without replacement on repeated failure (4.057956ms)
+[stdout] ✔ invalid file is blacklisted while the next good file uploads; no remote pull (488.541726ms)
+[stdout] ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+[stdout] ℹ fail 0
+[stdout] ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1581.265612
+[stdout] THREE_REPOSITORY_TESTS_COMPLETED
+
+[exit code] 0
+Progress: Completed
