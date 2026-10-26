@@ -1,0 +1,45 @@
+[command]
+set -eu
+printf 'REPLIT_CLI_HELP\n'
+replit --help 2>&1 | head -90
+printf 'REPLIT_SECRETS_SUBCOMMAND_HELP\n'
+replit secrets --help 2>&1 | head -90 || true
+printf 'CLI_HELP_COMPLETE\n'
+[streams]
+[stdout] REPLIT_CLI_HELP
+[stdout] NAME:
+   replit - Interact with Replit services
+
+USAGE:
+   replit [global options] [command [command options]] [arguments...]
+
+COMMANDS:
+   identity    Interact with Replit identity
+   identityv2  Interact with Replit identity v2 (STS-minted tokens)
+   ai          Interact with AI models via modelfarm (experimental)
+   shutdown    Shut down this Repl
+   secrets     Read secrets explicitly from Replit
+   gitsafe     Manage this Repl's Gitsafe backup remote
+   help, h     Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h  show help (default: false)
+[stdout] REPLIT_SECRETS_SUBCOMMAND_HELP
+[stdout] NAME:
+   replit secrets - Read secrets explicitly from Replit
+
+USAGE:
+   replit secrets [command [command options]] [arguments...]
+
+COMMANDS:
+   list     List secret names without values
+   get      Write one secret value to stdout
+   exec     Pass selected secrets only to a child command
+   help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help (default: false)
+[stdout] CLI_HELP_COMPLETE
+
+[exit code] 0
+Progress: Completed
