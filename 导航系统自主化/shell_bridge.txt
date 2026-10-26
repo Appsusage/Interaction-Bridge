@@ -1,0 +1,4 @@
+command -v nix-instantiate || true
+command -v nix-env || true
+command -v nix || true
+nix-shell -p osmium-tool --run 'osmium --version' 2>&1 | head -10
