@@ -1,4 +1,0 @@
-pwd
-ls -lh capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf capabilities/navigation/data/regions/selangor-pilot.osm.pbf 2>&1
-rg --files capabilities/navigation/local | head -20
-ps -eo pid,etime,args | rg 'osmium|nix-shell|curl|shell_command' | head -20
