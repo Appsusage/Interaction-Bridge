@@ -1,0 +1,26 @@
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+sh capabilities/navigation/local/download_vendor.sh
+node --input-type=module -e '
+import express from "express";
+import { registerLocalNavigation } from "./capabilities/navigation/local/service.js";
+const app = express(); app.use(express.json());
+const nav = registerLocalNavigation(app);
+const server = app.listen(0, "127.0.0.1");
+await new Promise(resolve => server.once("listening", resolve));
+try {
+ const base = "http://127.0.0.1:" + server.address().port;
+ const statusResponse = await fetch(base + "/navigation/local/api/status");
+ const status = await statusResponse.json();
+ if (!statusResponse.ok || !status.localMapReady || !status.mapCounts || status.mapCounts.edges < 1000) throw new Error("Local map not ready");
+ const geoResponse = await fetch(base + "/navigation/local/api/features?bbox=101.68,3.13,101.72,3.16&limit=1000");
+ const features = await geoResponse.json();
+ if (!geoResponse.ok || !Array.isArray(features.features) || !features.features.length) throw new Error("Local features query failed");
+ const vendor = await fetch(base + "/navigation/local/vendor/maplibre-gl.js", { method: "HEAD" });
+ const page = await fetch(base + "/navigation/local/");
+ if (!vendor.ok || !page.ok) throw new Error("Preview assets not served");
+ console.log(JSON.stringify({ status: "PASS", counts: status.mapCounts, sampleFeatures: features.features.length, previewHttp: page.status, vendorHttp: vendor.status }));
+} finally {
+ await new Promise(resolve => server.close(resolve));
+ nav.close();
+}'
