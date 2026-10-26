@@ -1,0 +1,6 @@
+set -u
+cd /home/runner/workspace/ai-agent
+date -u +'%Y-%m-%dT%H:%M:%SZ'
+rg -n 'registerLocalNavigation' backend/server.js || true
+curl -sS -o /dev/null -w 'LIVE_LOCAL_HTTP=%{http_code}\n' --max-time 5 http://127.0.0.1:3000/navigation/local/api/status || true
+git status --short -- backend/server.js
