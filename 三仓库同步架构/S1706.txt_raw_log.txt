@@ -1,0 +1,63 @@
+[command]
+set -eu
+REAL=/home/runner/workspace/ai-agent
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+printf 'STAGED_CLEAN_STATUS\n'
+git -C "$STAGED" status --porcelain | head -30
+printf 'GEN_CACHE_STATUS\n'
+if [ -e /home/runner/workspace/.gen-sync-cache ]; then printf 'cache_exists\n'; else printf 'cache_absent\n'; fi
+printf 'WORKFLOW_REFERENCES\n'
+if [ -f /home/runner/workspace/.replit ]; then rg -n 'Genesis Sync|sync_supervisor|tri_repo_supervisor|workflow' /home/runner/workspace/.replit | head -50 || true; fi
+if [ -f "$REAL/.replit" ]; then rg -n 'Genesis Sync|sync_supervisor|tri_repo_supervisor|workflow' "$REAL/.replit" | head -50 || true; fi
+printf 'RUNNING_PID_METADATA\n'
+node "$REAL/backend/sync/sync_supervisor.js" status
+printf 'END\n'
+[streams]
+[stdout] STAGED_CLEAN_STATUS
+[stdout] GEN_CACHE_STATUS
+[stdout] cache_absent
+WORKFLOW_REFERENCES
+[stdout] 10:[workflows]
+13:[[workflows.workflow]]
+17:[[workflows.workflow.tasks]]
+21:[[workflows.workflow.tasks]]
+22:task = "workflow.run"
+25:[[workflows.workflow.tasks]]
+26:task = "workflow.run"
+29:[[workflows.workflow.tasks]]
+30:task = "workflow.run"
+33:[[workflows.workflow]]
+38:[workflows.workflow.metadata]
+42:[[workflows.workflow.tasks]]
+50:[workflows.workflow.tasks.env]
+53:[[workflows.workflow]]
+58:[workflows.workflow.metadata]
+63:[[workflows.workflow.tasks]]
+71:[workflows.workflow.tasks.env]
+75:[[workflows.workflow]]
+79:[[workflows.workflow.tasks]]
+84:[[workflows.workflow]]
+88:[[workflows.workflow.tasks]]
+93:[[workflows.workflow.tasks]]
+94:task = "workflow.run"
+95:args = "Genesis Sync"
+97:[[workflows.workflow]]
+102:[[workflows.workflow.tasks]]
+106:[[workflows.workflow]]
+111:[[workflows.workflow.tasks]]
+115:[[workflows.workflow]]
+119:[[workflows.workflow.tasks]]
+123:[[workflows.workflow.tasks]]
+124:task = "workflow.run"
+127:[[workflows.workflow]]
+131:[[workflows.workflow.tasks]]
+135:[[workflows.workflow]]
+136:name = "Genesis Sync"
+139:[[workflows.workflow.tasks]]
+141:args = "cd ai-agent && node backend/sync/sync_supervisor.js run"
+[stdout] RUNNING_PID_METADATA
+[stdout] {"status":"running","pid":464}
+[stdout] END
+
+[exit code] 0
+Progress: Completed
