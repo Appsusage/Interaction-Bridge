@@ -1,0 +1,27 @@
+set -eu
+REAL=/home/runner/workspace/ai-agent
+STAGED=/home/runner/workspace/gen-bootstrap.QXOKgc6O/repo
+CACHE=/home/runner/workspace/.gen-sync-cache
+printf 'CUTOVER_PREFLIGHT\n'
+test -d "$STAGED/.git"
+test ! -e "$CACHE"
+test -z "$(git -C "$STAGED" status --porcelain)"
+test -f "$REAL/backend/sync/tri_repo_supervisor.js"
+printf 'SEED_VERIFIED_GEN_CACHE\n'
+mv "$STAGED" "$CACHE"
+git -C "$CACHE" status --short
+cd "$REAL"
+printf 'TRANSITION_REPLIT_WORKFLOW\n'
+node backend/sync/transition_replit_sync_workflow.js apply
+printf 'STOP_LEGACY_SYNC\n'
+node backend/sync/sync_supervisor.js stop
+for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  result=$(node backend/sync/sync_supervisor.js status)
+  case "$result" in *'"status":"stopped"'*) break;; esac
+  sleep 1
+done
+node backend/sync/sync_supervisor.js status
+printf 'START_NEW_SUPERVISOR\n'
+node backend/sync/tri_repo_supervisor.js start
+node backend/sync/tri_repo_supervisor.js status
+printf 'THREE_REPO_CUTOVER_COMMAND_COMPLETE\n'
