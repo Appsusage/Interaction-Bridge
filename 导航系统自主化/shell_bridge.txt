@@ -1,7 +1,0 @@
-pwd
-df -h .
-free -h
-for n in node pnpm osmium osrm-extract osrm-routed docker curl wget sqlite3 tippecanoe; do command -v "$n" || true; done
-git status --short -- capabilities/navigation backend/server.js frontend/index.html frontend/app.js
-rg -n 'navigation|express.static|app.use|listen\(' backend/server.js | head -80
-rg --files capabilities/navigation | head -60
