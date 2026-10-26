@@ -1,0 +1,19 @@
+[command]
+command -v git
+command -v gh || true
+GIT_TERMINAL_PROMPT=0 timeout 25 git ls-remote https://github.com/Appsusage/Genesis.git HEAD | head -1
+curl -sSL --max-time 15 -o /dev/null -w 'RAW_HTTP=%{http_code}\n' https://raw.githubusercontent.com/Appsusage/Genesis/main/capabilities/navigation/local/service.js
+ps -eo pid,etime,args | rg 'sync_daemon|sync_supervisor|github_sync' | head -8
+[streams]
+[stdout] /nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/git
+[stdout] /nix/store/60cwlhgyixk191xi8hq0f19qy5dr35qn-replit-runtime-path/bin/gh
+[stderr] error: unable to read askpass response from 'replit-git-askpass'
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+[stdout] RAW_HTTP=404
+[stdout]   57035    01:52:50 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/sync/sync_supervisor.js run
+  57066    01:52:50 /nix/store/vz8pfqyhxhllhlsbdzxyh4nmc6ryx0wk-nodejs-slim-24.22.1/bin/node /home/runner/workspace/ai-agent/backend/sync/sync_daemon.js --daemon
+  67574       00:00 /bin/bash -c command -v git command -v gh || true GIT_TERMINAL_PROMPT=0 timeout 25 git ls-remote https://github.com/Appsusage/Genesis.git HEAD | head -1 curl -sSL --max-time 15 -o /dev/null -w 'RAW_HTTP=%{http_code}\n' https://raw.githubusercontent.com/Appsusage/Genesis/main/capabilities/navigation/local/service.js ps -eo pid,etime,args | rg 'sync_daemon|sync_supervisor|github_sync' | head -8
+  67585       00:00 rg sync_daemon|sync_supervisor|github_sync
+
+[exit code] 0
+Progress: Completed
