@@ -1,0 +1,8 @@
+set -u
+cd /home/runner/workspace/ai-agent
+date -u +'%Y-%m-%dT%H:%M:%SZ'
+ps -o pid,ppid,lstart,etime,comm,args -p 468 || true
+ps -eo pid,ppid,comm,args | rg 'heartbeat.js|bridge_server.js|bridge_adaptor.js|shell_command.js|replit|nodemon|node backend/server.js' | head -28 || true
+rg -n 'restart|heartbeat|health' backend/server.js backend/console_live.js backend/heartbeat/heartbeat.js | head -35 || true
+rg -n 'registerLocalNavigation' backend/server.js || true
+curl -sS -o /dev/null -w 'HEALTH_HTTP=%{http_code}\n' --max-time 5 http://127.0.0.1:3000/health || true
