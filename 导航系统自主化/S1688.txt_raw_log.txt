@@ -1,0 +1,83 @@
+[command]
+pwd
+rg --files capabilities/vision | head -35
+rg --files capabilities/navigation | head -35
+test -d capabilities/navigation/local && echo LOCAL_NAV_PRESENT || echo LOCAL_NAV_MISSING
+test -f capabilities/navigation/data/regions/selangor-pilot.osm.pbf && wc -c capabilities/navigation/data/regions/selangor-pilot.osm.pbf
+git status --short --untracked-files=no
+git remote
+git ls-tree -r --name-only HEAD capabilities/navigation/local | head -15
+rg --files backend/migration backend/sync | rg 'github_sync|full_project_inventory|sync' | head -25
+ps -eo pid,etime,args | rg 'github_sync|migration_manager|shell_command' | head -15
+[streams]
+[stdout] /home/runner/workspace/ai-agent
+[stdout] capabilities/vision/camera.css
+capabilities/vision/text.js
+capabilities/vision/recognition.js
+capabilities/vision/motion.js
+capabilities/vision/labels.js
+capabilities/vision/THIRD_PARTY_NOTICES.md
+capabilities/vision/README.md
+capabilities/vision/camera.js
+capabilities/vision/detector.js
+capabilities/vision/detector-worker.js
+[stdout] capabilities/navigation/data/regions/selangor-pilot.osm.pbf
+capabilities/navigation/data/raw/malaysia-singapore-brunei-latest.osm.pbf
+capabilities/navigation/voice.js
+capabilities/navigation/vision.js
+capabilities/navigation/traffic.js
+capabilities/navigation/style.css
+capabilities/navigation/routing.js
+capabilities/navigation/navigation.js
+capabilities/navigation/map.js
+capabilities/navigation/learning.js
+capabilities/navigation/index.html
+capabilities/navigation/gps.js
+capabilities/navigation/app.js
+[stdout] LOCAL_NAV_MISSING
+[stdout] 39157343 capabilities/navigation/data/regions/selangor-pilot.osm.pbf
+[stdout]  M ../.replit
+ M backend/console_live.js
+ M backend/extension/browser/browser_live.js
+ M backend/extension/browser/browser_service.js
+ M backend/extension/browser/chatgpt_live.js
+ M backend/memory.json
+ M backend/server.js
+ M bridge/shell/.dropbox_token_cache.json
+ M bridge/shell/server.js
+ M frontend/app.js
+ M frontend/backend-console-viewer.css
+ M frontend/backend-console-viewer.js
+ M frontend/index.html
+ M frontend/style.css
+[stdout] gitsafe-backup
+[stdout] backend/sync/sync_last_report.json
+backend/sync/whole_project_sync.js
+backend/sync/whole_project_sync.js.hotfix-backup-1792945204209.js
+backend/sync/REPLIT_WORKFLOW.md
+backend/sync/setup_replit_workflow.js
+backend/sync/sync_settings.json
+backend/sync/sync_settings.json.prior-sync-update-1792692321
+backend/sync/OPERATIONS.md
+backend/sync/sync_supervisor.js
+backend/sync/sync_daemon.js
+backend/sync/full_project_inventory.js
+backend/sync/sync_controller.js
+backend/sync/sync_planner.js
+backend/sync/three_way_sync.js
+backend/sync/tests/whole_project_sync.test.js
+backend/sync/tests/full_project_inventory.test.js
+backend/sync/tests/sync_controller.test.js
+backend/sync/tests/sync_local_scanner.test.js
+backend/sync/tests/sync_init.test.js
+backend/sync/tests/github_sync_state.test.js
+backend/sync/tests/github_sync.test.js
+backend/sync/tests/github_poller.test.js
+backend/sync/sync_path_policy.js
+backend/sync/sync_local_scanner.js
+backend/sync/sync_init.js
+[stdout]   67420       00:01 /bin/bash -c pwd rg --files capabilities/vision | head -35 rg --files capabilities/navigation | head -35 test -d capabilities/navigation/local && echo LOCAL_NAV_PRESENT || echo LOCAL_NAV_MISSING test -f capabilities/navigation/data/regions/selangor-pilot.osm.pbf && wc -c capabilities/navigation/data/regions/selangor-pilot.osm.pbf git status --short --untracked-files=no git remote git ls-tree -r --name-only HEAD capabilities/navigation/local | head -15 rg --files backend/migration backend/sync | rg 'github_sync|full_project_inventory|sync' | head -25 ps -eo pid,etime,args | rg 'github_sync|migration_manager|shell_command' | head -15
+  67455       00:00 rg github_sync|migration_manager|shell_command
+
+[exit code] 0
+Progress: Completed
