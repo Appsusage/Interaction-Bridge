@@ -1,5 +1,0 @@
-command -v git
-command -v gh || true
-GIT_TERMINAL_PROMPT=0 timeout 25 git ls-remote https://github.com/Appsusage/Genesis.git HEAD | head -1
-curl -sSL --max-time 15 -o /dev/null -w 'RAW_HTTP=%{http_code}\n' https://raw.githubusercontent.com/Appsusage/Genesis/main/capabilities/navigation/local/service.js
-ps -eo pid,etime,args | rg 'sync_daemon|sync_supervisor|github_sync' | head -8
