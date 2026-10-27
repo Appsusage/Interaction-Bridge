@@ -1,0 +1,30 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'EBO_TOKEN_RUNTIME_CHECK_START\n'
+node --input-type=module <<'NODE'
+const t=process.env.EBO_BRIDGE_TOKEN||"";
+console.log("EBO_TOKEN_PRESENT",Boolean(t));
+console.log("EBO_TOKEN_ACCEPTED_LENGTH",t.length>=32);
+console.log("EBO_REPLIT_RUNTIME",Boolean(process.env.REPL_ID));
+NODE
+for f in backend/devices/ebo/ebo_relay_server.js backend/devices/ebo/android_bridge/bridge_client.mjs backend/server.js; do
+  node --check "$f"
+done
+printf 'EBO_SYNTAX_OK\n'
+if command -v curl >/dev/null 2>&1; then
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:3000/ebo/bridge-client.mjs || true)
+  echo "EBO_CLIENT_ROUTE_HTTP:$code"
+fi
+printf 'EBO_TOKEN_RUNTIME_CHECK_END\n'
+[streams]
+[stdout] EBO_TOKEN_RUNTIME_CHECK_START
+[stdout] EBO_TOKEN_PRESENT false
+[stdout] EBO_TOKEN_ACCEPTED_LENGTH false
+[stdout] EBO_REPLIT_RUNTIME true
+[stdout] EBO_SYNTAX_OK
+[stdout] EBO_CLIENT_ROUTE_HTTP:404
+EBO_TOKEN_RUNTIME_CHECK_END
+
+[exit code] 0
+Progress: Completed
