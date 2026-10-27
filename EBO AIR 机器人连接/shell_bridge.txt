@@ -1,0 +1,10 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+node --input-type=module <<'NODE'
+import { getEboRelayStatus } from './backend/devices/ebo/ebo_relay_server.js';
+console.log('EBO_REPLIT_DEV_DOMAIN', process.env.REPLIT_DEV_DOMAIN || '(unset)');
+console.log('EBO_PUBLIC_DOMAINS', process.env.REPLIT_DOMAINS || '(unset)');
+console.log('EBO_RELAY_CONFIGURED', getEboRelayStatus().configured);
+console.log('EBO_RELAY_STATUS', JSON.stringify({bridgeOnline:getEboRelayStatus().bridgeOnline,robotAuthenticated:getEboRelayStatus().robotAuthenticated}));
+NODE
+printf 'EBO_RUNTIME_URL_CHECK_END\n'
