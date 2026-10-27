@@ -1,0 +1,15 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+cd /home/runner/workspace/ai-agent || exit 2
+node -e 'const fs=require("node:fs");for(const f of ["backend/sync/migration_key_custody.js","backend/sync/migration_repository_sync.js","backend/sync/gen_bidirectional_sync.js"]){console.log("FILE",f,"PRESENT",fs.existsSync(f));} '
+node backend/sync/tri_repo_supervisor.js status
+
+[streams]
+[stdout] FILE backend/sync/migration_key_custody.js PRESENT false
+[stdout] FILE backend/sync/migration_repository_sync.js PRESENT true
+[stdout] FILE backend/sync/gen_bidirectional_sync.js PRESENT true
+[stdout] {"status":"running","pid":41525,"workers":{"Gen":{"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/066da114e7bf384e_0","pendingCount":167,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:00:06.133Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:00:24.338Z"},"Migration":{"status":"encryption_key_missing","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-26T22:29:04.682Z"}}}
+
+[exit code] 0
+Progress: Completed
