@@ -1,0 +1,34 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+cd /home/runner/workspace/ai-agent || exit 2
+node backend/sync/tri_repo_supervisor.js status
+printf 'MIGRATION GIT TRACKED FILES\n'
+git -C /home/runner/workspace/.migration-sync-cache ls-files | wc -l
+printf 'MIGRATION ENCRYPTED OBJECTS COUNT\n'
+find /home/runner/workspace/.migration-sync-cache/objects -type f -name '*.enc' 2>/dev/null | wc -l
+printf 'MIGRATION CACHE STATUS COUNT\n'
+git -C /home/runner/workspace/.migration-sync-cache status --porcelain -uno | wc -l
+printf 'SUPERVISOR LAST STATUS\n'
+tail -n 8 /home/runner/workspace/.ai-agent-tri-repo-runtime/supervisor.log | cut -c1-320
+
+[streams]
+[stdout] {"status":"running","pid":166555,"workers":{"Gen":{"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/103479666100f0c9_0","pendingCount":165,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:07:22.635Z"},"Project-Delivery":{"status":"uploaded","executed":true,"file":"backend/sync/gen_bidirectional_sync.js","pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:05:36.930Z"},"Migration":{"status":"encryption_key_missing","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-26T22:29:04.682Z"}}}
+[stdout] MIGRATION GIT TRACKED FILES
+[stdout] 1
+[stdout] MIGRATION ENCRYPTED OBJECTS COUNT
+[stdout] 12437
+[stdout] MIGRATION CACHE STATUS COUNT
+[stdout] 0
+[stdout] SUPERVISOR LAST STATUS
+[stdout] [tri-repo] Gen {"status":"error","executed":false,"error":"Command failed: git merge --ff-only --quiet origin/main\nhint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config se
+[tri-repo] Gen {"status":"error","executed":false,"error":"Command failed: git merge --ff-only --quiet origin/main\nhint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config se
+[tri-repo] Gen {"status":"error","executed":false,"error":"Command failed: git merge --ff-only --quiet origin/main\nhint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config se
+[tri-repo] Project-Delivery {"status":"uploaded","executed":true,"file":"backend/sync/transition_replit_sync_workflow.js","pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-26T22:20:06.811Z"}
+[tri-repo] Gen {"status":"error","executed":false,"error":"Command failed: git merge --ff-only --quiet origin/main\nhint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config se
+[tri-repo] Gen {"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/101e14f57d2d1288_0","pendingCount":166,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:05:33.847Z"}
+[tri-repo] Project-Delivery {"status":"uploaded","executed":true,"file":"backend/sync/gen_bidirectional_sync.js","pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:05:36.930Z"}
+[tri-repo] Gen {"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/103479666100f0c9_0","pendingCount":165,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:07:22.635Z"}
+
+[exit code] 0
+Progress: Completed
