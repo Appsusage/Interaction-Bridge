@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e 'import {uploadMigrationSnapshot} from "./backend/sync/migration_repository_sync.js";const r=await uploadMigrationSnapshot({root:process.cwd(),apply:false});console.log("MIGRATION_PREFLIGHT",JSON.stringify(r));'
+node backend/sync/tri_repo_supervisor.js status
