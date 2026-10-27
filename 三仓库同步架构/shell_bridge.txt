@@ -1,5 +1,0 @@
-#!/bin/bash
-set -uo pipefail
-cd /home/runner/workspace/ai-agent || exit 2
-node -e 'const fs=require("node:fs");for(const f of ["backend/sync/migration_key_custody.js","backend/sync/migration_repository_sync.js","backend/sync/gen_bidirectional_sync.js"]){console.log("FILE",f,"PRESENT",fs.existsSync(f));} '
-node backend/sync/tri_repo_supervisor.js status
