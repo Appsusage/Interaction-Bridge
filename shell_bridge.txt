@@ -1,0 +1,96 @@
+set -e
+cd /home/runner/workspace/ai-agent
+python3 - <<'PATCH_NEW_FLOAT_UI'
+from pathlib import Path
+import subprocess,os
+p=Path('frontend/shell-multi-floats.js')
+s=p.read_text()
+def once(old,new,label):
+    global s
+    if s.count(old)!=1 and not (label=='activate_other_panel_pointer' and s.count(old)==2):raise AssertionError(label+': '+str(s.count(old)))
+    s=s.replace(old,new,1)
+once('width:min(310px,calc(100vw - 16px))','width:min(233px,calc(100vw - 16px))','width_25_percent')
+once('@media(max-width:600px){.multi-shell-float{width:min(260px,70vw);height:min(300px,35vh)}}','@media(max-width:600px){.multi-shell-float{width:min(195px,calc(100vw - 16px));height:min(300px,35vh)}}','mobile_width')
+once("    '.multi-shell-float .msf-title{white-space:nowrap;font-size:11px}',",
+"""    '.multi-shell-float .msf-title{white-space:nowrap;font-size:14px;letter-spacing:-.25px}',
+    '.multi-shell-float .msf-brand,.multi-shell-float .msf-separator{font:9px system-ui,sans-serif;color:#a9c4dd;white-space:nowrap}',
+    '.multi-shell-float .msf-progress{font:700 14px ui-monospace,Consolas,monospace;color:#f1fbff;white-space:nowrap}',""",'compact_heading')
+once("  let socket = null, reconnect = null, foreground = null, demoteTimer = null;",
+"""  let socket = null, reconnect = null, foreground = null, demoteTimer = null;
+  const dismissed = new Set();
+  const margin = 8, gap = 9;
+  function layoutWindows() {
+    const movable = [...windows.values()].filter(w => w.element.isConnected && !w.userMoved);
+    if (!movable.length) return;
+    const width = movable[0].element.getBoundingClientRect().width;
+    const height = movable[0].element.getBoundingClientRect().height;
+    const columns = Math.max(1, Math.floor((innerWidth - margin * 2 + gap) / (width + gap)));
+    const rows = Math.max(1, Math.floor((innerHeight - margin * 2 + gap) / (height + gap)));
+    const available = columns * rows;
+    for (let i = 0; i < movable.length; i++) {
+      const col = Math.floor(i / rows) % columns;
+      const row = i % rows;
+      const overflow = i >= available ? Math.floor(i / available) : 0;
+      const win = movable[i], el = win.element;
+      const left = Math.max(margin, innerWidth - margin - width - col * (width + gap) - overflow * 15);
+      const top = Math.max(margin, Math.min(innerHeight - 35, margin + row * (height + gap) + overflow * 25));
+      el.style.left = left + 'px';
+      el.style.top = top + 'px';
+      el.style.right = 'auto';
+    }
+  }
+  function updateSlotCounters(active, capacity) {
+    for (const win of windows.values()) {
+      win.progress.textContent = Math.max(0,Number(active)||0) + '/' + Math.max(1,Number(capacity)||8);
+    }
+  }""",'automatic_multi_window_grid')
+once("    windows.delete(id);","    windows.delete(id);\n    dismissed.add(id);\n    layoutWindows();",'cleanup_relayout')
+once("    el.style.right = (6 + windows.size * 16) + 'px';\n    el.style.top = (Math.min(20 + windows.size * 34, Math.max(20, innerHeight - 210))) + 'px';",
+"    el.style.right = '8px';\n    el.style.top = '8px';",'avoid_cascade')
+once("    const title = document.createElement('strong'); title.className = 'msf-title'; title.textContent = state.taskName;",
+"""    const brand = document.createElement('span'); brand.className = 'msf-brand'; brand.textContent = 'Shell Bridge';
+    const title = document.createElement('strong'); title.className = 'msf-title';
+    title.textContent = state.taskName.replace(/\\.txt$/i,'');
+    const progress = document.createElement('strong'); progress.className = 'msf-progress'; progress.textContent = '0/8';
+    const separator = document.createElement('span'); separator.className = 'msf-separator'; separator.textContent = '–';""",'title_style')
+once("    head.append(title, status, close); el.append(head, output);",
+"    head.append(brand, title, progress, separator, status, close); el.append(head, output);",'title_order')
+once("    const win = { element: el, output, status, active: true, finishTimer: null, lastRevision: 0 };",
+"    const win = { element: el, output, status, progress, active: true, userMoved:false, finishTimer: null, lastRevision: 0 };",'win_state')
+once("    windows.set(state.id, win);","    windows.set(state.id, win);\n    layoutWindows();",'show_layout')
+once("      el.style.right = 'auto';\n    });","      el.style.right = 'auto';\n      win.userMoved = true;\n    });",'manual_drag')
+once("    if (!state?.id || !state.taskName) return;","    if (!state?.id || !state.taskName || dismissed.has(state.id)) return;",'dismissed_windows')
+once("    win.status.textContent = state.status || '执行中';",
+"""    win.status.textContent = (state.status || '执行中').replace(/\\s*[·•-]?\\s*10\\s*秒后关闭/g,'');
+    win.progress.textContent = Math.max(0,Number(state.slots)||0) + '/' + Math.max(1,Number(state.capacity)||8);""",'title_progress')
+once("    if (state.active === false || state.event === 'finish') {",
+"""    if (state.held || state.event === 'held') {
+      win.active = false;
+      clearTimeout(win.finishTimer);
+      return; // Show genuine blocked state until user dismisses it.
+    }
+    if (state.active === false || state.event === 'finish') {""",'held_window_visibility')
+once("      if (packet.type === 'task') render(packet);",
+"""      if (packet.type === 'task') render(packet);
+      if (packet.type === 'worker-status') updateSlotCounters(packet.active,packet.capacity);""",'live_progress_updates')
+once("  window.addEventListener('beforeunload', () => {",
+"  window.addEventListener('resize',layoutWindows);\n  window.addEventListener('beforeunload', () => {",'resize_layout')
+once("    if (target && target.id !== 'shell-float-window' && target.id !== 'backend-console-shell-drawer') selectOtherPanel(target);",
+"    if (target) selectOtherPanel(target);",'activate_other_panel_pointer')
+once("    if (target && target.id !== 'shell-float-window' && target.id !== 'backend-console-shell-drawer') selectOtherPanel(target);",
+"    if (target) selectOtherPanel(target);",'activate_other_panel_focus')
+once("    return event.target?.closest?.('#backend-console-viewer,#backend-console-shell-drawer,#browser-live-viewer,.browser-live-viewer,.float-menu,[data-floating-window],[role=\"dialog\"]');",
+"    return event.target?.closest?.('#shell-float-window,#backend-console-viewer,#backend-console-shell-drawer,#browser-live-viewer,.browser-live-viewer,.float-menu,[data-floating-window],[role=\"dialog\"]');",'other_shell_float_active')
+# CSS check after all transforms, leave old Shell Float untouched.
+tmp=p.with_name('.shell-multi-floats.syntax-'+str(os.getpid())+'.js')
+try:
+    tmp.write_text(s)
+    check=subprocess.run(['node','--check',str(tmp)],capture_output=True,text=True)
+    if check.returncode:raise RuntimeError(check.stderr)
+    p.write_text(s)
+finally:
+    try:tmp.unlink()
+    except FileNotFoundError:pass
+print('NEW_SHELL_FLOAT_UI_PATCH_OK width=233px mobile=195px grid=on')
+PATCH_NEW_FLOAT_UI
+node --check frontend/shell-multi-floats.js
