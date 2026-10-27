@@ -1,4 +1,0 @@
-#!/bin/bash
-set -euo pipefail
-cd /home/runner/workspace/ai-agent
-node --input-type=module -e 'import{uploadMigrationSnapshot}from"./backend/sync/migration_repository_sync.js";const r=await uploadMigrationSnapshot({root:process.cwd(),apply:true});console.log("ENCRYPTED_CONFIG_REFRESH",JSON.stringify({status:r.status,executed:r.executed,files:r.files??null,failedCount:r.failedCount??0,newObjects:r.newObjects??null}));if(r.status!=="encrypted_snapshot_uploaded")process.exitCode=3;'
