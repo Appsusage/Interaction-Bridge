@@ -1,0 +1,5 @@
+node --input-type=module <<'CHECK_TWO_FLOATS'
+const address='http://127.0.0.1:3000/shell-multi/status';
+const response=await fetch(address,{signal:AbortSignal.timeout(5000)});
+console.log('MULTI_FLOAT_LIVE_STATUS',response.status,await response.text());
+CHECK_TWO_FLOATS
