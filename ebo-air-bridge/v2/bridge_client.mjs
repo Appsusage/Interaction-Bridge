@@ -94,6 +94,7 @@ function connect() {
     } catch {}
     console.error("[EBO] WebSocket HTTP", response.statusCode, "redirect:", destination);
     response.resume();
+    ws.terminate();
   });
   ws.on("open", () => {
     ws.send(JSON.stringify({ type: "auth", token }));
