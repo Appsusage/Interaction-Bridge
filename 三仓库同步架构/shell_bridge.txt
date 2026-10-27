@@ -1,0 +1,12 @@
+#!/bin/bash
+set -uo pipefail
+cd /home/runner/workspace/ai-agent || exit 2
+node backend/sync/tri_repo_supervisor.js status
+printf 'MIGRATION GIT TRACKED FILES\n'
+git -C /home/runner/workspace/.migration-sync-cache ls-files | wc -l
+printf 'MIGRATION ENCRYPTED OBJECTS COUNT\n'
+find /home/runner/workspace/.migration-sync-cache/objects -type f -name '*.enc' 2>/dev/null | wc -l
+printf 'MIGRATION CACHE STATUS COUNT\n'
+git -C /home/runner/workspace/.migration-sync-cache status --porcelain -uno | wc -l
+printf 'SUPERVISOR LAST STATUS\n'
+tail -n 8 /home/runner/workspace/.ai-agent-tri-repo-runtime/supervisor.log | cut -c1-320
