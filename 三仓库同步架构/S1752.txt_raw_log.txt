@@ -1,0 +1,11 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+cd /home/runner/workspace/ai-agent || exit 2
+node backend/sync/tri_repo_supervisor.js status
+
+[streams]
+[stdout] {"status":"running","pid":196689,"workers":{"Gen":{"status":"synchronized","executed":true,"file":null,"pendingCount":171,"blockedCount":2,"failedCount":null,"processedCount":12,"deferredCount":0,"at":"2026-10-27T00:29:53.993Z"},"Project-Delivery":{"status":"uploaded","executed":true,"file":"backend/sync/gen_bidirectional_sync.js","pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-27T00:28:21.917Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-27T00:29:42.808Z"}}}
+
+[exit code] 0
+Progress: Completed
