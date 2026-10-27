@@ -1,0 +1,16 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+df -h /home/runner/workspace
+du -sh /home/runner/workspace/.migration-sync-cache 2>/dev/null
+cd /home/runner/workspace/ai-agent || exit 2
+node backend/sync/tri_repo_supervisor.js status
+
+[streams]
+[stdout] Filesystem      Size  Used Avail Use% Mounted on
+/dev/vdd        256G   13G  241G   6% /home/runner/workspace
+[stdout] 3.6G	/home/runner/workspace/.migration-sync-cache
+[stdout] {"status":"running","pid":166555,"workers":{"Gen":{"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/25432b79cb01782c_0","pendingCount":167,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:09:14.658Z"},"Project-Delivery":{"status":"uploaded","executed":true,"file":"backend/extension/navigation/vision_hud.js","pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:08:48.442Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:09:36.464Z"}}}
+
+[exit code] 0
+Progress: Completed
