@@ -1,0 +1,10 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'EBO_BRIDGE_VERIFY_START\n'
+for f in backend/devices/ebo/ebo_connection.js backend/devices/ebo/ebo_controller.js backend/devices/ebo/ebo_relay_server.js backend/devices/ebo/android_bridge/bridge_client.mjs backend/server.js test/ebo_bridge.test.mjs; do
+  if [ ! -f "$f" ]; then echo "EBO_MISSING_FILE:$f"; exit 21; fi
+  node --check "$f"
+done
+printf 'EBO_SYNTAX_ALL_OK\n'
+node --test test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+printf 'EBO_TESTS_OK\n'
