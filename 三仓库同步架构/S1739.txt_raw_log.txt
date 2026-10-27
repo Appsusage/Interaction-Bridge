@@ -1,0 +1,13 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e 'import {uploadMigrationSnapshot} from "./backend/sync/migration_repository_sync.js";const r=await uploadMigrationSnapshot({root:process.cwd(),apply:false});console.log("MIGRATION_PREFLIGHT",JSON.stringify(r));'
+node backend/sync/tri_repo_supervisor.js status
+
+[streams]
+[stdout] MIGRATION_PREFLIGHT {"repository":"Appsusage/Migration","status":"dry_run","executed":false,"recovery":"key_recoverable","recoveryShares":3}
+[stdout] {"status":"running","pid":166555,"workers":{"Gen":{"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/101e14f57d2d1288_0","pendingCount":166,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:05:33.847Z"},"Project-Delivery":{"status":"uploaded","executed":true,"file":"backend/sync/gen_bidirectional_sync.js","pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:05:36.930Z"},"Migration":{"status":"encryption_key_missing","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-26T22:29:04.682Z"}}}
+
+[exit code] 0
+Progress: Completed
