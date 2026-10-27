@@ -1,4 +1,0 @@
-set -e
-printf 'PARALLEL_B_START=%s\n' "$(date +%s%3N)"
-sleep 12
-printf 'PARALLEL_B_END=%s\n' "$(date +%s%3N)"
