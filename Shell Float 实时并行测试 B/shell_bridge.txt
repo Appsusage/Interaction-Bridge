@@ -1,9 +1,0 @@
-set -eu
-printf 'LONG_LIVE_B2_START_MS=%s\n' "$(date +%s%3N)"
-printf 'LONG_LIVE_B2_START_UTC=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')"
-for i in $(seq 1 15); do
- printf 'LONG_LIVE_B2_STEP=%s/15 UTC=%s\n' "$i" "$(date -u '+%H:%M:%S.%3N')"
- sleep 5
-done
-printf 'LONG_LIVE_B2_END_MS=%s\n' "$(date +%s%3N)"
-printf 'LONG_LIVE_B2_FINISHED\n'
