@@ -1,0 +1,25 @@
+[command]
+set -eu
+echo EBO_GITHUB_RAW_VERIFY_BEGIN
+DIR=$(mktemp -d)
+trap 'rm -rf "$DIR"' EXIT
+curl --proto '=https' -fLsS --max-time 20 'https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/6345b92c5424b48077563045edb095199f364518/ebo-air-bridge/v1/install.sh' -o "$DIR/install.sh"
+curl --proto '=https' -fLsS --max-time 20 'https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/20b331da4cb648a0e499f131c5e919c06dc6eba8/ebo-air-bridge/v1/bridge_client.mjs' -o "$DIR/bridge_client.mjs"
+test "$(head -n 1 "$DIR/install.sh")" = '#!/data/data/com.termux/files/usr/bin/sh'
+grep -q '^// backend/devices/ebo/android_bridge/bridge_client.mjs' "$DIR/bridge_client.mjs"
+sh -n "$DIR/install.sh"
+node --check "$DIR/bridge_client.mjs"
+echo EBO_PUBLIC_GITHUB_DOWNLOAD_REAL_SHELL:true
+echo EBO_PUBLIC_GITHUB_SCRIPT_VALID:true
+echo EBO_PUBLIC_GITHUB_CLIENT_VALID:true
+echo EBO_GITHUB_RAW_VERIFY_END
+
+[streams]
+[stdout] EBO_GITHUB_RAW_VERIFY_BEGIN
+[stdout] EBO_PUBLIC_GITHUB_DOWNLOAD_REAL_SHELL:true
+EBO_PUBLIC_GITHUB_SCRIPT_VALID:true
+EBO_PUBLIC_GITHUB_CLIENT_VALID:true
+EBO_GITHUB_RAW_VERIFY_END
+
+[exit code] 0
+Progress: Completed
