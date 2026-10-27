@@ -1,0 +1,61 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+R=/home/runner/workspace/ai-agent
+C=/home/runner/workspace/.gen-sync-cache
+B=/home/runner/workspace/.ai-agent-tri-repo-runtime
+git -C "$C" merge-base --is-ancestor a3a5a001bc5b1ecf0e696f26b2dbedb8c9085922 HEAD
+P1=backend/sync/migration_repository_sync.js
+P2=backend/sync/gen_bidirectional_sync.js
+P3=backend/sync/tests/gen_bidirectional_sync.test.js
+P4=backend/sync/migration_key_custody.js
+P5=backend/sync/tests/migration_key_custody.test.js
+for P in "$P1" "$P2" "$P3" "$P4" "$P5"; do test -f "$C/$P"; done
+cmp -s "$R/$P1" <(git -C "$C" show 8f00fc993bab2a04c31ee4c39e2a7b59a8250598:"$P1")
+cmp -s "$R/$P2" <(git -C "$C" show 57e28079088b6e62459f3f3ba3140b19df17a7ab:"$P2")
+cmp -s "$R/$P3" <(git -C "$C" show 57e28079088b6e62459f3f3ba3140b19df17a7ab:"$P3")
+test ! -e "$R/$P4"
+test ! -e "$R/$P5"
+STAMP="$(date +%Y%m%d%H%M%S)"
+D="$B/priority-code-backup-$STAMP"
+mkdir -p "$D/backend/sync/tests"
+for P in "$P1" "$P2" "$P3"; do cp -p "$R/$P" "$D/$P"; done
+for P in "$P4" "$P5" "$P1" "$P2" "$P3"; do
+  T="$R/$P.priority-$STAMP.tmp"
+  cp -p "$C/$P" "$T"
+  mv "$T" "$R/$P"
+done
+cd "$R"
+node --check "$P4"
+node --check "$P1"
+node --check "$P2"
+node "$P5"
+node backend/sync/tests/gen_bidirectional_sync.test.js
+printf 'PRIORITY_CODE_INSTALLED backup=%s\n' "$D"
+
+[streams]
+[stdout] ✔ Shamir 2 of 3: any pair restores the original key, no single share can (2.680772ms)
+[stdout] ✔ Migration: autonomous off-site key escrow survives loss of original Replit runtime (227.936045ms)
+[stdout] ✔ Migration never rotates an existing encrypted backup when remote custody is absent (1.138134ms)
+[stdout] ℹ tests 3
+ℹ suites 0
+[stdout] ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 236.20601
+[stdout] ✔ Gen independently uploads, downloads and preserves three-way conflicts (497.322239ms)
+[stdout] ✔ Gen safely reconciles a local unpushed commit and disjoint remote edits (275.066776ms)
+[stdout] ℹ tests 2
+[stdout] ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+[stdout] ℹ duration_ms 777.370655
+[stdout] PRIORITY_CODE_INSTALLED backup=/home/runner/workspace/.ai-agent-tri-repo-runtime/priority-code-backup-20261027000401
+
+[exit code] 0
+Progress: Completed
