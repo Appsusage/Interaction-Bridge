@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+R=/home/runner/workspace/ai-agent
+C=/home/runner/workspace/.gen-sync-cache
+for P in backend/sync/migration_repository_sync.js backend/sync/gen_bidirectional_sync.js backend/sync/tests/gen_bidirectional_sync.test.js; do
+  if [ "$P" = backend/sync/migration_repository_sync.js ]; then REF=8f00fc993bab2a04c31ee4c39e2a7b59a8250598; else REF=57e28079088b6e62459f3f3ba3140b19df17a7ab; fi
+  if cmp -s "$R/$P" <(git -C "$C" show "$REF:$P"); then printf 'UNCHANGED_FROM_BASE %s\n' "$P"; else printf 'LOCAL_DIVERGED %s\n' "$P"; fi
+done
+for P in backend/sync/migration_key_custody.js backend/sync/tests/migration_key_custody.test.js; do
+  test -e "$R/$P" && printf 'ALREADY_PRESENT %s\n' "$P" || printf 'MISSING %s\n' "$P"
+done
+git -C "$C" log -1 --format='%h %s'
