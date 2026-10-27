@@ -1,0 +1,29 @@
+[command]
+set -eu
+printf 'LIVE_MULTI_A_START_UTC=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')"
+printf 'LIVE_MULTI_A_START_MS=%s\n' "$(date +%s%3N)"
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  printf 'LIVE_MULTI_A_STEP=%s/10 AT=%s\n' "$i" "$(date -u '+%H:%M:%S.%3N')"
+  sleep 3
+done
+printf 'LIVE_MULTI_A_END_MS=%s\n' "$(date +%s%3N)"
+printf 'LIVE_MULTI_A_FINISHED\n'
+
+[streams]
+[stdout] LIVE_MULTI_A_START_UTC=2026-10-27T07:11:20.149Z
+[stdout] LIVE_MULTI_A_START_MS=1793085080153
+[stdout] LIVE_MULTI_A_STEP=1/10 AT=07:11:20.155
+[stdout] LIVE_MULTI_A_STEP=2/10 AT=07:11:23.165
+[stdout] LIVE_MULTI_A_STEP=3/10 AT=07:11:26.177
+[stdout] LIVE_MULTI_A_STEP=4/10 AT=07:11:29.193
+[stdout] LIVE_MULTI_A_STEP=5/10 AT=07:11:32.203
+[stdout] LIVE_MULTI_A_STEP=6/10 AT=07:11:35.209
+[stdout] LIVE_MULTI_A_STEP=7/10 AT=07:11:38.224
+[stdout] LIVE_MULTI_A_STEP=8/10 AT=07:11:41.233
+[stdout] LIVE_MULTI_A_STEP=9/10 AT=07:11:44.243
+[stdout] LIVE_MULTI_A_STEP=10/10 AT=07:11:47.248
+[stdout] LIVE_MULTI_A_END_MS=1793085110254
+LIVE_MULTI_A_FINISHED
+
+[exit code] 0
+Progress: Completed
