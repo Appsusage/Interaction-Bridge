@@ -1,4 +1,0 @@
-#!/bin/bash
-set -uo pipefail
-cd /home/runner/workspace/ai-agent || exit 2
-node backend/sync/tri_repo_supervisor.js status
