@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+R=/home/runner/workspace/ai-agent
+C=/home/runner/workspace/.gen-sync-cache
+B=/home/runner/workspace/.ai-agent-tri-repo-runtime
+git -C "$C" merge-base --is-ancestor 922e0399d0a082ca4f90bd19b184890242500a01 HEAD
+P1=backend/sync/migration_repository_sync.js
+P2=backend/sync/tests/migration_repository_sync.test.js
+cmp -s "$R/$P1" <(git -C "$C" show f89c1d60989472090d98a242eacae1e7a9f10c5b:"$P1")
+cmp -s "$R/$P2" <(git -C "$C" show 8f00fc993bab2a04c31ee4c39e2a7b59a8250598:"$P2")
+STAMP="$(date +%Y%m%d%H%M%S)"
+D="$B/config-code-backup-$STAMP"
+mkdir -p "$D/backend/sync/tests"
+for P in "$P1" "$P2"; do
+  cp -p "$R/$P" "$D/$P"
+  T="$R/$P.config-$STAMP.tmp"
+  cp -p "$C/$P" "$T"
+  mv "$T" "$R/$P"
+done
+cd "$R"
+node backend/sync/tests/migration_repository_sync.test.js
+printf 'CONFIG_CUSTODY_UPGRADED backup=%s\n' "$D"
