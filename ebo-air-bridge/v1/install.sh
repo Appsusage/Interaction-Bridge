@@ -53,19 +53,19 @@ fi
 
 echo "[EBO] 从公开 GitHub 固定版本下载 Bridge 客户端（不包含密钥）"
 curl --proto '=https' --tlsv1.2 -fLsS --connect-timeout 10 --max-time 45 \
-  "https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/20b331da4cb648a0e499f131c5e919c06dc6eba8/ebo-air-bridge/v1/bridge_client.mjs" -o "$CLIENT.tmp"
+  "https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/20b331da4cb648a0e499f131c5e919c06dc6eba8/ebo-air-bridge/v1/bridge_client.mjs" -o "$CLIENT.tmp.mjs"
 # HTTP 200 alone may return an HTML verification page; reject it rather than running.
-if ! grep -q '^// backend/devices/ebo/android_bridge/bridge_client.mjs' "$CLIENT.tmp"; then
+if ! grep -q '^// backend/devices/ebo/android_bridge/bridge_client.mjs' "$CLIENT.tmp.mjs"; then
   echo "[EBO] 下载的不是预期 JavaScript 文件。拒绝执行。"
-  rm -f "$CLIENT.tmp"
+  rm -f "$CLIENT.tmp.mjs"
   exit 5
 fi
-node --check "$CLIENT.tmp" >/dev/null 2>&1 || {
+node --check "$CLIENT.tmp.mjs" >/dev/null 2>&1 || {
   echo "[EBO] 下载客户端语法验证失败，未启动。"
-  rm -f "$CLIENT.tmp"
+  rm -f "$CLIENT.tmp.mjs"
   exit 6
 }
-mv "$CLIENT.tmp" "$CLIENT"
+mv "$CLIENT.tmp.mjs" "$CLIENT"
 chmod 600 "$CLIENT"
 
 cat > "$RUNNER" <<'EBO_RUNNER'
