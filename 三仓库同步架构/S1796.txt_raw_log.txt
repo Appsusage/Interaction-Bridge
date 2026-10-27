@@ -1,0 +1,28 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+C=/home/runner/workspace/.gen-sync-cache
+echo 'GIT_INDEX_LOCK'
+if test -e "$C/.git/index.lock"; then
+  stat -c 'size=%s mtime_epoch=%Y modified=%y' "$C/.git/index.lock"
+else
+  echo none
+fi
+echo 'GIT_STATUS'
+git -C "$C" status --short --untracked-files=all | head -n 8
+echo 'MODULE_BYTES'
+wc -c /home/runner/workspace/ai-agent/backend/sync/gen_bidirectional_sync.js
+echo 'BACKUP_BYTES'
+stat -c '%s' /home/runner/workspace/.gen-sync-backups/tri-repo-recovery-20261027/.chatgpt-profile/Default/DawnGraphiteCache/data_1
+
+[streams]
+[stdout] GIT_INDEX_LOCK
+none
+GIT_STATUS
+[stdout] MODULE_BYTES
+[stdout] 17327 /home/runner/workspace/ai-agent/backend/sync/gen_bidirectional_sync.js
+[stdout] BACKUP_BYTES
+[stdout] 270336
+
+[exit code] 0
+Progress: Completed
