@@ -6,7 +6,7 @@ umask 077
 ROOT="$HOME/ebo-bridge"
 SERVER="$ROOT/tunnel_status_server.mjs"
 TEMP="$ROOT/tunnel_status_server.next.mjs"
-PINNED="https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/b5828f757bc6aaa544b671b0b8a7096d4b00d401/ebo-air-bridge/v3/tunnel_status_server.mjs"
+PINNED="https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/4347760a0cfad56e9c264f4b4704233590ae1229/ebo-air-bridge/v3/tunnel_status_server.mjs"
 
 if [ ! -s "$ROOT/.bridge-token" ]; then
   echo "[EBO] 未找到之前保存的配对密钥；先完成 EBO Bridge 首次配对。"
@@ -45,8 +45,8 @@ if [ "$status" != "401" ]; then
   tail -n 12 "$ROOT/tunnel-server.log" 2>/dev/null || true
   exit 5
 fi
-echo "[EBO] 手机本地认证服务已启动，未授权请求被拒绝。"
+echo "[EBO] 手机本地 HMAC 认证服务已启动，未授权请求被拒绝。"
 echo "[EBO] 正在向 Cloudflare 创建临时隧道..."
 echo "[EBO] 请将随后出现的 https://...trycloudflare.com 地址复制给 ChatGPT。"
-echo "[EBO] 不要分享 EBO_BRIDGE_TOKEN 或其他令牌。"
+echo "[EBO] 不要分享 EBO_BRIDGE_TOKEN 或其他令牌；URL 可以仅用于本次测试。"
 exec cloudflared tunnel --url http://127.0.0.1:8765
