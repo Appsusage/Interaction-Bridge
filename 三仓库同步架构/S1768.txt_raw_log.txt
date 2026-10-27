@@ -1,6 +1,4 @@
-[v2 high-risk] S1768.txt
-[original source] 三仓库同步架构/shell_bridge.txt
-[full command]
+[command]
 #!/bin/bash
 set -u
 C=/home/runner/workspace/.gen-sync-cache
@@ -17,29 +15,19 @@ wc -c /home/runner/workspace/ai-agent/backend/sync/gen_bidirectional_sync.js
 echo 'TARGET BACKUP:'
 stat -c '%s bytes backed up' /home/runner/workspace/.gen-sync-backups/tri-repo-recovery-20261027/.chatgpt-profile/Default/DawnGraphiteCache/data_1 2>&1 || true
 
+[streams]
+[stdout] CACHE STATUS:
+[stdout] LOCK FILE:
+[stdout] stat: [stdout] cannot statx '/home/runner/workspace/.gen-sync-cache/.git/index.lock': No such file or directory
+[stdout] LOCK OWNER CHECK:
+[stdout] RUNNING GIT/SYNC PROCESSES:
+[stdout]     108       00:32 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/sync/tri_repo_supervisor.js run
+   3878       00:00 /bin/bash -c #!/bin/bash set -u C=/home/runner/workspace/.gen-sync-cache echo 'CACHE STATUS:' git -C "$C" status --short --untracked-files=all | head -n 10 echo 'LOCK FILE:' stat -c 'size=%s age_seconds=%Y mtime=%y' "$C/.git/index.lock" 2>&1 || true echo 'LOCK OWNER CHECK:' if command -v fuser >/dev/null 2>&1; then fuser "$C/.git/index.lock" 2>&1 || true; fi echo 'RUNNING GIT/SYNC PROCESSES:' ps -eo pid,etime,args | rg 'git (add|commit|restore|push|fetch|merge|lfs)|tri_repo_supervisor|gen_bidirectional_sync' | head -n 15 || true echo 'REPLIT MODULE VERSION:' wc -c /home/runner/workspace/ai-agent/backend/sync/gen_bidirectional_sync.js echo 'TARGET BACKUP:' stat -c '%s bytes backed up' /home/runner/workspace/.gen-sync-backups/tri-repo-recovery-20261027/.chatgpt-profile/Default/DawnGraphiteCache/data_1 2>&1 || true 
+   3903       00:00 rg git (add|commit|restore|push|fetch|merge|lfs)|tri_repo_supervisor|gen_bidirectional_sync
+[stdout] REPLIT MODULE VERSION:
+[stdout] 17327 /home/runner/workspace/ai-agent/backend/sync/gen_bidirectional_sync.js
+[stdout] TARGET BACKUP:
+[stdout] 270336 bytes backed up
 
-[continued at] 2026-10-27T07:52:08.707Z
-s (node:internal/process/task_queues:104:5)
-    at async Promise.allSettled (index 0)
-[error] Error: Broad or process-group termination blocked; exact positive PID required
-    at executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:125:37)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async Promise.allSettled (index 0)
-[error] Error: Broad or process-group termination blocked; exact positive PID required
-    at executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:125:37)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async Promise.allSettled (index 0)
-[error] Error: Broad or process-group termination blocked; exact positive PID required
-    at executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:125:37)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async Promise.allSettled (index 0)
-[error] Error: Broad or process-group termination blocked; exact positive PID required
-    at executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:125:37)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async Promise.allSettled (index 0)
-[error] Error: Broad or process-group termination blocked; exact positive PID required
-    at executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:125:37)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async Promise.allSettled (index 0)
-
-Pending, to be continued.
+[exit code] 0
+Progress: Completed
