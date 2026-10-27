@@ -1,0 +1,45 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'EBO_PHASE2_CHECK_START\n'
+node --check backend/extension/nexus.js
+node --check backend/devices/ebo/ebo_relay_server.js
+node --check backend/server.js
+node --test test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+if grep -q 'robot_status:async()' backend/extension/nexus.js; then echo 'EBO_ROBOT_STATUS_REGISTERED'; else echo 'EBO_STATUS_PENDING_SYNC'; fi
+node --input-type=module <<'NODE'
+import { getEboRelayStatus } from './backend/devices/ebo/ebo_relay_server.js';
+const s=getEboRelayStatus();
+console.log('EBO_RELAY_CONFIGURED', s.configured);
+console.log('EBO_RELAY_ONLINE', s.bridgeOnline);
+console.log('EBO_ROBOT_AUTH', s.robotAuthenticated);
+console.log('EBO_ENV_REPL_ID', Boolean(process.env.REPL_ID));
+NODE
+if command -v curl >/dev/null 2>&1; then
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://127.0.0.1:3000/ebo/bridge-client.mjs || true)
+  echo "EBO_CLIENT_HTTP_STATUS:$code"
+fi
+printf 'EBO_PHASE2_CHECK_END\n'
+[streams]
+[stdout] EBO_PHASE2_CHECK_START
+[stdout] ✔ Replit cannot claim LAN device connected (0.867286ms)
+[stdout] ✔ Unverified movement cannot be transmitted (0.146138ms)
+[stdout] ✔ Authenticated Android bridge reports LAN diagnostics, not robot connection (85.446037ms)
+[stdout] ℹ tests 3
+ℹ suites 0
+[stdout] ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 194.674788
+[stdout] EBO_ROBOT_STATUS_REGISTERED
+[stdout] EBO_RELAY_CONFIGURED false
+[stdout] EBO_RELAY_ONLINE false
+[stdout] EBO_ROBOT_AUTH false
+EBO_ENV_REPL_ID true
+[stdout] EBO_CLIENT_HTTP_STATUS:404
+EBO_PHASE2_CHECK_END
+
+[exit code] 0
+Progress: Completed
