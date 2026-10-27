@@ -1,0 +1,11 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node --input-type=module -e 'import {inspectMigrationEnvironment} from "./backend/migration/migration_environment.js";import {markMigrationTarget,planRehost,verifyRehost} from "./backend/migration/migration_rehost.js";const dest="/home/runner/workspace/.ai-agent-tri-repo-runtime/restore-verification-20261027001141";const src=await inspectMigrationEnvironment({projectRoot:process.cwd()});const marked=await markMigrationTarget({targetRoot:dest,sourceEnvironment:src,fileCount:16139});const plan=await planRehost({targetRoot:dest});const verify=await verifyRehost({targetRoot:dest});console.log("REHOST_PREFLIGHT",JSON.stringify({marker:marked.status,plan:plan.status,install:plan.installCommand,verification:verify.status,checks:verify.checks.map(c=>[c.name,c.status])}));'
+
+[streams]
+[stdout] REHOST_PREFLIGHT {"marker":"target_marked","plan":"planned","install":"npm ci --ignore-scripts --no-audit --no-fund","verification":"partial_verified","checks":[["original_application_code","passed"],["memory_readable","passed"],["browser_module_present","passed"],["shell_bridge_files_present","passed"],["frontend_present","passed"],["node_major_compatible","passed"],["dependencies_installed","passed"],["server_syntax","passed"],["target_http_health","not_run"],["ai_chat_response","not_run"],["provider_connections","not_run"],["browser_authenticated","not_run"],["shell_bridge_execution","not_run"],["memory_persistence_after_restart","not_run"]]}
+
+[exit code] 0
+Progress: Completed
