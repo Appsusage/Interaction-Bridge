@@ -3,7 +3,7 @@
 // No shell commands, movement commands, camera streams or UDP control packets.
 import http from "node:http";
 import { readFileSync } from "node:fs";
-import { timingSafeEqual } from "node:crypto";
+import { timingSafeEqual, createHmac } from "node:crypto";
 import { execFile } from "node:child_process";
 
 const HOST = "127.0.0.1";
@@ -17,10 +17,19 @@ const secret = readFileSync(TOKEN_PATH, "utf8").trim();
 if (secret.length < 32) throw new Error("EBO local secret is missing or too short");
 const secretBuffer = Buffer.from(secret, "utf8");
 
-function validToken(auth) {
-  if (typeof auth !== "string" || !auth.startsWith("Bearer ") || auth.length > 4096) return false;
-  const candidate = Buffer.from(auth.slice(7), "utf8");
-  return candidate.length === secretBuffer.length && timingSafeEqual(candidate, secretBuffer);
+// HMAC protects the paired token: never transmit the token through the tunnel.
+// Sign one GET /status request with a timestamp and refuse stale requests.
+function validRequest(headers) {
+  const rawTime = headers["x-ebo-timestamp"];
+  const signature = headers["x-ebo-signature"];
+  if (typeof rawTime !== "string" || !/^\d{13}$/.test(rawTime) ||
+      typeof signature !== "string" || !/^[a-f0-9]{64}$/.test(signature)) return false;
+  const stamp = Number(rawTime);
+  if (!Number.isFinite(stamp) || Math.abs(Date.now() - stamp) > 90000) return false;
+  const expected = createHmac("sha256", secretBuffer)
+    .update(rawTime + ":GET:/status", "utf8").digest();
+  const actual = Buffer.from(signature, "hex");
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
 function probeLan() {
@@ -38,7 +47,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404).end();
     return;
   }
-  if (!validToken(req.headers.authorization)) {
+  if (!validRequest(req.headers)) {
     res.writeHead(401, { "WWW-Authenticate": 'Bearer realm="ebo-air"' }).end();
     return;
   }
