@@ -1,0 +1,37 @@
+[command]
+set -eu
+echo EBO_NODE_BOOTSTRAP_VERIFY_START
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+node --input-type=module - "$WORK" <<'NODE'
+import { writeFileSync } from "node:fs";
+import path from "node:path";
+const root=process.argv[2];
+const u='https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/0cc48d56e62b1e15a2ee9249a8c6b3018c866e5d/ebo-air-bridge/v1/install.sh';
+const res=await fetch(u,{signal:AbortSignal.timeout(15000)});
+if(!res.ok)throw new Error('Unexpected installer HTTP '+res.status);
+const t=await res.text();
+if(!t.startsWith('#!/data/data/com.termux/files/usr/bin/sh'))throw new Error('Not a real Termux shell script');
+if(t.includes('curl --proto')||t.includes('pkg install -y nodejs curl'))throw new Error('Still contains broken curl');
+writeFileSync(path.join(root,'install.sh'),t);
+const m=t.match(/const url = "(https:\/\/raw[^"]+)";/);
+if(!m)throw new Error('No pinned client');
+const res2=await fetch(m[1],{signal:AbortSignal.timeout(15000)});
+if(!res2.ok)throw new Error('Client HTTP '+res2.status);
+const js=await res2.text();
+if(!js.startsWith('// backend/devices/ebo/android_bridge/bridge_client.mjs'))throw new Error('Not expected JS');
+writeFileSync(path.join(root,'client.mjs'),js);
+console.log('EBO_NODE_HTTP_FILE_CONTENT_VALID');
+NODE
+sh -n "$WORK/install.sh"
+node --check "$WORK/client.mjs"
+echo EBO_NODE_INSTALL_SCRIPT_SYNTAX_OK
+echo EBO_NODE_BOOTSTRAP_VERIFY_COMPLETE
+[streams]
+[stdout] EBO_NODE_BOOTSTRAP_VERIFY_START
+[stdout] EBO_NODE_HTTP_FILE_CONTENT_VALID
+[stdout] EBO_NODE_INSTALL_SCRIPT_SYNTAX_OK
+[stdout] EBO_NODE_BOOTSTRAP_VERIFY_COMPLETE
+
+[exit code] 0
+Progress: Completed
