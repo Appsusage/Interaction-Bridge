@@ -1,0 +1,13 @@
+set -e
+cd /home/runner/workspace/ai-agent
+printf 'MULTI_READONLY_CHECK_START\n'
+node --input-type=module <<'READ_MULTI_STATUS'
+import {execFileSync} from 'node:child_process';
+for(const [p,url] of [[3000,'http://127.0.0.1:3000/shell-multi/status'],[3102,'http://127.0.0.1:3102/health']]){
+try{const r=await fetch(url,{signal:AbortSignal.timeout(3000)});console.log('STATUS',p,r.status,(await r.text()).slice(0,900))}
+catch(e){console.log('STATUS_ERROR',p,e.message)}
+}
+const rows=execFileSync('ps',['-eo','pid,ppid,stat,args'],{encoding:'utf8'}).split('\n');
+console.log('PROCESSES',rows.filter(x=>/node.*(backend\/server\.js|bridge\/shell\/)/.test(x)).slice(0,25).join('\n'));
+READ_MULTI_STATUS
+printf 'MULTI_READONLY_CHECK_END\n'
