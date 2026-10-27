@@ -6,7 +6,7 @@ ROOT="$HOME/ebo-bridge"
 CLIENT="$ROOT/bridge_client.mjs"
 ACCESS="$ROOT/.replit-access-token"
 NEXT="$ROOT/bridge_client.next.mjs"
-URL="https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/b196a3691eada4abe3a35022fe3ebf9ec02a2d6a/ebo-air-bridge/v2/bridge_client.mjs"
+URL="https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/a2dbe6c2572e0c8c697ae650383228d1d898dfae/ebo-air-bridge/v2/bridge_client.mjs"
 if [ ! -f "$ROOT/.bridge-token" ]; then
   echo "[EBO] 原有 Bridge 尚未配对，请先完成初次安装。"
   exit 2
