@@ -1,0 +1,37 @@
+[command]
+#!/bin/bash
+set -uo pipefail
+C=/home/runner/workspace/.gen-sync-cache
+printf 'GEN DIRTY COUNT\n'
+git -C "$C" status --porcelain --untracked-files=all | wc -l
+printf 'GEN DIRTY TOP\n'
+git -C "$C" status --porcelain --untracked-files=all | head -n 35
+printf 'GEN TRACKED DIFF\n'
+git -C "$C" diff --name-status | head -n 35
+printf 'GEN STAGED DIFF\n'
+git -C "$C" diff --cached --name-status | head -n 35
+printf 'GEN STATUS SUMMARY\n'
+git -C "$C" status -sb -uno
+printf 'SUPERVISOR PROCESS\n'
+ps -p 156 -o pid=,etime=,args=
+printf 'SUPERVISOR STDOUT DEST\n'
+readlink /proc/156/fd/1 || true
+
+[streams]
+[stdout] GEN DIRTY COUNT
+[stdout] 1
+[stdout] GEN DIRTY TOP
+[stdout] M  .chatgpt-profile/Default/DawnGraphiteCache/data_1
+[stdout] GEN TRACKED DIFF
+[stdout] GEN STAGED DIFF
+[stdout] M	.chatgpt-profile/Default/DawnGraphiteCache/data_1
+[stdout] GEN STATUS SUMMARY
+[stdout] ## main...origin/main
+M  .chatgpt-profile/Default/DawnGraphiteCache/data_1
+[stdout] SUPERVISOR PROCESS
+[stdout]     156       06:26 /nix/store/3kgvidr44ycfh6swb9n6dgqsb18sllph-nodejs-24.22.1/bin/node backend/sync/tri_repo_supervisor.js run
+[stdout] SUPERVISOR STDOUT DEST
+[stdout] /dev/pts/1
+
+[exit code] 0
+Progress: Completed
