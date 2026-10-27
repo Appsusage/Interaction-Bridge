@@ -18,7 +18,9 @@ echo 'TARGET BACKUP:'
 stat -c '%s bytes backed up' /home/runner/workspace/.gen-sync-backups/tri-repo-recovery-20261027/.chatgpt-profile/Default/DawnGraphiteCache/data_1 2>&1 || true
 
 
-[continued at] 2026-10-27T04:03:30.288Z
+[continued at] 2026-10-27T04:09:27.401Z
+s (node:internal/process/task_queues:104:5)
+    at async Promise.allSettled (index 0)
 [error] Error: Broad or process-group termination blocked; exact positive PID required
     at executeRiskTask (file:///home/runner/workspace/ai-agent/bridge/shell/multi-task/risk_coordinator.js:125:37)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
