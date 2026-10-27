@@ -1,0 +1,13 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+TARGET="/home/runner/workspace/.ai-agent-tri-repo-runtime/restore-verification-updated-$(date +%Y%m%d%H%M%S)"
+RUNTIME="/home/runner/workspace/.ai-agent-tri-repo-runtime/fresh-key-recovery-$(date +%Y%m%d%H%M%S)"
+node --input-type=module -e 'import{restoreMigrationSnapshot}from"./backend/sync/migration_repository_sync.js";import{readFile}from"node:fs/promises";const r=await restoreMigrationSnapshot({targetRoot:process.argv[1],cachePath:"/home/runner/workspace/.migration-sync-cache",recoveryRuntimeDir:process.argv[2]});const s=JSON.parse(await readFile(r.environmentSecretsFile,"utf8"));console.log("UPDATED_RESTORE",JSON.stringify({status:r.status,files:r.files,environmentSecretsCount:Object.keys(s).length,dropboxAppKeyPresent:!!s.DROPBOX_APP_KEY,dropboxRefreshTokenPresent:!!s.DROPBOX_REFRESH_TOKEN,target:r.targetRoot}));' "$TARGET" "$RUNTIME"
+
+[streams]
+[stdout] UPDATED_RESTORE {"status":"restored_verified","files":16151,"environmentSecretsCount":23,"dropboxAppKeyPresent":true,"dropboxRefreshTokenPresent":true,"target":"/home/runner/workspace/.ai-agent-tri-repo-runtime/restore-verification-updated-20261027002047"}
+
+[exit code] 0
+Progress: Completed
