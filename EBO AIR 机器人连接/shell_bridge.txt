@@ -1,0 +1,12 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_PUBLIC_INSTALLER_TEST_BEGIN
+url="https://${REPLIT_DEV_DOMAIN}/ebo/bridge-install.sh"
+temp=$(mktemp)
+trap 'rm -f "$temp"' EXIT
+http=$(curl -fsSL -o "$temp" --max-time 10 -w '%{http_code}' "$url")
+echo "EBO_INSTALLER_PUBLIC_HTTP:$http"
+sh -n "$temp"
+if grep -q 'c3792481-1e0d-4b77-a94a-cc73b270f100-00-22liqzpphdzqb.pike.replit.dev' "$temp"; then echo "EBO_CURRENT_DOMAIN_INCLUDED:true"; else echo "EBO_CURRENT_DOMAIN_INCLUDED:false"; exit 2; fi
+if grep -q '__EBO_REPLIT_DOMAIN__' "$temp"; then echo "EBO_UNFILLED_TEMPLATE"; exit 3; fi
+echo EBO_PUBLIC_INSTALLER_TEST_PASS
