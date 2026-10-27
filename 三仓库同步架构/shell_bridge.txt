@@ -1,0 +1,8 @@
+#!/bin/bash
+set -uo pipefail
+cd /home/runner/workspace/ai-agent || exit 2
+node backend/sync/tri_repo_supervisor.js status
+printf 'LATEST MIGRATION\n'
+git -C /home/runner/workspace/.migration-sync-cache log -1 --format='%h %s'
+printf 'GEN REPO HEALTH\n'
+git -C /home/runner/workspace/.gen-sync-cache rev-list --left-right --count HEAD...origin/main
