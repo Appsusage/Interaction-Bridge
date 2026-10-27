@@ -20,10 +20,12 @@ case "$DOMAIN" in
 esac
 
 echo "[EBO] 初始化自动连接服务"
-if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
-  pkg update -y
-  pkg install -y nodejs curl
+if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+  echo "[EBO] Node.js / npm 未安装。请先执行 pkg install nodejs -y。"
+  exit 7
 fi
+node --version
+npm --version
 
 mkdir -p "$ROOT" "$HOME/.termux/boot"
 chmod 700 "$ROOT"
@@ -51,20 +53,19 @@ if [ ! -d "$ROOT/node_modules/ws" ]; then
   (cd "$ROOT" && npm install --no-audit --no-fund --ignore-scripts ws@8.21.1)
 fi
 
-echo "[EBO] 从公开 GitHub 固定版本下载 Bridge 客户端（不包含密钥）"
-curl --proto '=https' --tlsv1.2 -fLsS --connect-timeout 10 --max-time 45 \
-  "https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/20b331da4cb648a0e499f131c5e919c06dc6eba8/ebo-air-bridge/v1/bridge_client.mjs" -o "$CLIENT.tmp.mjs"
-# HTTP 200 alone may return an HTML verification page; reject it rather than running.
-if ! grep -q '^// backend/devices/ebo/android_bridge/bridge_client.mjs' "$CLIENT.tmp.mjs"; then
-  echo "[EBO] 下载的不是预期 JavaScript 文件。拒绝执行。"
-  rm -f "$CLIENT.tmp.mjs"
-  exit 5
-fi
-node --check "$CLIENT.tmp.mjs" >/dev/null 2>&1 || {
-  echo "[EBO] 下载客户端语法验证失败，未启动。"
-  rm -f "$CLIENT.tmp.mjs"
-  exit 6
+echo "[EBO] 通过 Node.js HTTPS 下载 Bridge 客户端（不依赖损坏的 curl）"
+node --input-type=module - "$CLIENT.tmp.mjs" <<'EBO_DOWNLOAD'
+import fs from "node:fs";
+const url = "https://raw.githubusercontent.com/Appsusage/Interaction-Bridge/20b331da4cb648a0e499f131c5e919c06dc6eba8/ebo-air-bridge/v1/bridge_client.mjs";
+const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+if (!response.ok) throw new Error("Client download failed: HTTP " + response.status);
+const contents = await response.text();
+if (!contents.startsWith("// backend/devices/ebo/android_bridge/bridge_client.mjs")) {
+  throw new Error("Downloaded file is not the expected EBO Bridge JavaScript");
 }
+fs.writeFileSync(process.argv[2], contents, { mode: 0o600 });
+EBO_DOWNLOAD
+node --check "$CLIENT.tmp.mjs"
 mv "$CLIENT.tmp.mjs" "$CLIENT"
 chmod 600 "$CLIENT"
 
