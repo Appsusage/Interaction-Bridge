@@ -1,0 +1,22 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+node backend/sync/tri_repo_supervisor.js stop
+READY=0
+for I in $(seq 1 25); do
+  S="$(node backend/sync/tri_repo_supervisor.js status)"
+  if printf '%s' "$S" | grep -q '"status":"stopped"'; then READY=1; break; fi
+  sleep 2
+done
+if [ "$READY" -ne 1 ]; then printf 'BATCH_RELOAD_TIMEOUT\n'; exit 4; fi
+node backend/sync/tri_repo_supervisor.js start
+node backend/sync/tri_repo_supervisor.js status
+
+[streams]
+[stdout] {"status":"stopping","pid":186580}
+[stdout] {"status":"started","pid":196689}
+[stdout] {"status":"running","pid":196689,"workers":{"Gen":{"status":"synchronized","executed":true,"file":".chatgpt-profile/Default/Cache/Cache_Data/38c5b32a6373eb5f_0","pendingCount":169,"blockedCount":2,"failedCount":null,"at":"2026-10-27T00:27:08.957Z"},"Project-Delivery":{"status":"uploaded","executed":true,"file":"capabilities/navigation/local/preview.js","pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:26:25.776Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"at":"2026-10-27T00:24:20.958Z"}}}
+
+[exit code] 0
+Progress: Completed
