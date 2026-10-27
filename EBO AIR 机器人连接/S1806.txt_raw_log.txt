@@ -1,0 +1,40 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_INSTALL_VERIFY_START
+for n in $(seq 1 18); do
+  if [ -f frontend/ebo/bridge-install.sh ] && [ -f backend/devices/ebo/android_bridge/install.sh ]; then break; fi
+  echo "EBO_SYNC_PENDING:$n"
+  sleep 4
+done
+test -f frontend/ebo/bridge-install.sh
+test -f backend/devices/ebo/android_bridge/install.sh
+sh -n frontend/ebo/bridge-install.sh
+sh -n backend/devices/ebo/android_bridge/install.sh
+node --check backend/server.js
+node --test test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+code=$(curl --max-time 5 -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:3000/ebo/bridge-install.sh' || true)
+echo "EBO_STATIC_INSTALL_HTTP:$code"
+test "$code" = 200
+echo EBO_INSTALL_VERIFY_PASS
+[streams]
+[stdout] EBO_INSTALL_VERIFY_START
+[stdout] EBO_SYNC_PENDING:1
+[stdout] EBO_SYNC_PENDING:2
+[stdout] EBO_SYNC_PENDING:3
+[stdout] ✔ Replit cannot claim LAN device connected (0.798306ms)
+✔ Unverified movement cannot be transmitted (0.163394ms)
+[stdout] ✔ Authenticated Android bridge reports LAN diagnostics, not robot connection (91.849787ms)
+[stdout] ℹ tests 3
+ℹ suites 0
+[stdout] ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 198.547579
+[stdout] EBO_STATIC_INSTALL_HTTP:200
+EBO_INSTALL_VERIFY_PASS
+
+[exit code] 0
+Progress: Completed
