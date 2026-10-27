@@ -1,0 +1,12 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+TARGET="/home/runner/workspace/.ai-agent-tri-repo-runtime/restore-verification-$(date +%Y%m%d%H%M%S)"
+node --input-type=module -e 'import {restoreMigrationSnapshot} from "./backend/sync/migration_repository_sync.js";import{readFile}from"node:fs/promises";const r=await restoreMigrationSnapshot({targetRoot:process.argv[1],cachePath:"/home/runner/workspace/.migration-sync-cache",recoveryRuntimeDir:"/home/runner/workspace/.ai-agent-tri-repo-runtime"});const values=JSON.parse(await readFile(r.environmentSecretsFile,"utf8"));console.log("MIGRATION_RESTORE_VERIFIED",JSON.stringify({status:r.status,files:r.files,environmentSecretsCount:Object.keys(values).length,targetRoot:r.targetRoot}));' "$TARGET"
+
+[streams]
+[stdout] MIGRATION_RESTORE_VERIFIED {"status":"restored_verified","files":16139,"environmentSecretsCount":17,"targetRoot":"/home/runner/workspace/.ai-agent-tri-repo-runtime/restore-verification-20261027001141"}
+
+[exit code] 0
+Progress: Completed
