@@ -1,0 +1,18 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_INSTALL_VERIFY_START
+for n in $(seq 1 18); do
+  if [ -f frontend/ebo/bridge-install.sh ] && [ -f backend/devices/ebo/android_bridge/install.sh ]; then break; fi
+  echo "EBO_SYNC_PENDING:$n"
+  sleep 4
+done
+test -f frontend/ebo/bridge-install.sh
+test -f backend/devices/ebo/android_bridge/install.sh
+sh -n frontend/ebo/bridge-install.sh
+sh -n backend/devices/ebo/android_bridge/install.sh
+node --check backend/server.js
+node --test test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+code=$(curl --max-time 5 -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:3000/ebo/bridge-install.sh' || true)
+echo "EBO_STATIC_INSTALL_HTTP:$code"
+test "$code" = 200
+echo EBO_INSTALL_VERIFY_PASS
