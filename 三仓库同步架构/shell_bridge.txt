@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+cd /home/runner/workspace/ai-agent
+sha256sum backend/sync/gen_bidirectional_sync.js backend/sync/tests/gen_bidirectional_sync.test.js
+wc -c backend/sync/gen_bidirectional_sync.js backend/sync/tests/gen_bidirectional_sync.test.js
+git -C /home/runner/workspace/.gen-sync-cache status --porcelain --untracked-files=all
