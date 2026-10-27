@@ -1,0 +1,41 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_SERVER_ROUTE_DIAGNOSTIC_START
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+for(const pid of fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x))) {
+  try {
+    const args=fs.readFileSync('/proc/'+pid+'/cmdline','utf8').split('\0').filter(Boolean);
+    if(args.length===0 || !args.some(x=>/backend\/server\.js$/.test(x))) continue;
+    console.log('SERVER_PID',pid,'ARGV_MATCH',args.map(x=>x.endsWith('backend/server.js')?'backend/server.js':x.includes('node')?'node':'OTHER').join(','),'CWD',fs.readlinkSync('/proc/'+pid+'/cwd'));
+    try { const st=execFileSync('ps',['-o','lstart=','-p',pid],{encoding:'utf8'}).trim(); console.log('SERVER_STARTED',pid,st); } catch {}
+  } catch {}
+}
+try{console.log('EBO_SERVER_FILE_MODIFIED',fs.statSync('backend/server.js').mtime.toISOString())}catch{}
+NODE
+if command -v ss >/dev/null 2>&1; then
+  echo SERVER_PORT_3000
+  ss -ltnp 2>/dev/null | grep ':3000' | head -n 5 || true
+fi
+for path in /health /ebo/bridge-client.mjs /; do
+ echo "ROUTE:$path"
+ curl -s -o /dev/null -w 'HTTP:%{http_code} TYPE:%{content_type}\n' --max-time 5 "http://127.0.0.1:3000$path" || true
+done
+echo EBO_SERVER_ROUTE_DIAGNOSTIC_END
+[streams]
+[stdout] EBO_SERVER_ROUTE_DIAGNOSTIC_START
+[stdout] SERVER_PID 86403 ARGV_MATCH node,backend/server.js CWD /home/runner/workspace/ai-agent
+[stdout] SERVER_STARTED 86403 Tue Oct 27 09:40:10 2026
+[stdout] EBO_SERVER_FILE_MODIFIED 2026-10-27T09:15:07.298Z
+[stdout] ROUTE:/health
+[stdout] HTTP:200 TYPE:application/json; charset=utf-8
+ROUTE:/ebo/bridge-client.mjs
+[stdout] HTTP:200 TYPE:text/javascript; charset=utf-8
+[stdout] ROUTE:/
+[stdout] HTTP:200 TYPE:text/html; charset=utf-8
+[stdout] EBO_SERVER_ROUTE_DIAGNOSTIC_END
+
+[exit code] 0
+Progress: Completed
