@@ -1,0 +1,46 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_SECRET_PROCESS_DIAGNOSTIC_START
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+const envPath=fs.existsSync('.env');
+let dotenvPresent=false;
+if(envPath) {
+  const text=fs.readFileSync('.env','utf8');
+  dotenvPresent=/^\s*EBO_BRIDGE_TOKEN\s*=/m.test(text);
+}
+console.log('PROJECT_DOTENV_FILE',envPath);
+console.log('PROJECT_DOTENV_KEY_NAME_PRESENT',dotenvPresent);
+const ids=fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x));
+let found=0;
+for(const id of ids) {
+  try {
+    const cmd=fs.readFileSync('/proc/'+id+'/cmdline','utf8').replace(/\0/g,' ');
+    if(!cmd.includes('backend/server.js') || !cmd.includes('node')) continue;
+    found++;
+    let key=false,readable=true;
+    try {
+      const env=fs.readFileSync('/proc/'+id+'/environ','utf8').split('\0');
+      key=env.some(x=>x.startsWith('EBO_BRIDGE_TOKEN=') && x.length >= 'EBO_BRIDGE_TOKEN='.length+32);
+    } catch(e) { readable=false; }
+    console.log('CHAT_SERVER_PROCESS',id,'PROCESS_KEY_LONG_ENOUGH',key,'ENV_READABLE',readable);
+  } catch {}
+}
+console.log('CHAT_SERVER_PROCESSES_FOUND',found);
+NODE
+echo EBO_RESTART_ROUTE_CODE_HINTS
+rg -n --max-count 3 -i 'restart.server|server.restart|restartServer|console.*restart|重启.*server|/restart' frontend backend/console_live.js backend/server.js backend/heartbeat 2>/dev/null | head -n 30 || true
+echo EBO_SECRET_PROCESS_DIAGNOSTIC_END
+[streams]
+[stdout] EBO_SECRET_PROCESS_DIAGNOSTIC_START
+[stdout] PROJECT_DOTENV_FILE false
+[stdout] PROJECT_DOTENV_KEY_NAME_PRESENT false
+CHAT_SERVER_PROCESS 86403 PROCESS_KEY_LONG_ENOUGH true ENV_READABLE true
+[stdout] CHAT_SERVER_PROCESS 93428 PROCESS_KEY_LONG_ENOUGH true ENV_READABLE true
+[stdout] CHAT_SERVER_PROCESSES_FOUND 2
+[stdout] EBO_RESTART_ROUTE_CODE_HINTS
+[stdout] EBO_SECRET_PROCESS_DIAGNOSTIC_END
+
+[exit code] 0
+Progress: Completed
