@@ -1,6 +1,0 @@
-#!/bin/bash
-set -uo pipefail
-df -h /home/runner/workspace
-du -sh /home/runner/workspace/.migration-sync-cache 2>/dev/null
-cd /home/runner/workspace/ai-agent || exit 2
-node backend/sync/tri_repo_supervisor.js status
