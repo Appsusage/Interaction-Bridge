@@ -1,0 +1,32 @@
+[command]
+#!/bin/bash
+set -euo pipefail
+C=/home/runner/workspace/.gen-sync-cache
+P=.chatgpt-profile/Default/DawnGraphiteCache/data_1
+EXPECTED="M  $P"
+ACTUAL=$(git -C "$C" status --porcelain --untracked-files=all)
+if [ "$ACTUAL" != "$EXPECTED" ]; then
+  printf 'No changes made: Gen cache status no longer matches the verified single-file residue.\n'
+  git -C "$C" status --short | head -n 8
+  exit 8
+fi
+B=/home/runner/workspace/.gen-sync-backups/tri-repo-recovery-20261027
+install -d -m 700 "$B/.chatgpt-profile/Default/DawnGraphiteCache"
+install -m 600 -- "$C/$P" "$B/$P"
+git -C "$C" restore --source=HEAD --staged --worktree -- "$P"
+printf 'Recovered only %s and backed up the staged copy.\n' "$P"
+printf 'Gen cache clean: '
+test -z "$(git -C "$C" status --porcelain --untracked-files=all)"
+printf 'yes\n'
+printf 'Gen current local revision: '
+git -C "$C" rev-parse --short HEAD
+printf 'Gen current remote revision (cached): '
+git -C "$C" rev-parse --short origin/main
+
+[streams]
+[stderr] fatal: Unable to create '/home/runner/workspace/.gen-sync-cache/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, or the lock file may be stale
+
+[exit code] 128
+Progress: Completed
