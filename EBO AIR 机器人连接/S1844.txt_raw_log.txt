@@ -1,0 +1,90 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_GEN_DRY_RUN_BEGIN
+timeout 100 node --input-type=module <<'NODE'
+import { synchronizeGenOnce } from './backend/sync/gen_bidirectional_sync.js';
+const r = await synchronizeGenOnce({root:process.cwd(),apply:false,maxFilesPerCycle:12});
+console.log(JSON.stringify({
+  status:r.status,pendingCount:r.pendingCount,blockedCount:r.blockedCount,
+  pending:(r.pending||[]).map(x=>({path:x.path,action:x.action})),
+  eboBlocked:(r.blocked||[]).filter(x=>String(x.path).includes('devices/ebo')).map(x=>({path:x.path,action:x.action,reason:x.reason})),
+  revision:r.revision
+},null,2));
+NODE
+echo EBO_GEN_DRY_RUN_END
+[streams]
+[stdout] EBO_GEN_DRY_RUN_BEGIN
+[stdout] {
+  "status": "dry_run",
+  "pendingCount": 36,
+  "blockedCount": 30,
+  "pending": [
+    {
+      "path": ".chatgpt-profile/Default/DawnGraphiteCache/index",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/DawnWebGPUCache/index",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Extension State/LOG",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Extension State/LOG.old",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/GCM Store/LOG",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/GCM Store/LOG.old",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/GPUCache/data_0",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/GPUCache/data_1",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/History-journal",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Local Storage/leveldb/000295.log",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Local Storage/leveldb/LOG",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Local Storage/leveldb/LOG.old",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Network Persistent State",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Preferences",
+      "action": "push"
+    },
+    {
+      "path": ".chatgpt-profile/Default/Sessions/Tabs_13437667501604055",
+      "action": "create"
+    }
+  ],
+  "eboBlocked": [],
+  "revision": "91a9167d3bcaa6f1665d287cd4f2d50dc8d24710"
+}
+[stdout] EBO_GEN_DRY_RUN_END
+
+[exit code] 0
+Progress: Completed
