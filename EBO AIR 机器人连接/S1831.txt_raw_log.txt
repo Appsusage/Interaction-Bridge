@@ -1,0 +1,161 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_TUTK_SDK_PROBE_START
+for n in $(seq 1 15); do
+ test -f backend/devices/ebo/research/probe_tutk_native_sdk.mjs && break
+ echo "WAIT_GEN_SYNC:$n"
+ sleep 3
+done
+node --check backend/devices/ebo/research/probe_tutk_native_sdk.mjs
+node backend/devices/ebo/research/probe_tutk_native_sdk.mjs
+echo EBO_TUTK_SDK_PROBE_COMPLETE
+
+[streams]
+[stdout] EBO_TUTK_SDK_PROBE_START
+[stdout] WAIT_GEN_SYNC:1
+[stdout] WAIT_GEN_SYNC:2
+[stdout] WAIT_GEN_SYNC:3
+[stdout] WAIT_GEN_SYNC:4
+[stdout] WAIT_GEN_SYNC:5
+[stdout] WAIT_GEN_SYNC:6
+[stdout] WAIT_GEN_SYNC:7
+[stdout] WAIT_GEN_SYNC:8
+[stdout] WAIT_GEN_SYNC:9
+[stdout] WAIT_GEN_SYNC:10
+[stdout] {
+  "source": "official latest ROLA APK, not necessarily uploaded 2.2.1",
+  "inspectedLibs": 5,
+  "results": [
+    {
+      "name": "lib/armeabi-v7a/libAVAPIs.so",
+      "size": 173584,
+      "sha256": "762f8c39e66f24925390c41343992fffdd9d9adeaccf806aade4f25dfd62de1e",
+      "elfHeader": true,
+      "elfClass": "32-bit",
+      "exportedSymbolTextPresence": {
+        "TUTK_SDK_Set_License_Key": false,
+        "IOTC_Initialize2": false,
+        "IOTC_Get_SessionID": false,
+        "IOTC_Connect_ByUIDEx": false,
+        "RDT_Initialize": false,
+        "RDT_Create": false,
+        "RDT_Write": false,
+        "RDT_Read": false,
+        "avInitialize": true,
+        "avClientStartEx": true,
+        "avSendIOCtrl": true
+      },
+      "sdkVersionHints": [
+        "4.3.5.3"
+      ],
+      "note": "Symbol bytes may be present without a compatible callable ABI; not proof of first-gen AIR support"
+    },
+    {
+      "name": "lib/armeabi-v7a/libIOTCAPIs.so",
+      "size": 165872,
+      "sha256": "c31f67407e1dc475255a23ff19098a3670bf9558dea525d3cebb9cb3381c0315",
+      "elfHeader": true,
+      "elfClass": "32-bit",
+      "exportedSymbolTextPresence": {
+        "TUTK_SDK_Set_License_Key": false,
+        "IOTC_Initialize2": true,
+        "IOTC_Get_SessionID": true,
+        "IOTC_Connect_ByUIDEx": true,
+        "RDT_Initialize": false,
+        "RDT_Create": false,
+        "RDT_Write": false,
+        "RDT_Read": false,
+        "avInitialize": false,
+        "avClientStartEx": false,
+        "avSendIOCtrl": false
+      },
+      "sdkVersionHints": [
+        "4.3.5.3"
+      ],
+      "note": "Symbol bytes may be present without a compatible callable ABI; not proof of first-gen AIR support"
+    },
+    {
+      "name": "lib/armeabi-v7a/libP2PTunnelAPIs.so",
+      "size": 58836,
+      "sha256": "8055f5439c34b605d9bbf74bea6144ffce17c39bc0a0bf7a5e1a322876f34f0a",
+      "elfHeader": true,
+      "elfClass": "32-bit",
+      "exportedSymbolTextPresence": {
+        "TUTK_SDK_Set_License_Key": false,
+        "IOTC_Initialize2": true,
+        "IOTC_Get_SessionID": true,
+        "IOTC_Connect_ByUIDEx": false,
+        "RDT_Initialize": true,
+        "RDT_Create": true,
+        "RDT_Write": true,
+        "RDT_Read": true,
+        "avInitialize": false,
+        "avClientStartEx": false,
+        "avSendIOCtrl": false
+      },
+      "sdkVersionHints": [
+        "4.3.5.3"
+      ],
+      "note": "Symbol bytes may be present without a compatible callable ABI; not proof of first-gen AIR support"
+    },
+    {
+      "name": "lib/armeabi-v7a/libRDTAPIs.so",
+      "size": 46568,
+      "sha256": "947f8685054809004a500d5fe7d4591e5177b4f4e321d6fb6743a95e5a452884",
+      "elfHeader": true,
+      "elfClass": "32-bit",
+      "exportedSymbolTextPresence": {
+        "TUTK_SDK_Set_License_Key": false,
+        "IOTC_Initialize2": false,
+        "IOTC_Get_SessionID": false,
+        "IOTC_Connect_ByUIDEx": false,
+        "RDT_Initialize": true,
+        "RDT_Create": true,
+        "RDT_Write": true,
+        "RDT_Read": true,
+        "avInitialize": false,
+        "avClientStartEx": false,
+        "avSendIOCtrl": false
+      },
+      "sdkVersionHints": [
+        "4.3.5.3"
+      ],
+      "note": "Symbol bytes may be present without a compatible callable ABI; not proof of first-gen AIR support"
+    },
+    {
+      "name": "lib/armeabi-v7a/libTUTKGlobalAPIs.so",
+      "size": 4355936,
+      "sha256": "52c4e86481d6753c1eb2b0c533214f4fac53f24679d9ae6393635c9391a26d53",
+      "elfHeader": true,
+      "elfClass": "32-bit",
+      "exportedSymbolTextPresence": {
+        "TUTK_SDK_Set_License_Key": true,
+        "IOTC_Initialize2": false,
+        "IOTC_Get_SessionID": false,
+        "IOTC_Connect_ByUIDEx": false,
+        "RDT_Initialize": false,
+        "RDT_Create": false,
+        "RDT_Write": false,
+        "RDT_Read": false,
+        "avInitialize": false,
+        "avClientStartEx": false,
+        "avSendIOCtrl": false
+      },
+      "sdkVersionHints": [
+        "4.3.5.3",
+        "4.3.2.17",
+        "4.3.2.26",
+        "4.3.2.6",
+        "4.3.2.7",
+        "4.3.2.8",
+        "4.3.2.9"
+      ],
+      "note": "Symbol bytes may be present without a compatible callable ABI; not proof of first-gen AIR support"
+    }
+  ]
+}
+[stdout] EBO_TUTK_SDK_PROBE_COMPLETE
+
+[exit code] 0
+Progress: Completed
