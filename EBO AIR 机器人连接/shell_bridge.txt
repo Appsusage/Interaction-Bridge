@@ -1,0 +1,20 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_P2P_READINESS_VERIFY_START
+for n in $(seq 1 36); do
+ if [ -f backend/devices/ebo/ebo_p2p_readiness.js ] && [ -f test/ebo_p2p_readiness.test.mjs ] && grep -q 'p2p: getEboP2PReadiness()' backend/devices/ebo/ebo_connection.js; then
+   echo "EBO_P2P_CODE_SYNCED:$n";break
+ fi
+ echo "EBO_P2P_SYNC_PENDING:$n"
+ sleep 5
+done
+node --check backend/devices/ebo/ebo_p2p_readiness.js
+node --check backend/devices/ebo/ebo_connection.js
+node --check test/ebo_p2p_readiness.test.mjs
+node --test test/ebo_p2p_readiness.test.mjs test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+node --input-type=module <<'NODE'
+import { getEboP2PReadiness } from './backend/devices/ebo/ebo_p2p_readiness.js';
+const p=getEboP2PReadiness();
+console.log('EBO_P2P_READINESS',JSON.stringify({arch:p.runtime.arch,ready:p.ready,authenticated:p.authenticated,nativeLibrariesPresent:p.prerequisites.nativeLibraryFilesPresent,blockers:p.blockers}));
+NODE
+echo EBO_P2P_READINESS_VERIFY_COMPLETE
