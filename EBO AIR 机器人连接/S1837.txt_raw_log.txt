@@ -1,0 +1,41 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_P2P_REPLIT_RUNTIME_AUDIT_START
+uname -m
+for executable in qemu-arm qemu-arm-static qemu-aarch64 qemu-aarch64-static clang gcc cc nix docker podman node python3 curl; do
+ if command -v "$executable" >/dev/null 2>&1; then echo "AVAILABLE:$executable:$(command -v "$executable")"; else echo "MISSING:$executable"; fi
+done
+node --input-type=module <<'NODE'
+import os from 'node:os';
+import fs from 'node:fs';
+console.log('NODE_ARCH',process.arch, 'OS_ARCH',os.arch(), 'OS_PLATFORM',os.platform());
+console.log('ARM_BIONIC_LINKER_PRESENT',fs.existsSync('/system/bin/linker'));
+console.log('ARM_RUNTIME_MOUNT_PRESENT',fs.existsSync('backend/devices/ebo/vendor/bionic/linker'));
+console.log('EBO_BRIDGE_TOKEN_CONFIGURED',Boolean(process.env.EBO_BRIDGE_TOKEN)); // No value disclosure
+NODE
+echo EBO_P2P_REPLIT_RUNTIME_AUDIT_END
+[streams]
+[stdout] EBO_P2P_REPLIT_RUNTIME_AUDIT_START
+[stdout] x86_64
+[stdout] MISSING:qemu-arm
+[stdout] MISSING:qemu-arm-static
+MISSING:qemu-aarch64
+MISSING:qemu-aarch64-static
+[stdout] MISSING:clang
+[stdout] AVAILABLE:gcc:/nix/store/3a7clrv9hlp3bvj68b2gczk6jb261yh1-replit-runtime-path/bin/gcc
+[stdout] AVAILABLE:cc:/nix/store/3a7clrv9hlp3bvj68b2gczk6jb261yh1-replit-runtime-path/bin/cc
+[stdout] AVAILABLE:nix:/nix/store/3a7clrv9hlp3bvj68b2gczk6jb261yh1-replit-runtime-path/bin/nix
+[stdout] AVAILABLE:docker:/nix/store/3a7clrv9hlp3bvj68b2gczk6jb261yh1-replit-runtime-path/bin/docker
+[stdout] MISSING:podman
+[stdout] AVAILABLE:node:/nix/store/rja9gmclbsvr4m49jpcpwz49a2hgb3ni-nodejs-24.22.1-wrapped/bin/node
+[stdout] AVAILABLE:python3:/repl/tools/bin/python3
+[stdout] AVAILABLE:curl:/nix/store/3a7clrv9hlp3bvj68b2gczk6jb261yh1-replit-runtime-path/bin/curl
+[stdout] NODE_ARCH x64 OS_ARCH x64 OS_PLATFORM linux
+[stdout] ARM_BIONIC_LINKER_PRESENT false
+[stdout] ARM_RUNTIME_MOUNT_PRESENT false
+[stdout] EBO_BRIDGE_TOKEN_CONFIGURED true
+[stdout] EBO_P2P_REPLIT_RUNTIME_AUDIT_END
+
+[exit code] 0
+Progress: Completed
