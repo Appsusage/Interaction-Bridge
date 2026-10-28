@@ -1,0 +1,14 @@
+[command]
+cd /home/runner/workspace/ai-agent && echo 'BRIDGE_FALLBACK_STARTED' && date -u && echo '=== bridge processes ===' && ps -eo pid,etime,args | grep -E '[s]hell_command.js|[s]hell_bridge|[g]ithub.*bridge' | head -15 && echo '=== chatgpt state ===' && curl -s -o /dev/null -w 'health:%{http_code}\n' http://127.0.0.1:3000/health && echo '=== chromium ===' && ps -eo pid,etime,args | grep '[c]hromium.*chatgpt-profile' | head -2 | cut -c1-220
+[streams]
+[stdout] BRIDGE_FALLBACK_STARTED
+[stdout] Wed Oct 28 09:24:14 AM UTC 2026
+[stdout] === bridge processes ===
+[stdout] === chatgpt state ===
+[stdout] health:200
+[stdout] === chromium ===
+[stdout]     303       01:59 /repl/ctls/bvajdx8xxf05dqrzwxgrlaxv0ryigzix-chromium-unwrapped-152.0.7977.64/libexec/chromium/chromium --disable-field-trial-config --disable-background-networking --disable-background-timer-throttlin
+    323       01:59 /repl/ctls/bvajdx8xxf05dqrzwxgrlaxv0ryigzix-chromium-unwrapped-152.0.7977.64/libexec/chromium/chromium --type=zygote --no-zygote-sandbox --no-sandbox --crashpad-handler-pid=0 --enable-crash-reporter=,
+
+[exit code] 0
+Progress: Completed
