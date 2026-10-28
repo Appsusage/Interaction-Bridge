@@ -1,0 +1,19 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_CONTROL_XREF_START
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cache=/home/runner/workspace/.gen-sync-cache
+git -C "$cache" -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+git -C "$cache" show origin/main:backend/devices/ebo/research/trace_rola_control_xrefs.mjs > "$tmp/control_scan.mjs"
+node --check "$tmp/control_scan.mjs"
+node "$tmp/control_scan.mjs" > "$tmp/result.json"
+node --input-type=module - "$tmp/result.json" <<'NODE'
+import {readFileSync} from 'node:fs';
+const result=JSON.parse(readFileSync(process.argv[2],'utf8'));
+console.log('CONTROL_XREF_SUMMARY',JSON.stringify({counts:result.counts,wrapper:result.classesCallingVendorWrapper?.slice(0,22)}));
+for(const [k,n] of [['relevantNamedMethods',90],['controlRelatedClasses',35]]){
+ console.log('CONTROL_XREF_'+k.toUpperCase(),JSON.stringify(result[k]?.slice(0,n)??[]));
+}
+NODE
+echo EBO_CONTROL_XREF_COMPLETE
