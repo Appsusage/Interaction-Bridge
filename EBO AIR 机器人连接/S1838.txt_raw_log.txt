@@ -1,0 +1,74 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_P2P_READINESS_VERIFY_START
+for n in $(seq 1 36); do
+ if [ -f backend/devices/ebo/ebo_p2p_readiness.js ] && [ -f test/ebo_p2p_readiness.test.mjs ] && grep -q 'p2p: getEboP2PReadiness()' backend/devices/ebo/ebo_connection.js; then
+   echo "EBO_P2P_CODE_SYNCED:$n";break
+ fi
+ echo "EBO_P2P_SYNC_PENDING:$n"
+ sleep 5
+done
+node --check backend/devices/ebo/ebo_p2p_readiness.js
+node --check backend/devices/ebo/ebo_connection.js
+node --check test/ebo_p2p_readiness.test.mjs
+node --test test/ebo_p2p_readiness.test.mjs test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+node --input-type=module <<'NODE'
+import { getEboP2PReadiness } from './backend/devices/ebo/ebo_p2p_readiness.js';
+const p=getEboP2PReadiness();
+console.log('EBO_P2P_READINESS',JSON.stringify({arch:p.runtime.arch,ready:p.ready,authenticated:p.authenticated,nativeLibrariesPresent:p.prerequisites.nativeLibraryFilesPresent,blockers:p.blockers}));
+NODE
+echo EBO_P2P_READINESS_VERIFY_COMPLETE
+[streams]
+[stdout] EBO_P2P_READINESS_VERIFY_START
+[stdout] EBO_P2P_SYNC_PENDING:1
+[stdout] EBO_P2P_SYNC_PENDING:2
+[stdout] EBO_P2P_SYNC_PENDING:3
+[stdout] EBO_P2P_SYNC_PENDING:4
+[stdout] EBO_P2P_SYNC_PENDING:5
+[stdout] EBO_P2P_SYNC_PENDING:6
+[stdout] EBO_P2P_SYNC_PENDING:7
+[stdout] EBO_P2P_SYNC_PENDING:8
+[stdout] EBO_P2P_SYNC_PENDING:9
+[stdout] EBO_P2P_SYNC_PENDING:10
+[stdout] EBO_P2P_SYNC_PENDING:11
+[stdout] EBO_P2P_SYNC_PENDING:12
+[stdout] EBO_P2P_SYNC_PENDING:13
+[stdout] EBO_P2P_SYNC_PENDING:14
+[stdout] EBO_P2P_SYNC_PENDING:15
+[stdout] EBO_P2P_SYNC_PENDING:16
+[stdout] EBO_P2P_SYNC_PENDING:17
+[stdout] EBO_P2P_SYNC_PENDING:18
+[stdout] EBO_P2P_SYNC_PENDING:19
+[stdout] EBO_P2P_SYNC_PENDING:20
+[stdout] EBO_P2P_SYNC_PENDING:21
+[stdout] EBO_P2P_SYNC_PENDING:22
+[stdout] EBO_P2P_SYNC_PENDING:23
+[stdout] EBO_P2P_SYNC_PENDING:24
+[stdout] EBO_P2P_SYNC_PENDING:25
+[stdout] EBO_P2P_SYNC_PENDING:26
+[stdout] EBO_P2P_SYNC_PENDING:27
+[stdout] EBO_P2P_SYNC_PENDING:28
+[stdout] EBO_P2P_SYNC_PENDING:29
+[stdout] EBO_P2P_SYNC_PENDING:30
+[stdout] EBO_P2P_SYNC_PENDING:31
+[stdout] EBO_P2P_SYNC_PENDING:32
+[stdout] EBO_P2P_SYNC_PENDING:33
+[stdout] EBO_P2P_SYNC_PENDING:34
+[stdout] EBO_P2P_SYNC_PENDING:35
+[stdout] EBO_P2P_SYNC_PENDING:36
+[stderr] node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/workspace/ai-agent/backend/devices/ebo/ebo_p2p_readiness.js'
+    at node:internal/modules/cjs/loader:1564:15
+    at node:internal/main/check_syntax:33:20 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.22.1
+
+[exit code] 1
+Progress: Completed
