@@ -1,0 +1,1744 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_TUTK_LAYER_TRACE_START
+for n in $(seq 1 36); do
+ if [ -f backend/devices/ebo/research/trace_rola_tutk_layer.mjs ]; then echo "TUTK_TRACE_SCRIPT_PRESENT:$n";break;fi
+ echo "TUTK_TRACE_SYNC_PENDING:$n"
+ sleep 5
+done
+test -f backend/devices/ebo/research/trace_rola_tutk_layer.mjs
+node --check backend/devices/ebo/research/trace_rola_tutk_layer.mjs
+node backend/devices/ebo/research/trace_rola_tutk_layer.mjs
+echo EBO_TUTK_LAYER_TRACE_END
+[streams]
+[stdout] EBO_TUTK_LAYER_TRACE_START
+[stdout] TUTK_TRACE_SYNC_PENDING:1
+[stdout] TUTK_TRACE_SYNC_PENDING:2
+[stdout] TUTK_TRACE_SYNC_PENDING:3
+[stdout] TUTK_TRACE_SYNC_PENDING:4
+[stdout] TUTK_TRACE_SCRIPT_PRESENT:5
+[stdout] {
+  "source": "Official latest ROLA APK: TUTK wrapper and deviceWraper call references (not identical to uploaded 2.2.1 confirmed)",
+  "metadata": [
+    {
+      "dex": "classes.dex",
+      "legacyCandidateClasses": 0,
+      "withMethods": 0
+    },
+    {
+      "dex": "classes2.dex",
+      "legacyCandidateClasses": 76,
+      "withMethods": 75
+    },
+    {
+      "dex": "classes3.dex",
+      "legacyCandidateClasses": 58,
+      "withMethods": 58
+    },
+    {
+      "dex": "classes4.dex",
+      "legacyCandidateClasses": 0,
+      "withMethods": 0
+    }
+  ],
+  "directVendorRelatedInvocations": [
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/c0;->a",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avRecvIOCtrl"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->a",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avRecvIOCtrl"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->a",
+      "callee": "Lcom/tutk/IOTC/Packet;->byteArrayToInt_Little"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/x;->a",
+      "callee": "Lcom/tutk/IOTC/Packet;->shortToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/x;->a",
+      "callee": "Lcom/tutk/IOTC/Packet;->intToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/x;->a",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avSendAudioData"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/h;->l",
+      "callee": "Lcom/tutk/IOTC/Packet;->intToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/h;->p",
+      "callee": "Lcom/tutk/IOTC/Packet;->intToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/q;->b",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Get_Version_String"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/q;->b",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avGetAVApiVersionString"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/q;->b",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_GetRDTApiVersionString"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/n;->b",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnelAgent_Attach_Connect_Stop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/n;->onTunnelSessionInfoChanged",
+      "callee": "Lcom/tutk/IOTC/sP2PTunnelSessionInfo;->getSID"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/n;->onTunnelSessionInfoChanged",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnel_SetBufSize"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/n;->onTunnelSessionInfoChanged",
+      "callee": "Lcom/tutk/IOTC/sP2PTunnelSessionInfo;->getRemoteIP"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/n;->onTunnelSessionInfoChanged",
+      "callee": "Lcom/tutk/IOTC/sP2PTunnelSessionInfo;->getNatType"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/e0;->invoke",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Connect_Stop_BySID"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/e0;->invoke",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Session_Close"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/g;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/g;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientExit"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/p;->invoke",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Create_Exit"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/p;->invoke",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Abort"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/w;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avServStop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/w;->invoke",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Session_Channel_OFF"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/w;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avServExit"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/y;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/y;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientExit"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/k;->invoke",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVClientStartInConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVClientStartOutConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStartEx"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/d;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avRecvAudioData"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Get_SessionID"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_IOTCConnectInput;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Connect_ByUIDEx"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_SInfoEx;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Session_Check_Ex"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/f;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avRecvFrameData2"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/j;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/Packet;->intToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/k;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVClientStartInConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/k;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVClientStartOutConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/k;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStartEx"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/k;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/l;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avSendIOCtrl"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/q;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Create"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/q;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Abort"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/q;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Read"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/r;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Write"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/r;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/RDTAPIs;->RDT_Flush"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/t;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVServStartInConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/t;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVServStartOutConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/t;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avServStartEx"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/camera/tutk/t;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avServStop"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/l;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnelAgent_StopPortMapping"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/l;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnelAgent_Disconnect"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/m;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnelAgent_Attach_Connect_Ex"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/m;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnelAgent_Attach_Connect"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/m;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnel_SetBufSize"
+    },
+    {
+      "caller": "Lcom/enabot/lib_device/tutk/m;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs;->P2PTunnelAgent_PortMapping"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/AVAPIs;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/AVAPIs;->avClientStart",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStart"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/AVAbort;->onAvailable",
+      "callee": "Lcom/tutk/IOTC/AVAbort;->AV_API_Abort"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/AVAbort;->abort",
+      "callee": "Lcom/tutk/IOTC/AVAbort;->AV_API_Abort"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/IOTCAPIs;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/LogLevel;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/LogLevel;-><init>"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/LogLevel;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/LogLevel;->$values"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/P2PTunnelAPIs;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/P2PTunnelAPIs;->tunnelSessionInfoCB",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs$IP2PTunnelCallback;->onTunnelSessionInfoChanged"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/P2PTunnelAPIs;->tunnelStatusCB",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelAPIs$IP2PTunnelCallback;->onTunnelStatusChanged"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/P2PTunnelConnectionType;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelConnectionType;-><init>"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/P2PTunnelConnectionType;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/P2PTunnelConnectionType;->$values"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/Packet;->byteArray2shortArray_Little",
+      "callee": "Lcom/tutk/IOTC/Packet;->byteArrayToShort_Little"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/Packet;->bytes2Long",
+      "callee": "Lcom/tutk/IOTC/Packet;->reverse"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/Packet;->shortArray2byteArray_Little",
+      "callee": "Lcom/tutk/IOTC/Packet;->shortToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/RDTAPIs;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/Region;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/Region;-><init>"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/Region;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/Region;->$values"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/TUTKGlobalAPIs;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/TUTKRegion;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/TUTKRegion;-><init>"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/TUTKRegion;-><clinit>",
+      "callee": "Lcom/tutk/IOTC/TUTKRegion;->$values"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/TUTKRegion;->toRegion",
+      "callee": "Lcom/tutk/IOTC/TUTKRegion;->values"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/util/Uint16;->toByteArray",
+      "callee": "Lcom/tutk/IOTC/util/Uint16;->toByteBuffer"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/util/Uint32;->toByteArray",
+      "callee": "Lcom/tutk/IOTC/util/Uint32;->toByteBuffer"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/util/Uint8;->toByteArray",
+      "callee": "Lcom/tutk/IOTC/util/Uint8;->toByteBuffer"
+    },
+    {
+      "caller": "Lcom/tutk/IOTC/util/Uint8;->toInteger",
+      "callee": "Lcom/tutk/IOTC/util/Uint8;->toInteger"
+    }
+  ],
+  "targetMethods": [
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "<clinit>",
+      "referencedMethods": [],
+      "countInvokes": 11
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/DeviceSettingsHelper$deleteDevice$value$1;-><init>",
+        "Lcom/ebo/ebocode/bean/DeviceInfo;->getMachineVersion",
+        "Lcom/ebo/ebocode/deviceWraper/m;->i",
+        "Lcom/ebo/ebocode/bean/DeviceInfo;->getUserId"
+      ],
+      "countInvokes": 19
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "b",
+      "referencedMethods": [],
+      "countInvokes": 5
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "c",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/DeviceSettingsHelper$getNewFirmwareVersion$1;-><init>"
+      ],
+      "countInvokes": 3
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "d",
+      "referencedMethods": [],
+      "countInvokes": 5
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "e",
+      "referencedMethods": [],
+      "countInvokes": 5
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/i;",
+      "method": "f",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/k;",
+      "method": "<init>",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/n;-><init>"
+      ],
+      "countInvokes": 10
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/k;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/k;->b",
+        "Lcom/ebo/ebocode/deviceWraper/j;-><init>"
+      ],
+      "countInvokes": 5
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/k;",
+      "method": "b",
+      "referencedMethods": [],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/m;",
+      "method": "<clinit>",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/l;-><init>"
+      ],
+      "countInvokes": 21
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/m;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/m;->c",
+        "Lcom/ebo/ebocode/deviceWraper/m;->e"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/m;",
+      "method": "b",
+      "referencedMethods": [],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/m;",
+      "method": "c",
+      "referencedMethods": [],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/m;",
+      "method": "d",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/m;->b"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/ebo/ebocode/deviceWraper/m;",
+      "method": "i",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/m;->c"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/a;",
+      "method": "<clinit>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c0;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c0;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/b0;-><init>",
+        "Lcom/tutk/IOTC/AVAPIs;->avRecvIOCtrl"
+      ],
+      "countInvokes": 20
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c0;",
+      "method": "b",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/y;-><init>",
+        "Lcom/enabot/lib_device/tutk/q;->a"
+      ],
+      "countInvokes": 3
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/g0;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/m;",
+      "method": "<init>",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c;-><init>",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/i;-><init>"
+      ],
+      "countInvokes": 7
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/m;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/e;-><init>",
+        "Lcom/tutk/IOTC/AVAPIs;->avRecvIOCtrl",
+        "Lcom/tutk/IOTC/Packet;->byteArrayToInt_Little"
+      ],
+      "countInvokes": 16
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/m;",
+      "method": "b",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/l;-><init>"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/o;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/o;",
+      "method": "a",
+      "referencedMethods": [],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/s;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/x;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/x;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/tutk/libSLC/AcousticEchoCanceler;->Play",
+        "Lcom/tutk/webrtc/NoiseSuppressor;->isInit",
+        "Lcom/tutk/webrtc/NoiseSuppressor;->run",
+        "Lcom/tutk/IOTC/Packet;->shortToByteArray_Little",
+        "Lcom/tutk/IOTC/Packet;->intToByteArray_Little",
+        "Lcom/tutk/IOTC/AVAPIs;->avSendAudioData"
+      ],
+      "countInvokes": 23
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/x;",
+      "method": "b",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/a;->a",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/v;-><init>",
+        "Lcom/tutk/libSLC/AcousticEchoCanceler;->close",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/w;-><init>",
+        "Lcom/enabot/lib_device/tutk/q;->a"
+      ],
+      "countInvokes": 10
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "<init>",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/c;-><init>",
+        "Lcom/enabot/lib_device/tutk/b;-><init>",
+        "Lcom/enabot/lib_device/tutk/e;-><init>",
+        "Lcom/enabot/lib_device/tutk/d;-><init>"
+      ],
+      "countInvokes": 12
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "c",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/q;-><init>"
+      ],
+      "countInvokes": 7
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "b",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/k;-><init>"
+      ],
+      "countInvokes": 9
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "d",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/o;->a",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/g;-><init>",
+        "Lcom/enabot/lib_device/tutk/q;->a",
+        "Lcom/enabot/lib_device/tutk/h;->f",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/x;->b",
+        "Lcom/enabot/lib_device/tutk/h;->a",
+        "Lcom/enabot/lib_device/tutk/h;->n",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/p;-><init>",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/e0;-><init>"
+      ],
+      "countInvokes": 29
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "e",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "f",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "g",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/a0;-><init>"
+      ],
+      "countInvokes": 13
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "h",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "i",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/r;-><init>"
+      ],
+      "countInvokes": 5
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "j",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/a;-><init>",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f0;-><init>"
+      ],
+      "countInvokes": 9
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "k",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f;-><init>"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "l",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->f",
+        "Lcom/enabot/lib_device/tutk/g;-><init>",
+        "Lcom/enabot/lib_device/tutk/a;->a",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/t;-><init>",
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/tutk/IOTC/Packet;->intToByteArray_Little",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+      ],
+      "countInvokes": 24
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "m",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/d;-><init>"
+      ],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "o",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "p",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->f",
+        "Lcom/enabot/lib_device/tutk/a;->a",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/v;-><init>",
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/tutk/IOTC/Packet;->intToByteArray_Little",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+      ],
+      "countInvokes": 12
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/h;",
+      "method": "q",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/h;->e",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/o;->a"
+      ],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/b0;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/b0;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c0;->a"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/b;",
+      "method": "<clinit>",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/b;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/b;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/b;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/b;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/e0;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/e0;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/e0;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/e0;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Connect_Stop_BySID",
+        "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Session_Close"
+      ],
+      "countInvokes": 8
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/e;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/e;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->a"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/g;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/g;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/g;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/g;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStop",
+        "Lcom/tutk/IOTC/AVAPIs;->avClientExit"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/h;",
+      "method": "<clinit>",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/h;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/h;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/h;",
+      "method": "invoke",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/h;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/h;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/i;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/i;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/o;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/i;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/i;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/p;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/p;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/p;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/p;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Create_Exit",
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Abort"
+      ],
+      "countInvokes": 16
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/w;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/w;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/w;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/w;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/AVAPIs;->avServStop",
+        "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Session_Channel_OFF",
+        "Lcom/tutk/IOTC/AVAPIs;->avServExit"
+      ],
+      "countInvokes": 7
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/y;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/y;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/y;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/y;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStop",
+        "Lcom/tutk/IOTC/AVAPIs;->avClientExit"
+      ],
+      "countInvokes": 3
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/a0;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/a0;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/a0;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/St_AVClientStartInConfig;-><init>",
+        "Lcom/tutk/IOTC/St_AVClientStartOutConfig;-><init>",
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStartEx",
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStop",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/z;-><init>"
+      ],
+      "countInvokes": 21
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/c;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWater/detection/h0;-><init>"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/d;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/d;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/d;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/d;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/d;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/d;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/d;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/d;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/d;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b",
+        "Lcom/tutk/IOTC/AVAPIs;->avRecvAudioData",
+        "Lcom/enabot/lib_device/tutk/p;-><init>",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/n;-><init>"
+      ],
+      "countInvokes": 58
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f0;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f0;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f0;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Get_SessionID",
+        "Lcom/tutk/IOTC/St_IOTCConnectInput;-><init>",
+        "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Connect_ByUIDEx",
+        "Lcom/enabot/lib_device/tutk/a;->b",
+        "Lcom/tutk/IOTC/St_SInfoEx;-><init>",
+        "Lcom/tutk/IOTC/IOTCAPIs;->IOTC_Session_Check_Ex"
+      ],
+      "countInvokes": 37
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/f;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/f;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b",
+        "Lcom/tutk/IOTC/AVAPIs;->avRecvFrameData2",
+        "Lcom/enabot/lib_device/tutk/p;-><init>"
+      ],
+      "countInvokes": 35
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/j;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/j;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/j;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/j;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/j;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/j;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/j;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/j;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/j;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/Packet;->intToByteArray_Little",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/m;->a"
+      ],
+      "countInvokes": 7
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/k;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/k;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/k;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/k;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/k;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/k;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/k;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/k;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/k;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/St_AVClientStartInConfig;-><init>",
+        "Lcom/tutk/IOTC/St_AVClientStartOutConfig;-><init>",
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStartEx",
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStop",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/j;-><init>"
+      ],
+      "countInvokes": 29
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/l;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/l;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/l;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/l;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/l;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/l;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/l;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/l;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/l;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/AVAPIs;->avSendIOCtrl"
+      ],
+      "countInvokes": 12
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/n;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/n;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/n;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/n;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/n;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/n;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/n;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/n;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/n;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/libSLC/AcousticEchoCanceler;->Capture"
+      ],
+      "countInvokes": 13
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/q;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/q;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/q;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/q;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/q;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/q;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/q;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/q;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/q;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Create",
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Abort",
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Read"
+      ],
+      "countInvokes": 25
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/r;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/r;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/r;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/r;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/r;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/r;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/r;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/r;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/r;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Write",
+        "Lcom/tutk/IOTC/RDTAPIs;->RDT_Flush"
+      ],
+      "countInvokes": 15
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/t;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/t;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/t;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/t;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/t;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/t;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/t;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/t;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/t;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/St_AVServStartInConfig;-><init>",
+        "Lcom/tutk/IOTC/St_AVServStartOutConfig;-><init>",
+        "Lcom/tutk/IOTC/AVAPIs;->avServStartEx",
+        "Lcom/tutk/IOTC/AVAPIs;->avServStop",
+        "Lcom/enabot/lib_device/tutk/a;->a",
+        "Lcom/tutk/libSLC/AcousticEchoCanceler;-><init>",
+        "Lcom/tutk/libSLC/AcousticEchoCanceler;->Open"
+      ],
+      "countInvokes": 25
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/u;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/u;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/u;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/u;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/u;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/u;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/u;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/u;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/u;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/webrtc/NoiseSuppressor;-><init>",
+        "Lcom/tutk/webrtc/NoiseSuppressor;->Create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/x;->a"
+      ],
+      "countInvokes": 23
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/v;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/v;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/v;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/v;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/v;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/v;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/v;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/v;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/v;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/tutk/webrtc/NoiseSuppressor;->release"
+      ],
+      "countInvokes": 12
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/z;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/z;",
+      "method": "create",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/z;-><init>"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/z;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/z;->invoke"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/z;",
+      "method": "invoke",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/z;->create",
+        "Lcom/enabot/lib_device/tutk/camera/tutk/z;->invokeSuspend"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/enabot/lib_device/tutk/camera/tutk/z;",
+      "method": "invokeSuspend",
+      "referencedMethods": [
+        "Lcom/enabot/lib_device/tutk/camera/tutk/c0;->a"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs$avTokenAuthFn;",
+      "method": "token_auth",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs$avTokenDeleteFn;",
+      "method": "token_delete",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs$avTokenRequestFn;",
+      "method": "token_request",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "<clinit>",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avClientRequestTokenWithIdentity",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avClientStart",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avClientStart",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/AVAPIs;->avClientStart"
+      ],
+      "countInvokes": 3
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avClientStart2",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avClientStartEx",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avClientStop",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avDeInitialize",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avInitialize",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avServStart2",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avServStart3",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avServStartEx",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/AVAPIs;",
+      "method": "avServStop",
+      "referencedMethods": [],
+      "countInvokes": 0
+    },
+    {
+      "class": "Lcom/tutk/IOTC/IOTCAPIs;",
+      "method": "<clinit>",
+      "referencedMethods": [
+        "Lcom/tutk/IOTC/util/LoadLibrary;->load"
+      ],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/tutk/IOTC/IOTCAPIs;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/tutk/IOTC/IOTCAPIs;",
+      "method": "IOTC_Check_Device_OnlineEx",
+      "referencedMethods": [],
+      "countInvokes": 0
+    }
+  ],
+  "counts": {
+    "directVendorRelatedInvocations": 104,
+    "targetMethodDeclarations": 306
+  },
+  "limitations": "Static DEX invoke-* indexing, not full control-flow analysis. No secret values, no live EBO authorization."
+}
+[stdout] EBO_TUTK_LAYER_TRACE_END
+
+[exit code] 0
+Progress: Completed
