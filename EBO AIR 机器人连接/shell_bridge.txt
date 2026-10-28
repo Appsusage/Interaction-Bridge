@@ -1,0 +1,6 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_OFFICIAL_APK_RANGE_SCAN_START
+node --check backend/devices/ebo/research/scan_rola_official_range.mjs
+node backend/devices/ebo/research/scan_rola_official_range.mjs
+echo EBO_OFFICIAL_APK_RANGE_SCAN_FINISHED
