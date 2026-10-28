@@ -1,0 +1,83 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_TARGETED_SYNC_START
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+const root=process.cwd();
+const cache=path.resolve(root,'../.gen-sync-cache');
+const allowed=[
+  'backend/devices/ebo/ebo_p2p_readiness.js',
+  'test/ebo_p2p_readiness.test.mjs'
+];
+const h=b=>createHash('sha256').update(b).digest('hex');
+const getRemote=(rel)=>{
+  const tree=execFileSync('git',['-C',cache,'ls-tree','origin/main','--',rel],{encoding:'utf8',timeout:8000});
+  if(!/^100644 blob [0-9a-f]{40}\s/.test(tree))throw Error('Gen source is not an ordinary tracked file: '+rel);
+  const bytes=execFileSync('git',['-C',cache,'show','origin/main:'+rel],{timeout:10000,maxBuffer:512000});
+  if(bytes.length<20||bytes.length>256000)throw Error('Unexpected Gen source size: '+rel);
+  return bytes;
+};
+function safeParent(filename){
+  const parent=path.dirname(filename);
+  let current=root;
+  for(const seg of path.relative(root,parent).split(path.sep)){
+    current=path.join(current,seg);
+    if(fs.existsSync(current) && !fs.lstatSync(current).isDirectory())throw Error('unsafe parent');
+  }
+  fs.mkdirSync(parent,{recursive:true});
+}
+function atomicSave(filename,bytes) {
+  safeParent(filename);
+  const temp=filename+'.ebo-targeted-'+process.pid+'.tmp';
+  try {
+    fs.writeFileSync(temp,bytes,{flag:'wx',mode:0o644});
+    fs.renameSync(temp,filename);
+  }finally {try{fs.unlinkSync(temp)}catch{}}
+}
+const toCreate=[];
+for(const rel of allowed){
+  const local=path.join(root,rel),remote=getRemote(rel);
+  if(fs.existsSync(local)){
+    if(!fs.lstatSync(local).isFile()||h(fs.readFileSync(local))!==h(remote))throw Error('Refuse to overwrite an existing changed file: '+rel);
+    console.log('ALREADY_MATCHES_GEN',rel);
+  }else toCreate.push({rel,remote});
+}
+const mainPath='backend/devices/ebo/ebo_connection.js';
+const main=path.join(root,mainPath);
+const old=fs.readFileSync(main,'utf8');
+const imp='import { getEboP2PReadiness } from "./ebo_p2p_readiness.js";';
+const marker='import { getEboRelayStatus } from "./ebo_relay_server.js";';
+const marker2='    bridge: getEboRelayStatus(),';
+if(old.split(marker).length!==2||old.split(marker2).length!==2)throw Error('Refuse to alter unexpected EBO connection module');
+let next=old;
+if(!next.includes(imp))next=next.replace(marker,marker+'\n'+imp);
+if(!next.includes('p2p: getEboP2PReadiness()'))next=next.replace(marker2,marker2+'\n    p2p: getEboP2PReadiness(),');
+if(next===old)console.log('EBO_CONNECTION_ALREADY_PATCHED');
+else {
+  const backupDir=fs.mkdtempSync(path.resolve(root,'../.ebo-sync-backup-'));
+  fs.chmodSync(backupDir,0o700);
+  fs.writeFileSync(path.join(backupDir,'ebo_connection.js'),old,{mode:0o600});
+  console.log('EBO_CONNECTION_BACKUP_CREATED_OUTSIDE_PROJECT');
+}
+for(const {rel,remote} of toCreate){
+  atomicSave(path.join(root,rel),remote);
+  console.log('TARGETED_FILE_COPIED',rel,'SHA256',h(remote));
+}
+if(next!==old){atomicSave(main,Buffer.from(next));console.log('EBO_CONNECTION_PATCH_APPLIED');}
+const status=fs.readFileSync(main,'utf8');
+if(!status.includes(imp)||!status.includes('p2p: getEboP2PReadiness()'))throw Error('P2P integration absent');
+console.log('EBO_TARGETED_SYNC_READY_FOR_TEST');
+NODE
+node --check backend/devices/ebo/ebo_p2p_readiness.js
+node --check test/ebo_p2p_readiness.test.mjs
+node --check backend/devices/ebo/ebo_connection.js
+node --test test/ebo_p2p_readiness.test.mjs test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+node --input-type=module <<'NODE'
+import {getEboP2PReadiness} from './backend/devices/ebo/ebo_p2p_readiness.js';
+const p=getEboP2PReadiness();
+console.log('EBO_P2P_NO_REAL_SESSION',JSON.stringify({platform:p.runtime.platform,arch:p.runtime.arch,authenticated:p.authenticated,ready:p.ready,blockers:p.blockers}));
+NODE
+echo EBO_TARGETED_SYNC_TEST_COMPLETE
