@@ -1,0 +1,595 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_LEGACY_CALL_GRAPH_START
+for n in $(seq 1 36); do
+ if [ -f backend/devices/ebo/research/trace_rola_legacy_calls.mjs ]; then echo "CALLGRAPH_SCRIPT_PRESENT:$n";break;fi
+ echo "CALLGRAPH_SYNC_PENDING:$n"
+ sleep 5
+done
+test -f backend/devices/ebo/research/trace_rola_legacy_calls.mjs
+node --check backend/devices/ebo/research/trace_rola_legacy_calls.mjs
+node backend/devices/ebo/research/trace_rola_legacy_calls.mjs
+echo EBO_LEGACY_CALL_GRAPH_END
+[streams]
+[stdout] EBO_LEGACY_CALL_GRAPH_START
+[stdout] CALLGRAPH_SYNC_PENDING:1
+[stdout] CALLGRAPH_SYNC_PENDING:2
+[stdout] CALLGRAPH_SYNC_PENDING:3
+[stdout] CALLGRAPH_SYNC_PENDING:4
+[stdout] CALLGRAPH_SYNC_PENDING:5
+[stdout] CALLGRAPH_SYNC_PENDING:6
+[stdout] CALLGRAPH_SYNC_PENDING:7
+[stdout] CALLGRAPH_SYNC_PENDING:8
+[stdout] CALLGRAPH_SYNC_PENDING:9
+[stdout] CALLGRAPH_SYNC_PENDING:10
+[stdout] CALLGRAPH_SCRIPT_PRESENT:11
+[stdout] {
+  "source": "Official latest ROLA APK (not identical to uploaded 2.2.1 confirmed)",
+  "metadata": [
+    {
+      "dex": "classes.dex",
+      "legacyCandidateClasses": 45,
+      "withMethods": 43
+    },
+    {
+      "dex": "classes2.dex",
+      "legacyCandidateClasses": 1141,
+      "withMethods": 1141
+    },
+    {
+      "dex": "classes3.dex",
+      "legacyCandidateClasses": 0,
+      "withMethods": 0
+    },
+    {
+      "dex": "classes4.dex",
+      "legacyCandidateClasses": 0,
+      "withMethods": 0
+    }
+  ],
+  "directVendorRelatedInvocations": [
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/c;->run",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avSendFrameData"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/i;->d",
+      "callee": "Lcom/enabot/lib_device/tutk/q;->a"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/a;->onCheckedChanged",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/e;->onChanged",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->c"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/e;->onChanged",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoTextureView;->c"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/l;->e",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/l;->e",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->c"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/o;->n",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->d"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/o;->p",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->j"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;-><init>",
+      "callee": "Lcom/enabot/lib_device/tutk/h;-><init>"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->a",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->a",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->a",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/c0;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->r",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->g"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->r",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->r",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->s",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/q;->s",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/g;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStop"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/g;->invoke",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientExit"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/c0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->d"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/c0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/m0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveSetViewModel;->f",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveSetViewModel;->f",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveSetViewModel;->n",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveSetViewModel;->n",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveSetViewModel;->o",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveSetViewModel;->p",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveViewModel;->g",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->m"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveViewModel;->h",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->l"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/LiveViewModel;->h",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->p"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/p;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->h"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/l0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->k"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/l0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/l0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/u0;->invoke",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoTextureView;->getMRectLv"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/viewModel/ParametersSetViewModel;->d",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/about/e0;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/about/f0;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/about/g0;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/catCollar/r;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/epet/viewModel/e;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files/viewModel/x;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/MedialTuTkViewModel;->B",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/MedialTuTkViewModel;->B",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/d;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avRecvFrameData2"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/d;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/Packet;->byteArrayToInt_Little"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/d;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/Packet;->byteArrayToShort_Little"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/e;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVClientStartInConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/e;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/St_AVClientStartOutConfig;-><init>"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/files2/e;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/AVAPIs;->avClientStartEx"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/d;->invokeSuspend",
+      "callee": "Lcom/tutk/IOTC/Packet;->longToByteArray_Little"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/e;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/f;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/f;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/a;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/b;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/c;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/d;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/e;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/f;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->k"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/f;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/f;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/g;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->o"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/h;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/j;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/j;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/j;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/l;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoTextureView;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/l;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/l;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/o;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->h"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/r;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/t;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/t;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/t;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->m"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/v;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/v;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/viewModel/v;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->q"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/m;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->k"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/n;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->o"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/report/w;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/report/x;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/viewModel/c;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/viewModel/d;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/viewModel/h;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/settings/a;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/settings/k;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->h"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/settings/o;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/settings/p;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/settings/p;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/camera/tutk/m;->b"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/skill/viewModle/c;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/wifi/g;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/wifi/h;->invokeSuspend",
+      "callee": "Lcom/enabot/lib_device/tutk/h;->i"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/SEDeviceInfoFragment;->n",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->setFullMode"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/SEDeviceInfoFragment;->n",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->setAttachCallBack"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/SEDeviceInfoFragment;->onPause",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->e"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/home/SEDeviceInfoFragment;->onResume",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoItemTextureView;->d"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/live/DeviceLiveActivity;->y",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoTextureView;->getMGestureMatrix"
+    },
+    {
+      "caller": "Lcom/ebo/ebocode/device/security/SecurityFixedAreaAct;->y",
+      "callee": "Lcom/enabot/lib_device/tutk/view/VideoTextureView;->getMRectLv"
+    }
+  ],
+  "targetMethods": [
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel$checkDeviceToken$1;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel$checkDeviceToken$1;",
+      "method": "a",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/home/ConnectViewModel;->h"
+      ],
+      "countInvokes": 3
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel$checkDeviceToken$1;",
+      "method": "e",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel$checkDeviceToken$1;",
+      "method": "onSuccess",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/home/ConnectViewModel;->h",
+        "Lcom/ebo/ebocode/device/home/f;-><init>"
+      ],
+      "countInvokes": 23
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "<init>",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/u;-><init>"
+      ],
+      "countInvokes": 7
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "d",
+      "referencedMethods": [],
+      "countInvokes": 11
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "b",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/o;->n"
+      ],
+      "countInvokes": 2
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "e",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/o;->d",
+        "Lcom/ebo/ebocode/deviceWraper/m;->h",
+        "Lcom/ebo/ebocode/deviceWraper/m;->k"
+      ],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "f",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/o;->d",
+        "Lcom/ebo/ebocode/deviceWraper/m;->h"
+      ],
+      "countInvokes": 3
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "g",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/o;->t",
+        "Lcom/ebo/ebocode/device/o;->q",
+        "Lcom/ebo/ebocode/device/o;->o",
+        "Lcom/ebo/ebocode/device/o;->p",
+        "Lcom/ebo/ebocode/device/home/ConnectViewModel;->l"
+      ],
+      "countInvokes": 8
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "h",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/k;->a",
+        "Lcom/ebo/ebocode/device/o;->n"
+      ],
+      "countInvokes": 7
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "i",
+      "referencedMethods": [],
+      "countInvokes": 1
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "j",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/deviceWraper/i;->e",
+        "Lcom/ebo/ebocode/device/home/ConnectViewModel;->k"
+      ],
+      "countInvokes": 8
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "k",
+      "referencedMethods": [
+        "Lcom/ebo/ebocode/device/o;->t",
+        "Lcom/ebo/ebocode/device/home/e;-><init>"
+      ],
+      "countInvokes": 4
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+      "method": "l",
+      "referencedMethods": [],
+      "countInvokes": 6
+    },
+    {
+      "class": "Lcom/ebo/ebocode/device/home/EBODeviceModel;",
+      "method": "<init>",
+      "referencedMethods": [],
+      "countInvokes": 2
+    }
+  ],
+  "counts": {
+    "directVendorRelatedInvocations": 126,
+    "targetMethodDeclarations": 18
+  },
+  "limitations": "Static DEX invoke-* indexing, not full control-flow analysis. No secret values, no live EBO authorization."
+}
+[stdout] EBO_LEGACY_CALL_GRAPH_END
+
+[exit code] 0
+Progress: Completed
