@@ -1,0 +1,197 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_SYNC_LOG_AUDIT_BEGIN
+for file in backend/sync/.sync-daemon.log backend/sync/.sync-supervisor.log backend/migration/.sync-daemon.log; do
+ echo "---LOG:$file---"
+ if [ -f "$file" ]; then
+  stat -c 'SIZE:%s MODIFIED:%y' "$file"
+  tail -n 45 "$file" | sed -E 's/(token|secret|password|authorization|authkey|api.key)[=: ]+[^ ,\"]+/\1:[REDACTED]/Ig' | head -n 45
+ else echo MISSING; fi
+done
+for file in backend/sync/.github-sync-state.json backend/migration/.github-sync-state.json; do
+ echo "---STATE:$file---"
+ if [ -f "$file" ]; then
+  node --input-type=module - "$file" <<'NODE'
+import fs from 'node:fs';
+const p=process.argv[2],x=JSON.parse(fs.readFileSync(p,'utf8'));
+const scrub=(obj,depth=0)=>{
+ if(depth>2 || obj===null)return obj;
+ if(Array.isArray(obj))return {type:'array',length:obj.length};
+ if(typeof obj!=='object')return typeof obj==='string'?obj.slice(0,60):obj;
+ return Object.fromEntries(Object.entries(obj).filter(([k])=>!/(token|secret|password|key|auth|credential)/i.test(k)).slice(0,28).map(([k,v])=>[k,scrub(v,depth+1)]));
+};
+console.log(JSON.stringify(scrub(x)));
+NODE
+ else echo MISSING; fi
+done
+echo SYNC_DAEMON_SOURCE_REFERENCE
+grep -nE 'setInterval|poll|start|process|GEN|Gen|GitHub|heartbeat|spawn' backend/sync/tri_repo_supervisor.js | head -n 45 || true
+echo EBO_SYNC_LOG_AUDIT_END
+[streams]
+[stdout] EBO_SYNC_LOG_AUDIT_BEGIN
+[stdout] ---LOG:backend/sync/.sync-daemon.log---
+[stdout] SIZE:30201 MODIFIED:2026-10-22 15:49:02.398097988 +0000
+[stdout] [Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"111895b726266a61788f4cc1cf3c59f04f920c29","direction":null,"file":null,"conflicts":0,"executed":false}
+[stdout] ---LOG:backend/sync/.sync-supervisor.log---
+[stdout] SIZE:15153 MODIFIED:2026-10-25 16:38:07.011438085 +0000
+[stdout] [Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"773e604d4043a34f06f5508bf5c88518cbba12b6","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] daemon active, interval=60000ms, aiEnabled=false
+[Genesis sync supervisor] worker exited {"code":null,"signal":"SIGKILL"} retry=1
+[Genesis sync] daemon active, interval=60000ms, aiEnabled=false
+[Genesis sync] {"status":"in_sync","revision":"28ea7ebc320e5b6f40916ceae4775130c39e40ac","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"28ea7ebc320e5b6f40916ceae4775130c39e40ac","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"28ea7ebc320e5b6f40916ceae4775130c39e40ac","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"synced","revision":"6bf0965fef052af4ad6a63a7ab834fd3d0796c31","direction":"pull","file":"backend/sync/setup_replit_workflow.js","conflicts":0,"executed":true}
+[Genesis sync] {"status":"in_sync","revision":"6bf0965fef052af4ad6a63a7ab834fd3d0796c31","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"6bf0965fef052af4ad6a63a7ab834fd3d0796c31","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"b1940deb695373570e9c19e4079ead5ae312d5ff","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] daemon active, interval=60000ms, aiEnabled=false
+[Genesis sync] {"status":"synced","revision":"d3f80ad9547f27ad03e77b72a32868934f8b4d3a","direction":"pull","file":"backend/sync/tests/whole_project_sync.test.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"d3f80ad9547f27ad03e77b72a32868934f8b4d3a","direction":"create","file":"backend/sync/whole_project_sync.js.hotfix-backup-1792945204209.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"5f9a56bdd484b932636f21ad83fd62c0893d2b73","direction":"create","file":"bridge/shell/multi-task/console.html","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"c21cb5d96824f20ee80af0030f9466dd3e7b94ca","direction":"create","file":"bridge/shell/multi-task/risk_coordinator.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"e2ea40db13aa8c23d91029d5815ccf2c1dc94dd6","direction":"create","file":"bridge/shell/multi-task/server.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"2e9db9e0d5ef529a6ba78a3c172d74d8c2c84788","direction":"create","file":"bridge/shell/multi-task/shell_command.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"841b6388b9d1a8472dbcf11fee07c6c2c1eef1c1","direction":"create","file":"bridge/shell/multi-task/shell_floats.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"0f64901ea6277800c402a95467a7aacc09e45f8d","direction":"create","file":"bridge/shell/multi-task/supervisor.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"46801e8e57a1a3197be10c00378afc33f2a9dfca","direction":"push","file":"frontend/backend-console-viewer.css","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"35e99b859ab7728f975982ae02d8fbcfefa26083","direction":"push","file":"frontend/backend-console-viewer.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"35e99b859ab7728f975982ae02d8fbcfefa26083","direction":"create","file":"frontend/shell-multi-floats.js","conflicts":6,"executed":true}
+[Genesis sync] {"status":"synced","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":"push","file":"frontend/style.css","conflicts":6,"executed":true}
+[Genesis sync] {"status":"blocked","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":null,"file":null,"conflicts":6,"executed":false}
+[Genesis sync] {"status":"blocked","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":null,"file":null,"conflicts":6,"executed":false}
+[Genesis sync] {"status":"blocked","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":null,"file":null,"conflicts":6,"executed":false}
+[Genesis sync] {"status":"blocked","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":null,"file":null,"conflicts":6,"executed":false}
+[Genesis sync] {"status":"blocked","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":null,"file":null,"conflicts":6,"executed":false}
+[Genesis sync] {"status":"blocked","revision":"a44768a303df06bdddf734dd82a9803d35e1b190","direction":null,"file":null,"conflicts":6,"executed":false}
+[stdout] ---LOG:backend/migration/.sync-daemon.log---
+[stdout] SIZE:4748 MODIFIED:2026-10-22 06:17:02.408265034 +0000
+[stdout] [Genesis sync] daemon active, interval=60000ms, aiEnabled=false
+[Genesis sync] {"status":"synced","revision":"a27981550986b76408952e497381dfabc19c859a","direction":"pull","file":"backend/migration/SYNC_OPERATIONS.md","conflicts":0,"executed":true}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[Genesis sync] {"status":"in_sync","revision":"a27981550986b76408952e497381dfabc19c859a","direction":null,"file":null,"conflicts":0,"executed":false}
+[stdout] ---STATE:backend/sync/.github-sync-state.json---
+[stdout] {"repository":"Appsusage/Genesis","branch":"main","appliedRevision":"111895b726266a61788f4cc1cf3c59f04f920c29"}
+[stdout] ---STATE:backend/migration/.github-sync-state.json---
+[stdout] {"repository":"Appsusage/Genesis","branch":"main","appliedRevision":"a27981550986b76408952e497381dfabc19c859a"}
+[stdout] SYNC_DAEMON_SOURCE_REFERENCE
+[stdout] 4: * Gen: two-way complete working copy (every 60 seconds).
+8: * Failures are isolated between workers; the prior Genesis supervisor and
+11: * node backend/sync/tri_repo_supervisor.js start|run|status|stop|once|dry-run
+15:import { spawn } from 'node:child_process';
+20:import { synchronizeGenOnce } from './gen_bidirectional_sync.js';
+30:  { name: 'Gen', interval: 60000, startDelay: 0,
+31:    fn: apply => synchronizeGenOnce({ root, apply, maxFilesPerCycle: 12 }) },
+32:  { name: 'Project-Delivery', interval: 180000, startDelay: 15000,
+34:  { name: 'Migration', interval: 6 * 60 * 60 * 1000, startDelay: 45000,
+54:  try { process.kill(pid, 0); return true; }
+59:  if (process.platform !== 'linux') return true;
+69:      try { await file.writeFile(JSON.stringify({ pid: process.pid, token })); }
+76:        throw new Error('Tri-repo supervisor lock is owned by a live process');
+84:  if (holder?.pid === process.pid && holder?.token === token)
+106:      processedCount: cycle.processedCount ?? null,
+122:  process.on('SIGTERM', stop);
+123:  process.on('SIGINT', stop);
+125:    await sleep(worker.startDelay);
+136:async function start() {
+142:    const child = spawn(process.execPath, [self, 'run'], { cwd: root,
+143:      detached: true, stdio: ['ignore', fd, fd], env: process.env });
+147:    if (!next || !await owned(next.pid)) throw new Error('Tri-repo supervisor failed to start');
+148:    return { status: 'started', pid: next.pid };
+152:  const cmd = process.argv[2] ?? 'status';
+154:  if (cmd === 'start') return start();
+167:    process.kill(lock.pid, 'SIGTERM');
+170:  throw new Error('Usage: start|run|status|stop|once|dry-run');
+173:catch (error) { console.error('[tri-repo]', error.message); process.exitCode = 1; }
+[stdout] EBO_SYNC_LOG_AUDIT_END
+
+[exit code] 0
+Progress: Completed
