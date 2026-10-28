@@ -1,0 +1,11 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_TUTK_SDK_PROBE_START
+for n in $(seq 1 15); do
+ test -f backend/devices/ebo/research/probe_tutk_native_sdk.mjs && break
+ echo "WAIT_GEN_SYNC:$n"
+ sleep 3
+done
+node --check backend/devices/ebo/research/probe_tutk_native_sdk.mjs
+node backend/devices/ebo/research/probe_tutk_native_sdk.mjs
+echo EBO_TUTK_SDK_PROBE_COMPLETE
