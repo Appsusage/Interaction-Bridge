@@ -1,0 +1,10 @@
+[command]
+cd /home/runner/workspace/ai-agent && printf 'ANDROID_PROJECT: ' && test -f android/app/build.gradle.kts && echo present || echo waiting_sync; printf 'GH_CLI: ' && (command -v gh || true); if command -v gh >/dev/null 2>&1; then gh api repos/Appsusage/Gen/actions/workflows/android-apk.yml/runs --jq '.workflow_runs[:5][] | [.id,.status,.conclusion,.html_url] | @tsv' 2>&1 | head -12; fi
+[streams]
+[stdout] ANDROID_PROJECT: [stdout] waiting_sync
+GH_CLI: [stdout] /nix/store/3a7clrv9hlp3bvj68b2gczk6jb261yh1-replit-runtime-path/bin/gh
+[stdout] 40782535329	completed	failure	https://github.com/Appsusage/Gen/actions/runs/40782535329
+40782412868	completed	failure	https://github.com/Appsusage/Gen/actions/runs/40782412868
+
+[exit code] 0
+Progress: Completed
