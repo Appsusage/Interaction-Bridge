@@ -1,0 +1,191 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_DEX_RETRY_START
+for n in $(seq 1 36); do
+ if [ -f backend/devices/ebo/research/scan_rola_dex_classes.mjs ]; then echo "EBO_DEX_SCRIPT_PRESENT:$n";break;fi
+ echo "EBO_DEX_SYNC_PENDING:$n"
+ sleep 5
+done
+test -f backend/devices/ebo/research/scan_rola_dex_classes.mjs
+node --check backend/devices/ebo/research/scan_rola_dex_classes.mjs
+node backend/devices/ebo/research/scan_rola_dex_classes.mjs
+echo EBO_DEX_RETRY_COMPLETED
+[streams]
+[stdout] EBO_DEX_RETRY_START
+[stdout] EBO_DEX_SCRIPT_PRESENT:1
+[stdout] {
+  "source": "official latest ROLA APK, not validated against user's 2.2.1",
+  "dexSummary": [
+    {
+      "name": "classes.dex",
+      "compressedBytes": 3584422,
+      "uncompressedBytes": 9035540,
+      "definedClasses": 8325
+    },
+    {
+      "name": "classes2.dex",
+      "compressedBytes": 3901862,
+      "uncompressedBytes": 9870564,
+      "definedClasses": 11029
+    },
+    {
+      "name": "classes3.dex",
+      "compressedBytes": 3249931,
+      "uncompressedBytes": 8914720,
+      "definedClasses": 11754
+    },
+    {
+      "name": "classes4.dex",
+      "compressedBytes": 1205768,
+      "uncompressedBytes": 3243884,
+      "definedClasses": 3876
+    }
+  ],
+  "classFamilyCounts": {
+    "other": 30835,
+    "firstGenDeviceOther": 1006,
+    "firstGenDeviceHome": 133,
+    "air2": 1269,
+    "rolaMini": 748,
+    "agora": 930,
+    "tutkOrKalay": 63
+  },
+  "relevantClassDescriptors": [
+    "Lcom/amap/api/services/route/DrivePath$1;",
+    "Lcom/amap/api/services/route/DrivePath;",
+    "Lcom/amap/api/services/route/DrivePathV2$1;",
+    "Lcom/amap/api/services/route/DrivePathV2;",
+    "Lcom/amap/api/services/route/DrivePlanPath$1;",
+    "Lcom/amap/api/services/route/DrivePlanPath;",
+    "Lcom/amap/api/services/route/DrivePlanStep$1;",
+    "Lcom/amap/api/services/route/DrivePlanStep;",
+    "Lcom/amap/api/services/route/DriveRoutePlanResult$1;",
+    "Lcom/amap/api/services/route/DriveRoutePlanResult;",
+    "Lcom/amap/api/services/route/DriveRouteResult$1;",
+    "Lcom/amap/api/services/route/DriveRouteResult;",
+    "Lcom/amap/api/services/route/DriveRouteResultV2$1;",
+    "Lcom/amap/api/services/route/DriveRouteResultV2;",
+    "Lcom/amap/api/services/route/DriveStep$1;",
+    "Lcom/amap/api/services/route/DriveStep;",
+    "Lcom/amap/api/services/route/DriveStepV2$1;",
+    "Lcom/amap/api/services/route/DriveStepV2;",
+    "Lcom/amap/api/services/route/RouteSearch$DrivePlanQuery$1;",
+    "Lcom/amap/api/services/route/RouteSearch$DrivePlanQuery;",
+    "Lcom/amap/api/services/route/RouteSearch$DriveRouteQuery$1;",
+    "Lcom/amap/api/services/route/RouteSearch$DriveRouteQuery;",
+    "Lcom/amap/api/services/route/RouteSearchV2$DriveRouteQuery$1;",
+    "Lcom/amap/api/services/route/RouteSearchV2$DriveRouteQuery;",
+    "Lcom/ebo/ebocode/acty/collar/ConnectCatCollarActViewModel$collarBindEbo$1$onSuccess$jsonType$1;",
+    "Lcom/ebo/ebocode/acty/collar/ConnectCatCollarActViewModel$collarBindEbo$1;",
+    "Lcom/ebo/ebocode/acty/main/petcard/SelectPetCardPresenter$collarBindEbo$1$onSuccess$jsonType$1;",
+    "Lcom/ebo/ebocode/acty/main/petcard/SelectPetCardPresenter$collarBindEbo$1;",
+    "Lcom/ebo/ebocode/acty/member/Air2MemberViewModel$getRobotStorageSku$1$onSuccess$$inlined$fromJsonByReturnType$1;",
+    "Lcom/ebo/ebocode/acty/member/Air2MemberViewModel$getRobotStorageSku$1;",
+    "Lcom/ebo/ebocode/base/EBOApplication;",
+    "Lcom/ebo/ebocode/base/EboBaseActivity$initParameters$1;",
+    "Lcom/ebo/ebocode/base/EboBaseActivity;",
+    "Lcom/ebo/ebocode/base/EboBaseFragment;",
+    "Lcom/ebo/ebocode/bean/NewsListBean$DataDTO$ResultsDTO$ExtraDTO$RobotInfoDTO;",
+    "Lcom/ebo/ebocode/bean/NewsListMainBean$DataDTO$ExtraDTO$RobotInfoDTO;",
+    "Lcom/ebo/ebocode/custom/EBOTextureView;",
+    "Lcom/ebo/ebocode/custom/EboBottomNavigation;",
+    "Lcom/ebo/ebocode/custom/model/CollarBindEboModel$EquipOwnerBean;",
+    "Lcom/ebo/ebocode/custom/model/CollarBindEboModel$PetBean;",
+    "Lcom/ebo/ebocode/custom/model/CollarBindEboModel$RobotBean;",
+    "Lcom/ebo/ebocode/custom/model/CollarBindEboModel;",
+    "Lcom/ebo/ebocode/custom/model/PetCardModel$EquipDataBean$RobotBean$1;",
+    "Lcom/ebo/ebocode/custom/model/PetCardModel$EquipDataBean$RobotBean;",
+    "Lcom/ebo/ebocode/custom/view/DriverArrow2View;",
+    "Lcom/ebo/ebocode/custom/view/DriverArrowViewPlus;",
+    "Lcom/ebo/ebocode/custom/view/EboThemeImageLayout;",
+    "Lcom/ebo/ebocode/custom/view/EboThemeLayout;",
+    "Lcom/ebo/ebocode/custom/view/NewEboThemeImageLayout;",
+    "Lcom/ebo/ebocode/custom/view/RobotAvailableView;",
+    "Lcom/ebo/ebocode/databinding/ActivityEboDeviceBinding;",
+    "Lcom/ebo/ebocode/databinding/ActivityEboReportBinding;",
+    "Lcom/ebo/ebocode/databinding/ActivityEboReportResultBinding;",
+    "Lcom/ebo/ebocode/databinding/ActivityEboSettingBinding;",
+    "Lcom/ebo/ebocode/databinding/DialogEboCoderSetBinding;",
+    "Lcom/ebo/ebocode/databinding/DialogEboVoiceSetBinding;",
+    "Lcom/ebo/ebocode/databinding/FragmentHomeRobotFilesBinding;",
+    "Lcom/ebo/ebocode/databinding/FragmentRobotFiles2Binding;",
+    "Lcom/ebo/ebocode/databinding/FragmentRobotFilesBinding;",
+    "Lcom/ebo/ebocode/databinding/LayoutItemRobotBinding;",
+    "Lcom/ebo/ebocode/device/about/DeviceAboutAct$changeRobotName$1;",
+    "Lcom/ebo/ebocode/device/about/EditDeviceNameAct$changeRobotName$1;",
+    "Lcom/ebo/ebocode/device/files/fragment/FilesHomeRobotFragment$initViewPager$2$1;",
+    "Lcom/ebo/ebocode/device/files/obj/RobotMediaInfo;",
+    "Lcom/ebo/ebocode/device/home/ConnectViewModel$checkDeviceToken$1;",
+    "Lcom/ebo/ebocode/device/home/ConnectViewModel;",
+    "Lcom/ebo/ebocode/device/home/EBODeviceModel;",
+    "Lcom/ebo/ebocode/device/home/MyHomeAdapter$1;",
+    "Lcom/ebo/ebocode/device/home/MyHomeAdapter;",
+    "Lcom/ebo/ebocode/device/home/a0;",
+    "Lcom/ebo/ebocode/device/home/a1;",
+    "Lcom/ebo/ebocode/device/home/a;",
+    "Lcom/ebo/ebocode/device/home/b0;",
+    "Lcom/ebo/ebocode/device/home/b1;",
+    "Lcom/ebo/ebocode/device/home/c0;",
+    "Lcom/ebo/ebocode/device/home/c1;",
+    "Lcom/ebo/ebocode/device/home/d0;",
+    "Lcom/ebo/ebocode/device/home/d1;",
+    "Lcom/ebo/ebocode/device/home/e0;",
+    "Lcom/ebo/ebocode/device/home/e1;",
+    "Lcom/ebo/ebocode/device/home/f0;",
+    "Lcom/ebo/ebocode/device/home/f1;",
+    "Lcom/ebo/ebocode/device/home/fragment/AirAutoFragment$MyAdapter;",
+    "Lcom/ebo/ebocode/device/home/fragment/a0;",
+    "Lcom/ebo/ebocode/device/home/fragment/a1;",
+    "Lcom/ebo/ebocode/device/home/fragment/a;",
+    "Lcom/ebo/ebocode/device/home/fragment/b0;",
+    "Lcom/ebo/ebocode/device/home/fragment/b1;",
+    "Lcom/ebo/ebocode/device/home/fragment/b;",
+    "Lcom/ebo/ebocode/device/home/fragment/c0;",
+    "Lcom/ebo/ebocode/device/home/fragment/c1;",
+    "Lcom/ebo/ebocode/device/home/fragment/c;",
+    "Lcom/ebo/ebocode/device/home/fragment/d0;",
+    "Lcom/ebo/ebocode/device/home/fragment/d1;",
+    "Lcom/ebo/ebocode/device/home/fragment/d;",
+    "Lcom/ebo/ebocode/device/home/fragment/e0;",
+    "Lcom/ebo/ebocode/device/home/fragment/e1;",
+    "Lcom/ebo/ebocode/device/home/fragment/e;",
+    "Lcom/ebo/ebocode/device/home/fragment/f0;",
+    "Lcom/ebo/ebocode/device/home/fragment/f1;",
+    "Lcom/ebo/ebocode/device/home/fragment/f;",
+    "Lcom/ebo/ebocode/device/home/fragment/g0;",
+    "Lcom/ebo/ebocode/device/home/fragment/g;",
+    "Lcom/ebo/ebocode/device/home/fragment/h0;",
+    "Lcom/ebo/ebocode/device/home/fragment/h;",
+    "Lcom/ebo/ebocode/device/home/fragment/i0;",
+    "Lcom/ebo/ebocode/device/home/fragment/i;",
+    "Lcom/ebo/ebocode/device/home/fragment/j0;",
+    "Lcom/ebo/ebocode/device/home/fragment/j;",
+    "Lcom/ebo/ebocode/device/home/fragment/m;",
+    "Lcom/ebo/ebocode/device/home/fragment/o0;",
+    "Lcom/ebo/ebocode/device/home/fragment/y;",
+    "Lcom/ebo/ebocode/device/home/h;",
+    "Lcom/ebo/ebocode/device/home/j1;",
+    "Lcom/ebo/ebocode/device/home/m;",
+    "Lcom/ebo/ebocode/device/home/q;",
+    "Lcom/ebo/ebocode/device/invite/InviteByEboIdLevelAct$DaysAdapter;",
+    "Lcom/ebo/ebocode/device/invite/InviteByEboIdLevelAct$inviteMembers$1$1;",
+    "Lcom/ebo/ebocode/deviceAir2/about/Air2DeviceAboutAct$changeRobotName$1;",
+    "Lcom/ebo/ebocode/deviceAir2/about/Air2DeviceAboutViewModel$changeRobotName$1;",
+    "Lcom/ebo/ebocode/deviceAir2/files/FileListViewModel$getRobotMedialFiles$1$onSuccess$$inlined$fromJsonByReturnType$1;",
+    "Lcom/ebo/ebocode/deviceRolaMini/about/RolaMiniAboutViewModel$changeRobotName$1;",
+    "Lcom/ebo/ebocode/deviceRolaMini/cloud/buy/MiniMemberViewModel$getRobotStorageSku$1$onSuccess$$inlined$fromJsonByReturnType$1;",
+    "Lcom/ebo/ebocode/deviceRolaMini/cloud/buy/MiniMemberViewModel$getRobotStorageSku$1;",
+    "Lcom/ebo/ebocode/deviceRolaMini/files/preview/MiniRobotPreviewFileListAct$ViewPagedAdapter;",
+    "Lcom/ebo/ebocode/deviceRolaMini/files/preview/MiniRobotPreviewFileListAct$initViews$3;",
+    "Lcom/ebo/ebocode/deviceTracker/settings/TrackerAboutDeviceAct$changeRobotName$1;",
+    "Lcom/ebo/ebocode/deviceTracker/view/TrackerUserProfilePictureLayout$updateRobotAppFriends$value$1;",
+    "Lcom/ebo/ebocode/deviceWater/settings/WaterDeviceAboutViewModel$changeRobotName$1;",
+    "Lcom/ebo/ebocode/service/EBOService;"
+  ],
+  "disclaimer": "Class-definition metadata only. Does not trace calls or prove actual AIR protocol use."
+}
+[stdout] EBO_DEX_RETRY_COMPLETED
+
+[exit code] 0
+Progress: Completed
