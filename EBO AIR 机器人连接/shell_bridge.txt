@@ -1,0 +1,11 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_ROLA_DEX_INDEX_SCAN_START
+for n in $(seq 1 15); do
+ test -f backend/devices/ebo/research/scan_rola_dex_classes.mjs && break
+ echo "DEX_SYNC_WAIT:$n"
+ sleep 3
+done
+node --check backend/devices/ebo/research/scan_rola_dex_classes.mjs
+node backend/devices/ebo/research/scan_rola_dex_classes.mjs
+echo EBO_ROLA_DEX_INDEX_SCAN_COMPLETE
