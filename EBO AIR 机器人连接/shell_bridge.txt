@@ -1,0 +1,16 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_TUTK_COMMAND_METHODS_START
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cache=/home/runner/workspace/.gen-sync-cache
+git -C "$cache" -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+git -C "$cache" show origin/main:backend/devices/ebo/research/trace_rola_send_methods.mjs > "$tmp/commands.mjs"
+node --check "$tmp/commands.mjs"
+node "$tmp/commands.mjs" > "$tmp/result.json"
+node --input-type=module - "$tmp/result.json" <<'NODE'
+import fs from 'node:fs';
+const x=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+console.log('EBO_TARGETED_METHODS',JSON.stringify(x.targets.slice(0,30)));
+NODE
+echo EBO_TUTK_COMMAND_METHODS_END
