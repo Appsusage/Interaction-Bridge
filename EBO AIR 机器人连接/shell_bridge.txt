@@ -1,0 +1,29 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_SYNC_LOG_AUDIT_BEGIN
+for file in backend/sync/.sync-daemon.log backend/sync/.sync-supervisor.log backend/migration/.sync-daemon.log; do
+ echo "---LOG:$file---"
+ if [ -f "$file" ]; then
+  stat -c 'SIZE:%s MODIFIED:%y' "$file"
+  tail -n 45 "$file" | sed -E 's/(token|secret|password|authorization|authkey|api.key)[=: ]+[^ ,\"]+/\1:[REDACTED]/Ig' | head -n 45
+ else echo MISSING; fi
+done
+for file in backend/sync/.github-sync-state.json backend/migration/.github-sync-state.json; do
+ echo "---STATE:$file---"
+ if [ -f "$file" ]; then
+  node --input-type=module - "$file" <<'NODE'
+import fs from 'node:fs';
+const p=process.argv[2],x=JSON.parse(fs.readFileSync(p,'utf8'));
+const scrub=(obj,depth=0)=>{
+ if(depth>2 || obj===null)return obj;
+ if(Array.isArray(obj))return {type:'array',length:obj.length};
+ if(typeof obj!=='object')return typeof obj==='string'?obj.slice(0,60):obj;
+ return Object.fromEntries(Object.entries(obj).filter(([k])=>!/(token|secret|password|key|auth|credential)/i.test(k)).slice(0,28).map(([k,v])=>[k,scrub(v,depth+1)]));
+};
+console.log(JSON.stringify(scrub(x)));
+NODE
+ else echo MISSING; fi
+done
+echo SYNC_DAEMON_SOURCE_REFERENCE
+grep -nE 'setInterval|poll|start|process|GEN|Gen|GitHub|heartbeat|spawn' backend/sync/tri_repo_supervisor.js | head -n 45 || true
+echo EBO_SYNC_LOG_AUDIT_END
