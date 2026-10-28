@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && printf 'FRONTEND CHAT STRUCTURE\n'; grep -nEi 'chatContainer|chatBox|chat-box|chat-window|chatWindow|chatPanel|fullscreen|full-screen|maximize|expand|chat-header' frontend/index.html frontend/style.css frontend/app.js | head -110; printf '\nBODY HEADER\n'; sed -n '20,125p' frontend/index.html
