@@ -1,9 +1,0 @@
-set -eu
-cd /home/runner/workspace/ai-agent
-echo EBO_DEX_TOOLCHAIN_CHECK_START
-for exe in jadx java javap apktool baksmali unzip readelf strings adb; do
-  if command -v "$exe" >/dev/null 2>&1; then echo "FOUND:$exe:$(command -v "$exe")"; else echo "MISSING:$exe"; fi
-done
-node --check backend/devices/ebo/research/scan_rola_official_range.mjs
-node --check backend/devices/ebo/research/probe_tutk_native_sdk.mjs
-echo EBO_DEX_TOOLCHAIN_CHECK_COMPLETE
