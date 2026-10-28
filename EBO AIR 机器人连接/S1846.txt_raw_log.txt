@@ -1,0 +1,65 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_CONNECTION_FIX_TEST_START
+CACHE=/home/runner/workspace/.gen-sync-cache
+git -C "$CACHE" -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const root=process.cwd(),cache=path.resolve(root,'../.gen-sync-cache');
+const targets=[
+ {name:'backend/devices/ebo/ebo_connection.js',old:'bf025abfb186d9d3fff7a080c9870912cd0a4125'},
+ {name:'backend/devices/ebo/ebo_connection.test.js',old:'a3487faa0ff9b6bccfcd891fdae8326b742f08db'},
+];
+const blobhash=b=>createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');
+const staged=[];
+for(const t of targets){
+ const dest=path.join(root,t.name);
+ const local=fs.readFileSync(dest);
+ const remote=execFileSync('git',['-C',cache,'show','origin/main:'+t.name],{maxBuffer:1024*1024});
+ const localSha=blobhash(local),remoteSha=blobhash(remote);
+ if(localSha===remoteSha){console.log('ALREADY_UPDATED',t.name);continue;}
+ if(localSha!==t.old)throw Error('LOCAL_EBO_FILE_CHANGED_UNEXPECTEDLY '+t.name+' '+localSha);
+ if(remote.length===0||remote.length>200000)throw Error('REMOTE_UNEXPECTED_SIZE '+t.name);
+ staged.push({t,dest,local,remote,remoteSha});
+}
+const backup=fs.mkdtempSync(path.resolve(root,'../.ebo-connection-fix-backup-'));fs.chmodSync(backup,0o700);
+for(const x of staged){
+ fs.writeFileSync(path.join(backup,path.basename(x.dest)),x.local,{mode:0o600});
+ const temp=x.dest+'.ebo-fix-'+process.pid+'.tmp';
+ try {fs.writeFileSync(temp,x.remote,{flag:'wx',mode:0o644});fs.renameSync(temp,x.dest);}
+ finally{try{fs.unlinkSync(temp)}catch{}}
+ console.log('UPDATED_EBO_FILE',x.t.name,'REMOTE_BLOB',x.remoteSha);
+}
+console.log('EBO_ONLY_FILES_CHANGED',staged.length);
+NODE
+node --check backend/devices/ebo/ebo_connection.js
+node --check backend/devices/ebo/ebo_connection.test.js
+node --test test/ebo_p2p_readiness.test.mjs test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+echo EBO_CONNECTION_FIX_TEST_END
+[streams]
+[stdout] EBO_CONNECTION_FIX_TEST_START
+[stdout] UPDATED_EBO_FILE backend/devices/ebo/ebo_connection.js REMOTE_BLOB 2bb5e57e0dec3295917f08c7be2ffdd6f3eef0c5
+[stdout] UPDATED_EBO_FILE backend/devices/ebo/ebo_connection.test.js REMOTE_BLOB e58d7a43b7e2b90da47bd910b649fe65ca36203c
+EBO_ONLY_FILES_CHANGED 2
+[stdout] ✔ Replit cannot claim LAN device connected (48.628494ms)
+[stdout] ✔ Unverified movement cannot be transmitted (0.374603ms)
+[stdout] ✔ Authenticated Android bridge reports LAN diagnostics, not robot connection (83.624116ms)
+[stdout] ✔ P2P cannot claim authenticated if files or credential variables are missing (1.970594ms)
+✔ Recognizes four compatible ELF files without claiming a real P2P session (1.049609ms)
+✔ Rejects 32-bit ARM SDK on Replit x64 runtime (0.542548ms)
+ℹ tests 6
+ℹ suites 0
+[stdout] ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 191.370872
+[stdout] EBO_CONNECTION_FIX_TEST_END
+
+[exit code] 0
+Progress: Completed
