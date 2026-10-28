@@ -1,0 +1,140 @@
+[command]
+cd /home/runner/workspace/ai-agent && printf 'FRONTEND CHAT STRUCTURE\n'; grep -nEi 'chatContainer|chatBox|chat-box|chat-window|chatWindow|chatPanel|fullscreen|full-screen|maximize|expand|chat-header' frontend/index.html frontend/style.css frontend/app.js | head -110; printf '\nBODY HEADER\n'; sed -n '20,125p' frontend/index.html
+[streams]
+[stdout] FRONTEND CHAT STRUCTURE
+[stdout] frontend/index.html:100:     <div id="aiChatBox">
+frontend/index.html:130:     <div id="userChatBox">
+frontend/index.html:212:  <button id="dockToggle" class="dock-toggle" type="button" aria-label="展开功能菜单" aria-expanded="false" title="展开功能菜单">☰</button>
+frontend/style.css:333:#userChatBox{
+frontend/style.css:387:#aiChatBox{
+frontend/style.css:408:#aiChatBox::-webkit-scrollbar,
+frontend/style.css:409:#userChatBox::-webkit-scrollbar{
+frontend/app.js:1:const aiChatBox =
+frontend/app.js:2:document.getElementById("aiChatBox");
+frontend/app.js:5:const userChatBox =
+frontend/app.js:6:document.getElementById("userChatBox");
+frontend/app.js:302:aiChatBox.appendChild(loading);
+frontend/app.js:429:aiChatBox.appendChild(ai);
+frontend/app.js:468:userChatBox.dataset.id=id;
+frontend/app.js:472:userChatBox.innerHTML=
+frontend/app.js:538:aiChatBox.scrollTop =
+frontend/app.js:539:aiChatBox.scrollHeight;
+frontend/app.js:610:aiChatBox.appendChild(ai);
+frontend/app.js:632:aiChatBox.addEventListener(
+frontend/app.js:639:"#aiChatBox .message.ai"
+frontend/app.js:657:aiChatBox.getBoundingClientRect();
+frontend/app.js:683:targetID != userChatBox.dataset.id
+frontend/app.js:1796:aiChatBox.appendChild(box);
+frontend/app.js:1893:  if (dockToggle) dockToggle.setAttribute("aria-expanded", String(!!open));
+frontend/app.js:1952:  // Tap outside the expanded dock to dismiss it without affecting the chat.
+[stdout] 
+BODY HEADER
+[stdout]   <link rel="stylesheet" href="/backend-console-viewer.css">
+  <link rel="stylesheet" href="/extension/pet/limbo/pet.css">
+<link rel="stylesheet" href="/capabilities/vision/camera.css">
+</head>
+
+
+
+<body>
+
+
+
+<div class="container">
+
+
+
+<!-- =====================
+     顶部 AI 信息
+===================== -->
+
+
+<header class="header">
+
+
+<div class="ai-avatar">
+
+<img 
+id="aiAvatar"
+src="/media/avatar.png">
+
+</div>
+
+
+
+<div class="ai-info">
+
+
+<h1>
+私人AI助手
+</h1>
+
+
+
+<span id="serverStatus">
+
+● 检测中...
+
+</span>
+
+
+
+</div>
+
+
+
+</header>
+
+
+
+
+
+
+
+<!-- =====================
+     聊天区域
+===================== -->
+
+
+     <div class="chat-layout">
+
+
+     <!-- AI区域 -->
+
+     <div class="ai-panel">
+
+
+     <div class="panel-title">
+     
+     </div>
+
+
+     <div id="aiChatBox">
+
+
+     <div class="message ai">
+
+     你好，我是你的私人AI助手。
+
+     </div>
+
+
+     </div>
+
+
+     </div>
+
+
+
+
+
+     <!-- 用户区域 -->
+
+     <div class="user-panel">
+
+
+     <div class="panel-title">
+     
+
+[exit code] 0
+Progress: Completed
