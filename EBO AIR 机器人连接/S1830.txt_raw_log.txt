@@ -1,0 +1,115 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_OFFICIAL_APK_RANGE_SCAN_START
+node --check backend/devices/ebo/research/scan_rola_official_range.mjs
+node backend/devices/ebo/research/scan_rola_official_range.mjs
+echo EBO_OFFICIAL_APK_RANGE_SCAN_FINISHED
+[streams]
+[stdout] EBO_OFFICIAL_APK_RANGE_SCAN_START
+[stdout] {
+  "source": "Enabot official current ROLA APK; not yet matched to user's uploaded 2.2.1 binary",
+  "sourceUrl": "https://mediakit.enabot.com/ebo/apk-release/prod_app_google_release_latest.apk",
+  "totalArchiveBytes": 394179427,
+  "entryCount": 4948,
+  "dexCount": 4,
+  "nativeLibraryCount": 138,
+  "kalayCandidates": {
+    "libTUTKGlobalAPIs.so": [
+      "lib/arm64-v8a/libTUTKGlobalAPIs.so",
+      "lib/armeabi-v7a/libTUTKGlobalAPIs.so"
+    ],
+    "libIOTCAPIs.so": [
+      "lib/arm64-v8a/libIOTCAPIs.so",
+      "lib/armeabi-v7a/libIOTCAPIs.so"
+    ],
+    "libRDTAPIs.so": [
+      "lib/arm64-v8a/libRDTAPIs.so",
+      "lib/armeabi-v7a/libRDTAPIs.so"
+    ],
+    "libAVAPIs.so": [
+      "lib/arm64-v8a/libAVAPIs.so",
+      "lib/armeabi-v7a/libAVAPIs.so"
+    ]
+  },
+  "allFourKalayLibrariesPresent": true,
+  "relevantLibraries": [
+    "lib/arm64-v8a/libAVAPIs.so",
+    "lib/arm64-v8a/libAVAPIsT.so",
+    "lib/arm64-v8a/libIOTCAPIs.so",
+    "lib/arm64-v8a/libIOTCAPIsT.so",
+    "lib/arm64-v8a/libP2PTunnelAPIs.so",
+    "lib/arm64-v8a/libP2PTunnelAPIsT.so",
+    "lib/arm64-v8a/libRDTAPIs.so",
+    "lib/arm64-v8a/libRDTAPIsT.so",
+    "lib/arm64-v8a/libTUTKGlobalAPIs.so",
+    "lib/arm64-v8a/libTUTKGlobalAPIsT.so",
+    "lib/arm64-v8a/libagora-core.so",
+    "lib/arm64-v8a/libagora-fdkaac.so",
+    "lib/arm64-v8a/libagora-ffmpeg.so",
+    "lib/arm64-v8a/libagora-rtc-sdk.so",
+    "lib/arm64-v8a/libagora-rtm-sdk.so",
+    "lib/arm64-v8a/libagora-soundtouch.so",
+    "lib/arm64-v8a/libagora_ai_echo_cancellation_extension.so",
+    "lib/arm64-v8a/libagora_ai_noise_suppression_extension.so",
+    "lib/arm64-v8a/libagora_audio_beauty_extension.so",
+    "lib/arm64-v8a/libagora_clear_vision_extension.so",
+    "lib/arm64-v8a/libagora_content_inspect_extension.so",
+    "lib/arm64-v8a/libagora_drm_loader_extension.so",
+    "lib/arm64-v8a/libagora_dtd.so",
+    "lib/arm64-v8a/libagora_face_capture_extension.so",
+    "lib/arm64-v8a/libagora_face_detection_extension.so",
+    "lib/arm64-v8a/libagora_lip_sync_extension.so",
+    "lib/arm64-v8a/libagora_screen_capture_extension.so",
+    "lib/arm64-v8a/libagora_segmentation_extension.so",
+    "lib/arm64-v8a/libagora_spatial_audio_extension.so",
+    "lib/arm64-v8a/libagora_udrm3_extension.so",
+    "lib/arm64-v8a/libagora_video_av1_decoder_extension.so",
+    "lib/arm64-v8a/libagora_video_av1_encoder_extension.so",
+    "lib/arm64-v8a/libagora_video_decoder_extension.so",
+    "lib/arm64-v8a/libagora_video_encoder_extension.so",
+    "lib/arm64-v8a/libagora_video_quality_analyzer_extension.so",
+    "lib/arm64-v8a/libeboSignature.so",
+    "lib/armeabi-v7a/libAVAPIs.so",
+    "lib/armeabi-v7a/libAVAPIsT.so",
+    "lib/armeabi-v7a/libIOTCAPIs.so",
+    "lib/armeabi-v7a/libIOTCAPIsT.so",
+    "lib/armeabi-v7a/libP2PTunnelAPIs.so",
+    "lib/armeabi-v7a/libP2PTunnelAPIsT.so",
+    "lib/armeabi-v7a/libRDTAPIs.so",
+    "lib/armeabi-v7a/libRDTAPIsT.so",
+    "lib/armeabi-v7a/libTUTKGlobalAPIs.so",
+    "lib/armeabi-v7a/libTUTKGlobalAPIsT.so",
+    "lib/armeabi-v7a/libagora-core.so",
+    "lib/armeabi-v7a/libagora-fdkaac.so",
+    "lib/armeabi-v7a/libagora-ffmpeg.so",
+    "lib/armeabi-v7a/libagora-rtc-sdk.so",
+    "lib/armeabi-v7a/libagora-rtm-sdk.so",
+    "lib/armeabi-v7a/libagora-soundtouch.so",
+    "lib/armeabi-v7a/libagora_ai_echo_cancellation_extension.so",
+    "lib/armeabi-v7a/libagora_ai_noise_suppression_extension.so",
+    "lib/armeabi-v7a/libagora_audio_beauty_extension.so",
+    "lib/armeabi-v7a/libagora_clear_vision_extension.so",
+    "lib/armeabi-v7a/libagora_content_inspect_extension.so",
+    "lib/armeabi-v7a/libagora_drm_loader_extension.so",
+    "lib/armeabi-v7a/libagora_dtd.so",
+    "lib/armeabi-v7a/libagora_face_capture_extension.so",
+    "lib/armeabi-v7a/libagora_face_detection_extension.so",
+    "lib/armeabi-v7a/libagora_lip_sync_extension.so",
+    "lib/armeabi-v7a/libagora_screen_capture_extension.so",
+    "lib/armeabi-v7a/libagora_segmentation_extension.so",
+    "lib/armeabi-v7a/libagora_spatial_audio_extension.so",
+    "lib/armeabi-v7a/libagora_udrm3_extension.so",
+    "lib/armeabi-v7a/libagora_video_av1_decoder_extension.so",
+    "lib/armeabi-v7a/libagora_video_av1_encoder_extension.so",
+    "lib/armeabi-v7a/libagora_video_decoder_extension.so",
+    "lib/armeabi-v7a/libagora_video_encoder_extension.so",
+    "lib/armeabi-v7a/libagora_video_quality_analyzer_extension.so",
+    "lib/armeabi-v7a/libeboSignature.so"
+  ],
+  "note": "Filename evidence only. Does not establish original EBO Air control protocol."
+}
+[stdout] EBO_OFFICIAL_APK_RANGE_SCAN_FINISHED
+
+[exit code] 0
+Progress: Completed
