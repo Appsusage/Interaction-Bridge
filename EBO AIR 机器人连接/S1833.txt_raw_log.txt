@@ -1,0 +1,44 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_ROLA_DEX_INDEX_SCAN_START
+for n in $(seq 1 15); do
+ test -f backend/devices/ebo/research/scan_rola_dex_classes.mjs && break
+ echo "DEX_SYNC_WAIT:$n"
+ sleep 3
+done
+node --check backend/devices/ebo/research/scan_rola_dex_classes.mjs
+node backend/devices/ebo/research/scan_rola_dex_classes.mjs
+echo EBO_ROLA_DEX_INDEX_SCAN_COMPLETE
+[streams]
+[stdout] EBO_ROLA_DEX_INDEX_SCAN_START
+[stdout] DEX_SYNC_WAIT:1
+[stdout] DEX_SYNC_WAIT:2
+[stdout] DEX_SYNC_WAIT:3
+[stdout] DEX_SYNC_WAIT:4
+[stdout] DEX_SYNC_WAIT:5
+[stdout] DEX_SYNC_WAIT:6
+[stdout] DEX_SYNC_WAIT:7
+[stdout] DEX_SYNC_WAIT:8
+[stdout] DEX_SYNC_WAIT:9
+[stdout] DEX_SYNC_WAIT:10
+[stdout] DEX_SYNC_WAIT:11
+[stdout] DEX_SYNC_WAIT:12
+[stdout] DEX_SYNC_WAIT:13
+[stdout] DEX_SYNC_WAIT:14
+[stdout] DEX_SYNC_WAIT:15
+[stderr] node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/workspace/ai-agent/backend/devices/ebo/research/scan_rola_dex_classes.mjs'
+    at node:internal/modules/cjs/loader:1564:15
+    at node:internal/main/check_syntax:33:20 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.22.1
+
+[exit code] 1
+Progress: Completed
