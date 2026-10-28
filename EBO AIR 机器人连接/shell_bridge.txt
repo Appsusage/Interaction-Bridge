@@ -1,0 +1,21 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_P2P_SYNC_DIAG_START
+for x in backend/devices/ebo/ebo_p2p_readiness.js test/ebo_p2p_readiness.test.mjs backend/devices/ebo/ebo_connection.js; do
+ if [ -f "$x" ]; then echo "PRESENT:$x"; else echo "MISSING:$x"; fi
+done
+if [ -d .git ]; then
+ echo ROOT_GIT_BRANCH
+ git branch --show-current || true
+ echo ROOT_GIT_REMOTE_NAMES
+ git remote | head -n 12 || true
+ echo ROOT_GIT_EBO_STATUS
+ git status --short -- backend/devices/ebo test/ebo_p2p_readiness.test.mjs | head -n 40 || true
+ echo ROOT_GIT_RECENT_COMMIT
+ git log -1 --pretty='%h %ci %s' || true
+else echo ROOT_GIT_NOT_FOUND; fi
+echo RECENT_SYNC_FILES
+find backend -maxdepth 4 \( -iname '*sync*log*' -o -iname '*sync*state*' -o -iname '*sync*error*' -o -iname '*tri*repo*' \) -type f 2>/dev/null | head -n 50 || true
+echo RELEVANT_RUNNING_PROCESSES
+ps -eo pid,etime,args | grep -Ei '(github_sync|tri.repo|sync_manager|bridge/shell)' | grep -v -E 'grep|EBO_P2P_SYNC_DIAG' | sed -E 's/(token|key|secret|password|auth)=[^ ]+/\1=[REDACTED]/Ig' | head -n 16 || true
+echo EBO_P2P_SYNC_DIAG_END
