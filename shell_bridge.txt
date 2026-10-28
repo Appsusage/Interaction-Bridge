@@ -1,0 +1,4 @@
+printf 'OLD_SHELL_BRIDGE_DNS_TEST_BEGIN\n'
+date -u '+UTC_TIME=%Y-%m-%dT%H:%M:%SZ'
+node -e "const dns=require('node:dns'); for(const host of ['api.github.com','api.dropboxapi.com']) dns.lookup(host,(error,ip)=>console.log(host,error?error.code:ip));"
+printf 'OLD_SHELL_BRIDGE_DNS_TEST_END\n'
