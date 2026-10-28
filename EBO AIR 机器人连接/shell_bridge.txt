@@ -1,0 +1,14 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_GEN_DRY_RUN_BEGIN
+timeout 100 node --input-type=module <<'NODE'
+import { synchronizeGenOnce } from './backend/sync/gen_bidirectional_sync.js';
+const r = await synchronizeGenOnce({root:process.cwd(),apply:false,maxFilesPerCycle:12});
+console.log(JSON.stringify({
+  status:r.status,pendingCount:r.pendingCount,blockedCount:r.blockedCount,
+  pending:(r.pending||[]).map(x=>({path:x.path,action:x.action})),
+  eboBlocked:(r.blocked||[]).filter(x=>String(x.path).includes('devices/ebo')).map(x=>({path:x.path,action:x.action,reason:x.reason})),
+  revision:r.revision
+},null,2));
+NODE
+echo EBO_GEN_DRY_RUN_END
