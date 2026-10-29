@@ -1,0 +1,13 @@
+set -eu
+echo EBO_MAVLINK_CRC_HYPOTHESIS_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for path in backend/devices/ebo/research/mavlink_crc_candidate.mjs test/ebo_mavlink_crc_candidate.test.mjs; do
+  echo "FETCH_PRIVATE_GEN:$path"
+  mkdir -p "$tmp/$(dirname "$path")"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$path" --jq '.content' | base64 -d > "$tmp/$path"
+  test -s "$tmp/$path"
+done
+node --check "$tmp/backend/devices/ebo/research/mavlink_crc_candidate.mjs"
+(cd "$tmp" && node --test test/ebo_mavlink_crc_candidate.test.mjs)
+echo EBO_MAVLINK_CRC_HYPOTHESIS_TEST_COMPLETE
