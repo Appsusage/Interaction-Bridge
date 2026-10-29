@@ -1,0 +1,1 @@
+cd /home/runner/workspace/ai-agent && gh api repos/Appsusage/Gen/actions/workflows/android-apk.yml/runs --jq '.workflow_runs[:3][] | [.id,.status,.conclusion,.html_url] | @tsv' | head -3
