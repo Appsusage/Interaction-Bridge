@@ -1,0 +1,9 @@
+[command]
+cd /home/runner/workspace/ai-agent && gh api repos/Appsusage/Gen/actions/workflows/android-apk.yml/runs --jq '.workflow_runs[:3][] | [.id,.status,.conclusion,.html_url] | @tsv' | head -3
+[streams]
+[stdout] 40801418758	completed	success	https://github.com/Appsusage/Gen/actions/runs/40801418758
+40801372053	completed	success	https://github.com/Appsusage/Gen/actions/runs/40801372053
+40784870509	completed	success	https://github.com/Appsusage/Gen/actions/runs/40784870509
+
+[exit code] 0
+Progress: Completed
