@@ -1,0 +1,33 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_TRANSPORT_SEND_HANDLERS_START
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+git -C /home/runner/workspace/.gen-sync-cache -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+git -C /home/runner/workspace/.gen-sync-cache show origin/main:backend/devices/ebo/research/trace_rola_transport_handlers.mjs > "$tmp/scan.mjs"
+node --check "$tmp/scan.mjs"
+node "$tmp/scan.mjs" > "$tmp/out.json"
+node --input-type=module - "$tmp/out.json" <<'NODE'
+import fs from "node:fs";
+const x=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+for(const c of x.targets){
+ const events=c.instructions?.events||[];
+ console.log("EBO_TRANSPORT_METHOD",JSON.stringify({owner:c.class,method:c.method,codeUnits:c.instructions?.codeUnits,
+   interestingInvokes:events.filter(e=>e.op==='invoke').map(e=>e.target).filter(e=>/RDT|AVAPIs|Packet|tutk|Coroutine/i.test(e)).slice(0,36),
+   instructions:events.filter(e=>e.op==="invoke"&&/RDT_Write|RDT_Create|avSendIOCtrl|Packet|m;->b/i.test(e.target||"") ||
+      e.op.startsWith("const")).slice(0,85)}));
+}
+console.log('EBO_TRANSPORT_TOTAL_METHODS',x.targets.length);
+NODE
+echo EBO_TRANSPORT_SEND_HANDLERS_FINISHED
+[streams]
+[stdout] EBO_TRANSPORT_SEND_HANDLERS_START
+[stderr] fatal: 'origin' does not appear to be a git repository
+[stderr] fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+
+[exit code] 128
+Progress: Completed
