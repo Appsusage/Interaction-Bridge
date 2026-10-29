@@ -1,0 +1,35 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_SEND_HANDLER_RETRY_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+git -C /home/runner/workspace/.gen-sync-cache -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+git -C /home/runner/workspace/.gen-sync-cache show origin/main:backend/devices/ebo/research/trace_rola_transport_handlers.mjs > "$tmp/trace.mjs"
+node --check "$tmp/trace.mjs"
+node "$tmp/trace.mjs" > "$tmp/results.json"
+node --input-type=module - "$tmp/results.json" <<'NODE'
+import fs from 'node:fs';
+const obj=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+console.log('EBO_TRACE_METHOD_COUNT',obj.targets?.length);
+for(const t of obj.targets??[]){
+  const key=t.class+'->'+t.method;
+  if(!/camera\/tutk\/(?:m|q|r|l|c0)|DeviceLiveActivity/.test(key))continue;
+  console.log('EBO_TRACE_METHOD',JSON.stringify({
+    owner:t.class,method:t.method,codeUnits:t.instructions?.codeUnits,
+    calls:t.calls?.filter(c=>/RDT_Write|RDT_Read|avSendIOCtrl|RDT_Create|camera\/tutk|Packet/.test(c)).slice(0,45),
+    events:t.instructions?.events?.filter(e=>e.op==='invoke'&&/RDT_Write|avSendIOCtrl|Packet|m;->b/.test(e.target||'')||e.op.startsWith('const')).slice(0,55)
+  }));
+}
+NODE
+echo EBO_SEND_HANDLER_RETRY_COMPLETE
+[streams]
+[stdout] EBO_SEND_HANDLER_RETRY_START
+[stderr] fatal: 'origin' does not appear to be a git repository
+[stderr] fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+
+[exit code] 128
+Progress: Completed
