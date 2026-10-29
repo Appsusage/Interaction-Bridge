@@ -1,0 +1,31 @@
+[command]
+set -eu
+echo EBO_ROLA_221_LOCAL_PARSER_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/research/trace_rola_221_transport_handlers.mjs test/ebo_rola_local_apk_scanner.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/trace_rola_221_transport_handlers.mjs"
+node --check "$tmp/test/ebo_rola_local_apk_scanner.test.mjs"
+(cd "$tmp" && node --test test/ebo_rola_local_apk_scanner.test.mjs)
+echo EBO_ROLA_221_LOCAL_PARSER_TEST_COMPLETE
+[streams]
+[stdout] EBO_ROLA_221_LOCAL_PARSER_TEST_START
+[stdout] ✔ local APK scanner accepts a structurally valid synthetic DEX ZIP (45.408472ms)
+[stdout] ✔ malformed APK input fails closed (43.952849ms)
+[stdout] ✔ missing APK path is rejected without fetching private binaries (40.988567ms)
+[stdout] ℹ tests 3
+ℹ suites 0
+[stdout] ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 198.628135
+[stdout] EBO_ROLA_221_LOCAL_PARSER_TEST_COMPLETE
+
+[exit code] 0
+Progress: Completed
