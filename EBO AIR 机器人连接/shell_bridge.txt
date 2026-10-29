@@ -1,0 +1,37 @@
+set -eu
+echo EBO_LOADER_ABI_GATED_TEST_BEGIN
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for path in backend/devices/ebo/ebo_p2p_readiness.js test/ebo_p2p_readiness.test.mjs backend/devices/ebo/research/mavlink_crc_candidate.mjs test/ebo_mavlink_crc_candidate.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$path")"
+  echo "FETCH_PRIVATE_GEN:$path"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$path" --jq '.content' | base64 -d > "$tmp/$path"
+  test -s "$tmp/$path"
+done
+node --check "$tmp/backend/devices/ebo/ebo_p2p_readiness.js"
+node --check "$tmp/backend/devices/ebo/research/mavlink_crc_candidate.mjs"
+(cd "$tmp" && node --test test/ebo_p2p_readiness.test.mjs test/ebo_mavlink_crc_candidate.test.mjs)
+echo EBO_LOADER_ABI_GATED_TEST_COMPLETE
+cd /home/runner/workspace/ai-agent
+node --input-type=module - "$tmp/backend/devices/ebo/ebo_p2p_readiness.js" <<'NODE'
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+const oldBlob="79dabcddc8b86a82943b99069c3d84c5634f8a75";
+const dest=path.resolve("backend/devices/ebo/ebo_p2p_readiness.js");
+const from=process.argv[2];
+const now=fs.readFileSync(dest),next=fs.readFileSync(from);
+function sha1(b){return crypto.createHash("sha1").update(Buffer.from("blob "+b.length+"\0")).update(b).digest("hex");}
+if(sha1(now)===sha1(next)){console.log("EBO_LOADER_ABI_ALREADY_SYNCED");}
+else if(sha1(now)!==oldBlob){console.log("EBO_LOADER_ABI_COPY_SKIPPED_UNEXPECTED_LOCAL_BLOB",sha1(now));}
+else {
+ const backupDir=fs.mkdtempSync(path.resolve("../.ebo-abi-backup-"));fs.chmodSync(backupDir,0o700);
+ fs.writeFileSync(path.join(backupDir,"ebo_p2p_readiness.js"),now,{mode:0o600});
+ const temp=dest+".abi-update-"+process.pid+".tmp";
+ try{fs.writeFileSync(temp,next,{flag:"wx",mode:0o644});fs.renameSync(temp,dest);}
+ finally{try{fs.unlinkSync(temp);}catch{}}
+ console.log("EBO_LOADER_ABI_GUARD_INSTALLED",sha1(next));
+}
+NODE
+node --check backend/devices/ebo/ebo_p2p_readiness.js
+echo EBO_LOADER_ABI_GATED_TEST_END
