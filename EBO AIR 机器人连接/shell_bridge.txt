@@ -1,0 +1,13 @@
+set -eu
+echo EBO_PASSIVE_RDT_INSPECT_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/research/inspect_ebo_rdt_stream.mjs test/ebo_rdt_stream_inspector.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/inspect_ebo_rdt_stream.mjs"
+node --check "$tmp/test/ebo_rdt_stream_inspector.test.mjs"
+(cd "$tmp" && node --test test/ebo_rdt_stream_inspector.test.mjs)
+echo EBO_PASSIVE_RDT_INSPECT_TEST_COMPLETE
