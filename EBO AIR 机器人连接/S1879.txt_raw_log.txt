@@ -1,0 +1,50 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_P2P_RUNTIME_SMOKE_START
+node --check backend/devices/ebo/ebo_p2p_readiness.js
+node --check backend/devices/ebo/ebo_connection.js
+node --test test/ebo_p2p_readiness.test.mjs test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+node --input-type=module <<'NODE'
+import { getEboP2PReadiness } from './backend/devices/ebo/ebo_p2p_readiness.js';
+import { getEBOConnectionStatus } from './backend/devices/ebo/ebo_connection.js';
+const readiness=getEboP2PReadiness();
+const status=getEBOConnectionStatus();
+if (readiness.authenticated || readiness.ready || readiness.prerequisites.nativeLoaderAbiVerified ||
+    readiness.blockers.indexOf('NATIVE_SDK_LOADER_ABI_UNVERIFIED')<0) {
+ throw Error('Unsafe P2P readiness status');
+}
+if (!status.p2p || status.p2p.authenticated || status.p2p.ready) {
+ throw Error('Robot status missing or incorrectly claiming P2P readiness');
+}
+console.log('EBO_P2P_RUNTIME_STATUS',JSON.stringify({
+ platform:readiness.runtime.platform,arch:readiness.runtime.arch,
+ libraryCount:Object.keys(readiness.nativeLibraries).length,
+ loaderAbiVerified:readiness.prerequisites.nativeLoaderAbiVerified,
+ actualRobotAuthenticated:status.p2p.authenticated,
+ p2pReady:status.p2p.ready,
+ blockers:readiness.blockers
+}));
+NODE
+echo EBO_P2P_RUNTIME_SMOKE_COMPLETE
+[streams]
+[stdout] EBO_P2P_RUNTIME_SMOKE_START
+[stdout] ✔ Replit cannot claim LAN device connected (57.104704ms)
+[stdout] ✔ Unverified movement cannot be transmitted (0.524411ms)
+[stdout] ✔ Authenticated Android bridge reports LAN diagnostics, not robot connection (87.03929ms)
+[stdout] ✔ P2P cannot claim authenticated if files or credential variables are missing (1.864137ms)
+✔ Recognizes four compatible ELF files without claiming a real P2P session (1.57126ms)
+[stdout] ✔ Rejects 32-bit ARM SDK on Replit x64 runtime (1.314536ms)
+[stdout] ℹ tests 6
+[stdout] ℹ suites 0
+[stdout] ℹ pass 6
+[stdout] ℹ fail 0
+[stdout] ℹ cancelled 0
+[stdout] ℹ skipped 0
+[stdout] ℹ todo 0
+[stdout] ℹ duration_ms 530.086307
+[stdout] EBO_P2P_RUNTIME_STATUS {"platform":"linux","arch":"x64","libraryCount":4,"loaderAbiVerified":false,"actualRobotAuthenticated":false,"p2pReady":false,"blockers":["NATIVE_SDK_LIBRARIES_MISSING","REQUIRED_CREDENTIALS_NOT_CONFIGURED","NATIVE_SDK_LOADER_ABI_UNVERIFIED","KALAY_NATIVE_CLIENT_NOT_IMPLEMENTED","ORIGINAL_AIR_PROTOCOL_UNVERIFIED"]}
+[stdout] EBO_P2P_RUNTIME_SMOKE_COMPLETE
+
+[exit code] 0
+Progress: Completed
