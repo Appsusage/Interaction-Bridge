@@ -1,0 +1,25 @@
+[command]
+set -eu
+echo EBO_P2P_OBSERVER_OFFLINE_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+cache=/home/runner/workspace/.gen-sync-cache
+git -C "$cache" -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+mkdir -p "$tmp/backend/devices/ebo" "$tmp/test"
+git -C "$cache" show origin/main:backend/devices/ebo/ebo_p2p_observer.js > "$tmp/backend/devices/ebo/ebo_p2p_observer.js"
+git -C "$cache" show origin/main:test/ebo_p2p_observer.test.mjs > "$tmp/test/ebo_p2p_observer.test.mjs"
+node --check "$tmp/backend/devices/ebo/ebo_p2p_observer.js"
+node --check "$tmp/test/ebo_p2p_observer.test.mjs"
+node --test "$tmp/test/ebo_p2p_observer.test.mjs"
+echo EBO_P2P_OBSERVER_OFFLINE_TEST_COMPLETE
+
+[streams]
+[stdout] EBO_P2P_OBSERVER_OFFLINE_TEST_START
+[stderr] fatal: 'origin' does not appear to be a git repository
+[stderr] fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+
+[exit code] 128
+Progress: Completed
