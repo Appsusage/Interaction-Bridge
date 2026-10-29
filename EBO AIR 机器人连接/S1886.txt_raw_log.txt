@@ -1,0 +1,12 @@
+[command]
+set -eu
+echo EBO_OFFLINE_CI_STATUS_START
+gh run list --repo Appsusage/Gen --workflow ebo-air-passive-rdt-inspector.yml --limit 4 --json databaseId,headSha,status,conclusion,createdAt,url
+echo EBO_OFFLINE_CI_STATUS_COMPLETE
+[streams]
+[stdout] EBO_OFFLINE_CI_STATUS_START
+[stdout] [{"conclusion":"success","createdAt":"2026-10-29T17:30:53Z","databaseId":40922044372,"headSha":"bbe1a9874e9df4f549ebeae9c7a1e0d58db366b3","status":"completed","url":"https://github.com/Appsusage/Gen/actions/runs/40922044372"}]
+[stdout] EBO_OFFLINE_CI_STATUS_COMPLETE
+
+[exit code] 0
+Progress: Completed
