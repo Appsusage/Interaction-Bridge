@@ -1,0 +1,35 @@
+[command]
+set -eu
+echo EBO_GAMEPAD_CODEC_RETRY_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/backend/devices/ebo/research" "$tmp/test"
+for path in backend/devices/ebo/research/gamepad_raw_mini_payload.mjs test/ebo_gamepad_raw_mini_payload.test.mjs; do
+  echo "FETCH_GEN_FILE:$path"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$path" --jq '.content' | base64 -d > "$tmp/$path"
+  test -s "$tmp/$path"
+done
+node --check "$tmp/backend/devices/ebo/research/gamepad_raw_mini_payload.mjs"
+node --check "$tmp/test/ebo_gamepad_raw_mini_payload.test.mjs"
+(cd "$tmp" && node --test test/ebo_gamepad_raw_mini_payload.test.mjs)
+echo EBO_GAMEPAD_CODEC_RETRY_COMPLETE
+[streams]
+[stdout] EBO_GAMEPAD_CODEC_RETRY_START
+[stdout] FETCH_GEN_FILE:backend/devices/ebo/research/gamepad_raw_mini_payload.mjs
+[stdout] FETCH_GEN_FILE:test/ebo_gamepad_raw_mini_payload.test.mjs
+[stdout] ✔ MAVLink GAMEPAD_RAW_MINI metadata and zero payload are 17 bytes (1.017376ms)
+[stdout] ✔ four float32 axes are written little-endian; button occupies exactly one byte (1.061999ms)
+✔ rejects invalid numeric axes, button values, and malformed payload length (0.784012ms)
+✔ module contains no transport and cannot authenticate or move a robot (0.28489ms)
+[stdout] ℹ tests 4
+[stdout] ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+[stdout] ℹ skipped 0
+[stdout] ℹ todo 0
+[stdout] ℹ duration_ms 127.068688
+[stdout] EBO_GAMEPAD_CODEC_RETRY_COMPLETE
+
+[exit code] 0
+Progress: Completed
