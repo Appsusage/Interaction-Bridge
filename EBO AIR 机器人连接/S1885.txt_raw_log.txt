@@ -1,0 +1,33 @@
+[command]
+set -eu
+echo EBO_PASSIVE_RDT_INSPECT_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/research/inspect_ebo_rdt_stream.mjs test/ebo_rdt_stream_inspector.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/inspect_ebo_rdt_stream.mjs"
+node --check "$tmp/test/ebo_rdt_stream_inspector.test.mjs"
+(cd "$tmp" && node --test test/ebo_rdt_stream_inspector.test.mjs)
+echo EBO_PASSIVE_RDT_INSPECT_TEST_COMPLETE
+[streams]
+[stdout] EBO_PASSIVE_RDT_INSPECT_TEST_START
+[stdout] ✔ summarizes known candidate envelope without decoding payload or claiming auth (1.418727ms)
+✔ v2 24-bit message IDs and unknown incompat flags are handled without transmission (0.904887ms)
+✔ incomplete frames do not become status claims (0.163065ms)
+✔ scan limit is bounded and never proves hardware (0.177259ms)
+✔ input constraints fail closed and no payload content is emitted (0.455272ms)
+[stdout] ℹ tests 5
+[stdout] ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.533652
+[stdout] EBO_PASSIVE_RDT_INSPECT_TEST_COMPLETE
+
+[exit code] 0
+Progress: Completed
