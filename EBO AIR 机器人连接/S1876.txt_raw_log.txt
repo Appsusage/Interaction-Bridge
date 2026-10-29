@@ -1,0 +1,56 @@
+[command]
+set -eu
+echo EBO_MAVLINK_CRC_INSPECT_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+gh api --hostname github.com "repos/Appsusage/Gen/contents/backend/devices/ebo/research/trace_rola_mavlink_crc.mjs" --jq '.content' | base64 -d > "$tmp/scan.mjs"
+node --check "$tmp/scan.mjs"
+node "$tmp/scan.mjs" > "$tmp/out.json"
+node --input-type=module - "$tmp/out.json" <<'NODE'
+import fs from 'node:fs';
+const x=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+console.log('MAVLINK_CRC_METHOD_COUNT',x.targets.length);
+for(const z of x.targets) {
+ const y=(z.instructions?.events||[]);
+ console.log('MAVLINK_CRC_METHOD',JSON.stringify({
+  class:z.class,method:z.method,codeUnits:z.instructions?.codeUnits,
+  relevant:y.filter(e=>e.op==='invoke'&& /crc|checksum|encode|pack|byte|Lu\/b;/.test(e.target||'')).slice(0,32),
+  numeric:y.filter(e=>e.op.startsWith('const')).slice(0,45)
+ }));
+}
+NODE
+echo EBO_MAVLINK_CRC_INSPECT_COMPLETE
+[streams]
+[stdout] EBO_MAVLINK_CRC_INSPECT_START
+[stdout] MAVLINK_CRC_METHOD_COUNT 27
+[stdout] MAVLINK_CRC_METHOD {"class":"Lcom/MAVLink/c;","method":"<init>","codeUnits":5,"relevant":[],"numeric":[{"pc":0,"op":"const/4","value":0}]}
+MAVLINK_CRC_METHOD {"class":"Lcom/MAVLink/c;","method":"<init>","codeUnits":15,"relevant":[{"pc":7,"op":"invoke","target":"Lu/b;-><init>"}],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lcom/MAVLink/c;","method":"encodePacket","codeUnits":203,"relevant":[],"numeric":[{"pc":2,"op":"const/4","value":1},{"pc":37,"op":"const/4","value":2},{"pc":43,"op":"const/4","value":6},{"pc":44,"op":"const/16","value":8},{"pc":46,"op":"const/4","value":5},{"pc":47,"op":"const/4","value":4},{"pc":48,"op":"const/4","value":3},{"pc":49,"op":"const/4","value":0},{"pc":52,"op":"const/4","value":-3},{"pc":88,"op":"const/4","value":7},{"pc":103,"op":"const/16","value":9},{"pc":107,"op":"const/16","value":10},{"pc":110,"op":"const/4","value":-2}]}
+MAVLINK_CRC_METHOD {"class":"Lcom/MAVLink/c;","method":"unpack","codeUnits":1158,"relevant":[],"numeric":[{"pc":2,"op":"const/16","value":163},{"pc":6,"op":"const/16","value":169},{"pc":10,"op":"const/16","value":166},{"pc":14,"op":"const/16","value":167},{"pc":36,"op":"const/4","value":0}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"<init>","codeUnits":12,"relevant":[],"numeric":[{"pc":3,"op":"const/16","value":255}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"b","codeUnits":22,"relevant":[],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"c","codeUnits":9,"relevant":[{"pc":0,"op":"invoke","target":"Lu/b;->d"}],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"d","codeUnits":60,"relevant":[],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"e","codeUnits":36,"relevant":[],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"f","codeUnits":22,"relevant":[],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"g","codeUnits":66,"relevant":[],"numeric":[{"pc":11,"op":"const-wide/16","value":255},{"pc":14,"op":"const/16","value":24},{"pc":17,"op":"const-wide/16","value":0},{"pc":30,"op":"const/16","value":16},{"pc":44,"op":"const/16","value":8}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"h","codeUnits":122,"relevant":[],"numeric":[{"pc":11,"op":"const-wide/16","value":255},{"pc":14,"op":"const/16","value":56},{"pc":17,"op":"const-wide/16","value":0},{"pc":30,"op":"const/16","value":48},{"pc":44,"op":"const/16","value":40},{"pc":58,"op":"const/16","value":32},{"pc":72,"op":"const/16","value":24},{"pc":86,"op":"const/16","value":16},{"pc":100,"op":"const/16","value":8}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"i","codeUnits":34,"relevant":[],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"j","codeUnits":8,"relevant":[{"pc":4,"op":"invoke","target":"Lu/b;->k"}],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"k","codeUnits":25,"relevant":[{"pc":3,"op":"invoke","target":"Lu/b;->a"},{"pc":9,"op":"invoke","target":"Lu/b;->a"},{"pc":15,"op":"invoke","target":"Lu/b;->a"},{"pc":21,"op":"invoke","target":"Lu/b;->a"}],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"l","codeUnits":13,"relevant":[{"pc":3,"op":"invoke","target":"Lu/b;->a"},{"pc":9,"op":"invoke","target":"Lu/b;->a"}],"numeric":[]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"m","codeUnits":23,"relevant":[{"pc":7,"op":"invoke","target":"Lu/b;->a"}],"numeric":[{"pc":2,"op":"const/16","value":255}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"n","codeUnits":32,"relevant":[{"pc":16,"op":"invoke","target":"Lu/b;->k"}],"numeric":[{"pc":0,"op":"const-wide/16","value":0}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"o","codeUnits":89,"relevant":[{"pc":11,"op":"invoke","target":"Lu/b;->a"},{"pc":20,"op":"invoke","target":"Lu/b;->a"},{"pc":29,"op":"invoke","target":"Lu/b;->a"},{"pc":38,"op":"invoke","target":"Lu/b;->a"},{"pc":47,"op":"invoke","target":"Lu/b;->a"},{"pc":56,"op":"invoke","target":"Lu/b;->a"},{"pc":65,"op":"invoke","target":"Lu/b;->a"},{"pc":73,"op":"invoke","target":"Lu/b;->a"}],"numeric":[{"pc":0,"op":"const-wide/16","value":0},{"pc":6,"op":"const/4","value":0},{"pc":14,"op":"const/16","value":8},{"pc":23,"op":"const/16","value":16},{"pc":32,"op":"const/16","value":24},{"pc":41,"op":"const/16","value":32},{"pc":50,"op":"const/16","value":40},{"pc":59,"op":"const/16","value":48},{"pc":68,"op":"const/16","value":56}]}
+MAVLINK_CRC_METHOD {"class":"Lu/b;","method":"p","codeUnits":24,"relevant":[{"pc":8,"op":"invoke","target":"Lu/b;->l"}],"numeric":[{"pc":2,"op":"const/32","value":65535}]}
+MAVLINK_CRC_METHOD {"class":"Lw/i0;","method":"<init>","codeUnits":8,"relevant":[],"numeric":[{"pc":3,"op":"const/16","value":202}]}
+MAVLINK_CRC_METHOD {"class":"Lw/i0;","method":"<init>","codeUnits":18,"relevant":[],"numeric":[{"pc":3,"op":"const/16","value":202}]}
+MAVLINK_CRC_METHOD {"class":"Lw/i0;","method":"<init>","codeUnits":24,"relevant":[],"numeric":[{"pc":3,"op":"const/16","value":202}]}
+MAVLINK_CRC_METHOD {"class":"Lw/i0;","method":"<init>","codeUnits":25,"relevant":[{"pc":21,"op":"invoke","target":"Lw/i0;->unpack"}],"numeric":[{"pc":3,"op":"const/16","value":202}]}
+MAVLINK_CRC_METHOD {"class":"Lw/i0;","method":"pack","codeUnits":57,"relevant":[{"pc":25,"op":"invoke","target":"Lu/b;->j"},{"pc":32,"op":"invoke","target":"Lu/b;->j"},{"pc":39,"op":"invoke","target":"Lu/b;->j"},{"pc":46,"op":"invoke","target":"Lu/b;->j"},{"pc":53,"op":"invoke","target":"Lu/b;->m"}],"numeric":[{"pc":2,"op":"const/16","value":17},{"pc":17,"op":"const/16","value":202}]}
+MAVLINK_CRC_METHOD {"class":"Lw/i0;","method":"unpack","codeUnits":34,"relevant":[{"pc":3,"op":"invoke","target":"Lu/b;->c"},{"pc":9,"op":"invoke","target":"Lu/b;->c"},{"pc":15,"op":"invoke","target":"Lu/b;->c"},{"pc":21,"op":"invoke","target":"Lu/b;->c"},{"pc":27,"op":"invoke","target":"Lu/b;->f"}],"numeric":[{"pc":0,"op":"const/4","value":0}]}
+MAVLINK_CRC_METHOD {"class":"Lp4/f;","method":"f","codeUnits":1096,"relevant":[],"numeric":[{"pc":38,"op":"const/4","value":0},{"pc":39,"op":"const/4","value":1},{"pc":40,"op":"const/4","value":4},{"pc":43,"op":"const/4","value":0},{"pc":44,"op":"const/4","value":3},{"pc":65,"op":"const/4","value":-1},{"pc":66,"op":"const/16","value":46},{"pc":161,"op":"const/4","value":5},{"pc":172,"op":"const/4","value":2},{"pc":244,"op":"const/16","value":32},{"pc":298,"op":"const/16","value":48},{"pc":442,"op":"const/16","value":16},{"pc":528,"op":"const/4","value":0},{"pc":552,"op":"const/4","value":0},{"pc":585,"op":"const/16","value":3000},{"pc":594,"op":"const/4","value":0},{"pc":615,"op":"const/4","value":1},{"pc":678,"op":"const/4","value":0},{"pc":686,"op":"const/4","value":1},{"pc":760,"op":"const/4","value":0},{"pc":798,"op":"const/4","value":0},{"pc":799,"op":"const/4","value":0},{"pc":846,"op":"const/16","value":16},{"pc":910,"op":"const/16","value":10},{"pc":912,"op":"const/4","value":0},{"pc":917,"op":"const/16","value":11},{"pc":1002,"op":"const/4","value":1}]}
+[stdout] EBO_MAVLINK_CRC_INSPECT_COMPLETE
+
+[exit code] 0
+Progress: Completed
