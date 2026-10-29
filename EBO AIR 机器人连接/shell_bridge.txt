@@ -1,0 +1,12 @@
+set -eu
+echo EBO_ROLA_VERSION_COMPARE_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/research/compare_rola_method_snapshots.mjs test/ebo_rola_method_snapshot_compare.test.mjs; do
+ mkdir -p "$tmp/$(dirname "$rel")"
+ gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+ test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/compare_rola_method_snapshots.mjs"
+(cd "$tmp" && node --test test/ebo_rola_method_snapshot_compare.test.mjs)
+echo EBO_ROLA_VERSION_COMPARE_TEST_COMPLETE
