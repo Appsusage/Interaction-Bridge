@@ -1,4 +1,0 @@
-set -eu
-echo EBO_OFFLINE_CI_STATUS_START
-gh run list --repo Appsusage/Gen --workflow ebo-air-passive-rdt-inspector.yml --limit 4 --json databaseId,headSha,status,conclusion,createdAt,url
-echo EBO_OFFLINE_CI_STATUS_COMPLETE
