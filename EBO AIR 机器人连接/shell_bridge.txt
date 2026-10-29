@@ -1,0 +1,13 @@
+set -eu
+echo EBO_ROLA_221_LOCAL_PARSER_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/research/trace_rola_221_transport_handlers.mjs test/ebo_rola_local_apk_scanner.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/trace_rola_221_transport_handlers.mjs"
+node --check "$tmp/test/ebo_rola_local_apk_scanner.test.mjs"
+(cd "$tmp" && node --test test/ebo_rola_local_apk_scanner.test.mjs)
+echo EBO_ROLA_221_LOCAL_PARSER_TEST_COMPLETE
