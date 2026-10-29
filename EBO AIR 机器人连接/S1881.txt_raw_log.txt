@@ -1,0 +1,31 @@
+[command]
+set -eu
+echo EBO_ROLA_VERSION_COMPARE_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/research/compare_rola_method_snapshots.mjs test/ebo_rola_method_snapshot_compare.test.mjs; do
+ mkdir -p "$tmp/$(dirname "$rel")"
+ gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+ test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/compare_rola_method_snapshots.mjs"
+(cd "$tmp" && node --test test/ebo_rola_method_snapshot_compare.test.mjs)
+echo EBO_ROLA_VERSION_COMPARE_TEST_COMPLETE
+[streams]
+[stdout] EBO_ROLA_VERSION_COMPARE_TEST_START
+[stdout] ✔ same DEX methods with changed code offsets remain the same (0.895707ms)
+[stdout] ✔ changed numeric constant is reported as a potential difference, not a robot command (0.301021ms)
+[stdout] ✔ added and removed methods are distinguished (0.868345ms)
+✔ invalid summary format is rejected (0.364566ms)
+[stdout] ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+[stdout] ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.041991
+[stdout] EBO_ROLA_VERSION_COMPARE_TEST_COMPLETE
+
+[exit code] 0
+Progress: Completed
