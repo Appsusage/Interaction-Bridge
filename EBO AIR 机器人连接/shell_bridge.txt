@@ -1,0 +1,20 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+printf 'EBO_TRANSPORT_RETRY_BEGIN\n'
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+git -C /home/runner/workspace/.gen-sync-cache -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+git -C /home/runner/workspace/.gen-sync-cache show origin/main:backend/devices/ebo/research/trace_rola_transport_handlers.mjs > "$tmp/handlers.mjs"
+node --check "$tmp/handlers.mjs"
+node "$tmp/handlers.mjs" > "$tmp/report.json"
+node --input-type=module - "$tmp/report.json" <<'NODE'
+import fs from "node:fs";
+const r=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+console.log("METHOD_COUNT",r.targets.length);
+for (const x of r.targets) {
+ const m=x.instructions?.events||[];
+ const relevant=m.filter(e=>e.op==="invoke" && /RDT_(Read|Write|Create)|avSendIOCtrl|m;->b|Packet;->|arraycopy/.test(e.target||""));
+ console.log("TRANSPORT_METHOD",JSON.stringify({class:x.class,method:x.method,codeUnits:x.instructions?.codeUnits,events:relevant.slice(0,20),constants:m.filter(e=>e.op.startsWith("const")).slice(0,35)}));
+}
+NODE
+echo EBO_TRANSPORT_RETRY_END
