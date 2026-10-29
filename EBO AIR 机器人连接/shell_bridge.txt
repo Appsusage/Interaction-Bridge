@@ -1,0 +1,12 @@
+set -eu
+echo EBO_PASSIVE_MAVLINK_CRC_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/backend/devices/ebo/research" "$tmp/test"
+for rel in backend/devices/ebo/research/mavlink_crc_candidate.mjs backend/devices/ebo/research/inspect_mavlink_crc_capture.mjs test/ebo_mavlink_crc_capture.test.mjs; do
+ gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+ test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/inspect_mavlink_crc_capture.mjs"
+(cd "$tmp" && node --test test/ebo_mavlink_crc_capture.test.mjs)
+echo EBO_PASSIVE_MAVLINK_CRC_TEST_COMPLETE
