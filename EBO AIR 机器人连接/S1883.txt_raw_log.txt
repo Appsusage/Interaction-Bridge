@@ -1,0 +1,37 @@
+[command]
+set -eu
+echo EBO_MAVLINK_CRC_DEDUP_VERIFY_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/backend/devices/ebo/research" "$tmp/test"
+for rel in backend/devices/ebo/research/mavlink_crc_candidate.mjs backend/devices/ebo/research/inspect_mavlink_crc_capture.mjs test/ebo_mavlink_crc_capture.test.mjs; do
+  gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/inspect_mavlink_crc_capture.mjs"
+(cd "$tmp" && node --test test/ebo_mavlink_crc_capture.test.mjs)
+echo EBO_MAVLINK_CRC_DEDUP_VERIFY_COMPLETE
+[streams]
+[stdout] EBO_MAVLINK_CRC_DEDUP_VERIFY_START
+[stdout] ✔ 3 matching v1 checksums support an offline hypothesis but never enable movement (5.323329ms)
+[stdout] ✔ published original-series EBO frame independently confirms CRC_EXTRA 211 (0.720135ms)
+[stdout] ✔ three copies of the same frame do not establish a CRC hypothesis (0.231723ms)
+✔ a repeated sequence number from the same sender counts only once (0.214061ms)
+✔ different sender sequence numbers can support a passive hypothesis (0.222704ms)
+✔ 2 samples alone cannot establish the checksum hypothesis (0.131316ms)
+✔ v2 frames are inspected without changing identity or payload interpretation (0.16849ms)
+✔ corrupt bytes do not validate expected candidate (0.123155ms)
+✔ random/encrypted-looking data and empty input never claim verified robot control (0.497807ms)
+✔ reject malformed input options and oversized captures (2.030346ms)
+[stdout] ℹ tests 10
+[stdout] ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 77.465818
+[stdout] EBO_MAVLINK_CRC_DEDUP_VERIFY_COMPLETE
+
+[exit code] 0
+Progress: Completed
