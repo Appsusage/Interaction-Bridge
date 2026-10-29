@@ -1,0 +1,28 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_P2P_RUNTIME_SMOKE_START
+node --check backend/devices/ebo/ebo_p2p_readiness.js
+node --check backend/devices/ebo/ebo_connection.js
+node --test test/ebo_p2p_readiness.test.mjs test/ebo_bridge.test.mjs backend/devices/ebo/ebo_connection.test.js
+node --input-type=module <<'NODE'
+import { getEboP2PReadiness } from './backend/devices/ebo/ebo_p2p_readiness.js';
+import { getEBOConnectionStatus } from './backend/devices/ebo/ebo_connection.js';
+const readiness=getEboP2PReadiness();
+const status=getEBOConnectionStatus();
+if (readiness.authenticated || readiness.ready || readiness.prerequisites.nativeLoaderAbiVerified ||
+    readiness.blockers.indexOf('NATIVE_SDK_LOADER_ABI_UNVERIFIED')<0) {
+ throw Error('Unsafe P2P readiness status');
+}
+if (!status.p2p || status.p2p.authenticated || status.p2p.ready) {
+ throw Error('Robot status missing or incorrectly claiming P2P readiness');
+}
+console.log('EBO_P2P_RUNTIME_STATUS',JSON.stringify({
+ platform:readiness.runtime.platform,arch:readiness.runtime.arch,
+ libraryCount:Object.keys(readiness.nativeLibraries).length,
+ loaderAbiVerified:readiness.prerequisites.nativeLoaderAbiVerified,
+ actualRobotAuthenticated:status.p2p.authenticated,
+ p2pReady:status.p2p.ready,
+ blockers:readiness.blockers
+}));
+NODE
+echo EBO_P2P_RUNTIME_SMOKE_COMPLETE
