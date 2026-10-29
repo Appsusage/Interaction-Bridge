@@ -1,0 +1,33 @@
+[command]
+set -eu
+echo EBO_PASSIVE_MAVLINK_CRC_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/backend/devices/ebo/research" "$tmp/test"
+for rel in backend/devices/ebo/research/mavlink_crc_candidate.mjs backend/devices/ebo/research/inspect_mavlink_crc_capture.mjs test/ebo_mavlink_crc_capture.test.mjs; do
+ gh api --hostname github.com "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+ test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/research/inspect_mavlink_crc_capture.mjs"
+(cd "$tmp" && node --test test/ebo_mavlink_crc_capture.test.mjs)
+echo EBO_PASSIVE_MAVLINK_CRC_TEST_COMPLETE
+[streams]
+[stdout] EBO_PASSIVE_MAVLINK_CRC_TEST_START
+[stdout] ✔ 3 matching v1 checksums support an offline hypothesis but never enable movement (1.873901ms)
+[stdout] ✔ 2 samples alone cannot establish the checksum hypothesis (0.252107ms)
+[stdout] ✔ v2 frames are inspected without changing identity or payload interpretation (0.155063ms)
+[stdout] ✔ corrupt bytes do not validate expected candidate (0.120287ms)
+✔ random/encrypted-looking data and empty input never claim verified robot control (0.199471ms)
+✔ reject malformed input options and oversized captures (0.953058ms)
+[stdout] ℹ tests 6
+[stdout] ℹ suites 0
+[stdout] ℹ pass 6
+ℹ fail 0
+[stdout] ℹ cancelled 0
+ℹ skipped 0
+[stdout] ℹ todo 0
+[stdout] ℹ duration_ms 78.590405
+[stdout] EBO_PASSIVE_MAVLINK_CRC_TEST_COMPLETE
+
+[exit code] 0
+Progress: Completed
