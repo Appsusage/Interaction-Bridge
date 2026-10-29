@@ -1,0 +1,42 @@
+[command]
+set -eu
+echo EBO_PASSIVE_GAMEPAD_FRAME_TEST_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/backend/devices/ebo/research" "$tmp/test"
+for path in backend/devices/ebo/research/gamepad_raw_mini_payload.mjs backend/devices/ebo/research/inspect_gamepad_v1_capture.mjs test/ebo_gamepad_raw_mini_payload.test.mjs test/ebo_gamepad_v1_capture.test.mjs; do
+ echo "FETCH_GEN_FILE:$path"
+ gh api --hostname github.com "repos/Appsusage/Gen/contents/$path" --jq '.content' | base64 -d > "$tmp/$path"
+ test -s "$tmp/$path"
+done
+node --check "$tmp/backend/devices/ebo/research/inspect_gamepad_v1_capture.mjs"
+node --check "$tmp/test/ebo_gamepad_v1_capture.test.mjs"
+(cd "$tmp" && node --test test/ebo_gamepad_raw_mini_payload.test.mjs test/ebo_gamepad_v1_capture.test.mjs)
+echo EBO_PASSIVE_GAMEPAD_FRAME_TEST_END
+[streams]
+[stdout] EBO_PASSIVE_GAMEPAD_FRAME_TEST_START
+[stdout] FETCH_GEN_FILE:backend/devices/ebo/research/gamepad_raw_mini_payload.mjs
+[stdout] FETCH_GEN_FILE:backend/devices/ebo/research/inspect_gamepad_v1_capture.mjs
+[stdout] FETCH_GEN_FILE:test/ebo_gamepad_raw_mini_payload.test.mjs
+[stdout] FETCH_GEN_FILE:test/ebo_gamepad_v1_capture.test.mjs
+[stdout] ✔ MAVLink GAMEPAD_RAW_MINI metadata and zero payload are 17 bytes (1.056991ms)
+[stdout] ✔ four float32 axes are written little-endian; button occupies exactly one byte (1.229755ms)
+✔ rejects invalid numeric axes, button values, and malformed payload length (1.079349ms)
+✔ module contains no transport and cannot authenticate or move a robot (0.350344ms)
+[stdout] ✔ passively decodes a 25-byte gamepad frame but reports checksum as unknown (1.919823ms)
+✔ strict hex input parses only complete frames (0.954827ms)
+[stdout] ✔ invalid versions, message IDs and payload lengths are rejected (0.435486ms)
+✔ zero-axes with pressed buttons are NOT a neutral candidate (0.247302ms)
+✔ NaN axis explicitly fails the finiteness indicator (0.204046ms)
+[stdout] ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.43922
+[stdout] EBO_PASSIVE_GAMEPAD_FRAME_TEST_END
+
+[exit code] 0
+Progress: Completed
