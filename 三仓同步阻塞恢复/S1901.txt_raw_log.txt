@@ -1,0 +1,31 @@
+[command]
+set -u
+printf 'TRI_REPO_VERIFY_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+for kind in .gen-sync-cache .migration-sync-cache; do
+  folder="/home/runner/workspace/$kind"
+  printf 'CACHE=%s\n' "$kind"
+  if [ -d "$folder/.git" ]; then
+    printf 'GIT_STATE=initialized\n'
+    git -C "$folder" rev-parse --verify HEAD 2>&1 || true
+  elif [ -d "$folder" ]; then
+    printf 'GIT_STATE=directory_without_git\n'
+  elif [ -e "$folder" ]; then
+    printf 'GIT_STATE=non_directory\n'
+  else
+    printf 'GIT_STATE=absent\n'
+  fi
+done
+
+[streams]
+[stdout] TRI_REPO_VERIFY_AT=2026-10-30T13:14:26Z
+[stdout] {"status":"running","pid":45255,"workers":{"Gen":{"status":"error","executed":false,"error":"ENOENT: no such file or directory, lstat '/home/runner/workspace/.gen-sync-cache/.git'","at":"2026-10-30T13:12:49.855Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:13:29.809Z"},"Migration":{"status":"error","executed":false,"error":"Migration cache path is occupied","at":"2026-10-30T12:42:34.714Z"}}}
+[stdout] CACHE=.gen-sync-cache
+GIT_STATE=initialized
+[stdout] 62b341a309891223135cd57edd27d6e0fa483a07
+[stdout] CACHE=.migration-sync-cache
+[stdout] GIT_STATE=initialized
+[stdout] fatal: Needed a single revision
+
+[exit code] 0
+Progress: Completed
