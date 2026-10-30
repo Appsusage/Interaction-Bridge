@@ -1,0 +1,37 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_AUTH_READ_REUSE_TEST_BEGIN
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/backend/devices/ebo" "$tmp/test"
+cache=/home/runner/workspace/.gen-sync-cache
+git -C "$cache" -c credential.helper='!gh auth git-credential' fetch --quiet origin main
+for rel in backend/devices/ebo/ebo_session_coordinator.js test/ebo_session_coordinator.test.mjs; do
+  git -C "$cache" show "origin/main:$rel" > "$tmp/$rel"
+done
+printf '{"type":"module"}\n' > "$tmp/package.json"
+node --check "$tmp/backend/devices/ebo/ebo_session_coordinator.js"
+node --check "$tmp/test/ebo_session_coordinator.test.mjs"
+(cd "$tmp" && node --test test/ebo_session_coordinator.test.mjs)
+node --input-type=module - "$tmp/backend/devices/ebo/ebo_session_coordinator.js" <<'NODE'
+import { pathToFileURL } from "node:url";
+const mod=await import(pathToFileURL(process.argv[2]));
+const coordinator=mod.createEboReadOnlyCoordinator();
+const result=await coordinator.ensureAuthenticatedAndRead();
+console.log("EBO_ACTUAL_DEFAULT_CONNECTION_GATE", JSON.stringify(result));
+if(result.code!=="NATIVE_KALAY_ADAPTER_NOT_CONFIGURED" ||
+   result.robotAuthenticated!==false || result.safeToSend!==false)
+ throw new Error("Unconfigured native P2P client must remain blocked");
+NODE
+echo EBO_AUTH_READ_REUSE_TEST_END
+[streams]
+[stdout] EBO_AUTH_READ_REUSE_TEST_BEGIN
+[stderr] fatal: 'origin' does not appear to be a git repository
+[stderr] fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+
+[exit code] 128
+Progress: Completed
