@@ -1,0 +1,21 @@
+set -eu
+echo EBO_REUSE_TEST_API_FALLBACK_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+printf '{"type":"module"}\n' > "$tmp/package.json"
+for rel in backend/devices/ebo/ebo_session_coordinator.js test/ebo_session_coordinator.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gh api "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/ebo_session_coordinator.js"
+node --check "$tmp/test/ebo_session_coordinator.test.mjs"
+(cd "$tmp" && node --test test/ebo_session_coordinator.test.mjs)
+node --input-type=module - "$tmp/backend/devices/ebo/ebo_session_coordinator.js" <<'NODE'
+import { pathToFileURL } from "node:url";
+const mod = await import(pathToFileURL(process.argv[2]));
+const r = await mod.createEboReadOnlyCoordinator().ensureAuthenticatedAndRead();
+console.log("EBO_NATIVE_ADAPTER_ABSENT",JSON.stringify(r));
+if(r.robotAuthenticated || r.safeToSend || r.code!=="NATIVE_KALAY_ADAPTER_NOT_CONFIGURED")process.exit(3);
+NODE
+echo EBO_REUSE_TEST_API_FALLBACK_COMPLETE
