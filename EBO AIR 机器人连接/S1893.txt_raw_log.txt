@@ -1,0 +1,44 @@
+[command]
+set -eu
+echo EBO_REUSE_TEST_API_FALLBACK_START
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+printf '{"type":"module"}\n' > "$tmp/package.json"
+for rel in backend/devices/ebo/ebo_session_coordinator.js test/ebo_session_coordinator.test.mjs; do
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gh api "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+  test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/ebo_session_coordinator.js"
+node --check "$tmp/test/ebo_session_coordinator.test.mjs"
+(cd "$tmp" && node --test test/ebo_session_coordinator.test.mjs)
+node --input-type=module - "$tmp/backend/devices/ebo/ebo_session_coordinator.js" <<'NODE'
+import { pathToFileURL } from "node:url";
+const mod = await import(pathToFileURL(process.argv[2]));
+const r = await mod.createEboReadOnlyCoordinator().ensureAuthenticatedAndRead();
+console.log("EBO_NATIVE_ADAPTER_ABSENT",JSON.stringify(r));
+if(r.robotAuthenticated || r.safeToSend || r.code!=="NATIVE_KALAY_ADAPTER_NOT_CONFIGURED")process.exit(3);
+NODE
+echo EBO_REUSE_TEST_API_FALLBACK_COMPLETE
+[streams]
+[stdout] EBO_REUSE_TEST_API_FALLBACK_START
+[stdout] ✔ unconfigured native client fails closed without a network attempt (1.192447ms)
+✔ same live authenticated session and fresh read are reused (3.419088ms)
+✔ stale status is read again but not reauthenticated (0.498943ms)
+[stdout] ✔ concurrent calls coalesce into one authentication and read (0.835423ms)
+[stdout] ✔ transport dropout invalidates auth and read; failure does not claim success (0.486696ms)
+[stdout] ✔ spoofed model or stale reply never authenticates the robot (0.452256ms)
+[stdout] ✔ auth false, incomplete session ID or malformed response never become success (0.444232ms)
+[stdout] ℹ tests 7
+[stdout] ℹ suites 0
+[stdout] ℹ pass 7
+[stdout] ℹ fail 0
+[stdout] ℹ cancelled 0
+[stdout] ℹ skipped 0
+[stdout] ℹ todo 0
+[stdout] ℹ duration_ms 153.704254
+[stdout] EBO_NATIVE_ADAPTER_ABSENT {"success":false,"robotAuthenticated":false,"statusReceived":false,"connected":false,"safeToSend":false,"code":"NATIVE_KALAY_ADAPTER_NOT_CONFIGURED"}
+[stdout] EBO_REUSE_TEST_API_FALLBACK_COMPLETE
+
+[exit code] 0
+Progress: Completed
