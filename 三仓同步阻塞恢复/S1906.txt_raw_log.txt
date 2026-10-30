@@ -1,0 +1,53 @@
+[command]
+set -u
+d="/home/runner/workspace/.gen-sync-cache"
+printf 'GEN_STATUS_DETAIL_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+printf 'CACHE_SIZE='
+du -sh "$d" 2>&1 || true
+printf 'IS_SHALLOW='
+git -C "$d" rev-parse --is-shallow-repository 2>&1 || true
+printf 'STATUS_FIRST_15_LINES\n'
+git -C "$d" status --short --untracked-files=no 2>&1 | head -n 15
+printf 'STATUS_PORCELAIN_FIRST_10\n'
+git -C "$d" -c core.quotePath=true status --porcelain=v1 --untracked-files=no 2>&1 | head -n 10
+printf 'GIT_CACHE_LAST_WARNINGS\n'
+node backend/sync/tri_repo_supervisor.js status
+printf 'END_GEN_STATUS_DETAIL\n'
+
+[streams]
+[stdout] GEN_STATUS_DETAIL_AT=2026-10-30T13:21:19Z
+[stdout] CACHE_SIZE=[stdout] 2.9G	/home/runner/workspace/.gen-sync-cache
+[stdout] IS_SHALLOW=[stdout] false
+[stdout] STATUS_FIRST_15_LINES
+[stdout] D  .chatgpt-profile/Default/Cache/Cache_Data/448608d6943555a6_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44a7fb9252410b87_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44b6f29be8095760_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44bb11341eaee67c_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44c266a90a1fb48a_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44c4ca4e0ae9d5ad_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44d6598668912960_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44e16f4cb6230acb_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44f0859a61d5aff0_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/450149ee8aad6dec_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/45188176bc9d53dd_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/4540967723752a14_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/4541b2a1932b7c62_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/454b75017a2084ad_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/457016186ee8a4ee_0
+[stdout] STATUS_PORCELAIN_FIRST_10
+[stdout] D  .chatgpt-profile/Default/Cache/Cache_Data/448608d6943555a6_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44a7fb9252410b87_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44b6f29be8095760_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44bb11341eaee67c_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44c266a90a1fb48a_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44c4ca4e0ae9d5ad_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44d6598668912960_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44e16f4cb6230acb_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/44f0859a61d5aff0_0
+D  .chatgpt-profile/Default/Cache/Cache_Data/450149ee8aad6dec_0
+[stdout] GIT_CACHE_LAST_WARNINGS
+[stdout] {"status":"running","pid":45255,"workers":{"Gen":{"status":"error","executed":false,"error":"Command failed: git restore --source=HEAD --staged --worktree -- .chatgpt-profile/Default/Cache/Cache_Data/448608d6943555a6_0\nfatal: Unable to create '/home/runner/workspace/.gen-sync-cache/.git/index.lock': File exists.\n\nAnother git process seems to","at":"2026-10-30T13:21:20.025Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:20:15.098Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:18:59.716Z"}}}
+[stdout] END_GEN_STATUS_DETAIL
+
+[exit code] 0
+Progress: Completed
