@@ -1,0 +1,15 @@
+set -u
+printf 'CACHE_CAPACITY_START\n'
+df -h /home/runner/workspace
+du -sh /home/runner/workspace/.gen-sync-cache /home/runner/workspace/.migration-sync-cache 2>&1 || true
+for kind in .gen-sync-cache .migration-sync-cache; do
+  target="/home/runner/workspace/$kind"
+  printf 'CACHE_CHECK=%s\n' "$kind"
+  printf 'TOP_LEVEL_FILES='
+  find "$target" -mindepth 1 -maxdepth 1 -type f -print 2>/dev/null | wc -l
+  printf 'TOP_LEVEL_DIRS='
+  find "$target" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | wc -l
+  printf 'LAST_CHANGED_FILE_UTC='
+  find "$target" -type f -printf '%TY-%Tm-%TdT%TH:%TM:%TSZ\n' 2>/dev/null | sort | tail -n 1
+done
+printf 'CACHE_CAPACITY_END\n'
