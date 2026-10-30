@@ -1,0 +1,67 @@
+set -euo pipefail
+project="/home/runner/workspace/ai-agent"
+cache="/home/runner/workspace/.gen-sync-cache"
+runtime="/home/runner/workspace/.ai-agent-tri-repo-runtime"
+printf 'GEN_BULK_REPAIR_START=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+test -d "$project/backend/sync"
+test -d "$cache/.git"
+test ! -L "$cache"
+head_sha="$(git -C "$cache" rev-parse HEAD)"
+remote_sha="$(git -C "$cache" rev-parse origin/main)"
+if [ "$head_sha" != "$remote_sha" ]; then
+  printf 'ABORT_REMOTE_HEAD_MISMATCH\n'
+  exit 10
+fi
+printf 'STOP_TRI_REPO\n'
+node "$project/backend/sync/tri_repo_supervisor.js" stop
+restart_on_exit=1
+restart_guard() {
+  if [ "$restart_on_exit" -eq 1 ]; then
+    printf 'RESTART_TRI_REPO_ON_EXIT\n'
+    node "$project/backend/sync/tri_repo_supervisor.js" start || true
+  fi
+}
+trap restart_guard EXIT
+stopped=0
+for i in $(seq 1 30); do
+  out="$(node "$project/backend/sync/tri_repo_supervisor.js" status)"
+  if printf '%s' "$out" | grep -q '"status":"stopped"'; then stopped=1; break; fi
+  sleep 1
+done
+if [ "$stopped" -ne 1 ]; then
+  printf 'STOP_FAILED_NO_REPAIR\n'
+  exit 11
+fi
+sleep 3
+git_count="$(ps -eo comm= | awk '$1=="git" {n++} END {print n+0}')"
+if [ "$git_count" -ne 0 ]; then
+  printf 'OTHER_GIT_PROCESS_ACTIVE=%s ABORT_REPAIR\n' "$git_count"
+  exit 12
+fi
+backup="$runtime/preserved-gen-index-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+test ! -e "$backup"
+mkdir -m 700 "$backup"
+printf 'INDEX_BACKUP=%s\n' "$backup"
+if [ -f "$cache/.git/index" ]; then
+  cp -p -- "$cache/.git/index" "$backup/index.before-repair"
+fi
+if [ -f "$cache/.git/index.lock" ]; then
+  mv -- "$cache/.git/index.lock" "$backup/index.lock.stale"
+  printf 'STALE_LOCK_PRESERVED\n'
+fi
+printf 'REBUILD_INDEX_FROM_REMOTE_HEAD\n'
+git -C "$cache" read-tree --reset HEAD
+printf 'INDEX_COUNT='
+git -C "$cache" ls-files | wc -l
+printf 'RESTORE_WORKTREE_FROM_INDEX\n'
+git -C "$cache" checkout-index --all --force
+printf 'VERIFY_REPAIRED_CACHE\n'
+printf 'STAGED_DIFF_COUNT='
+git -C "$cache" diff --cached --name-only HEAD | wc -l
+printf 'UNSTAGED_DIFF_COUNT='
+git -C "$cache" diff --name-only HEAD | wc -l
+printf 'MISSING_TRACKED_COUNT='
+git -C "$cache" ls-files --deleted | wc -l
+printf 'UNTRACKED_COUNT='
+git -C "$cache" ls-files --others --exclude-standard | wc -l
+printf 'REPAIR_FINISHED_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
