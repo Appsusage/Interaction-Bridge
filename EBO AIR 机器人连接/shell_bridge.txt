@@ -1,0 +1,34 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_AUTHENTICATED_RUNTIME_GATES_START
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import os from 'node:os';
+const p='backend/devices/ebo/ebo_p2p_readiness.js';
+const report={
+  runtime:{platform:process.platform,arch:process.arch,release:os.release()},
+  staticEvidence:{source:"user-provided ROLA 2.2.1",actualDeviceAuthVerified:false,actualDeviceReplyVerified:false},
+  requiredSettingsPresence:Object.fromEntries(
+   ['EBO_LICENSE','EBO_UID','EBO_AUTHKEY','EBO_IDENTITY','EBO_TOKEN',
+    'EBO_P2P_NATIVE_LIB_DIR','EBO_P2P_OBSERVER_SOCKET','EBO_P2P_OBSERVER_KEY']
+    .map(name=>[name,Boolean(process.env[name]?.trim())])
+  ),
+  sdkFilesPresent:fs.existsSync('backend/devices/ebo/vendor/lib'),
+  p2pReadinessModulePresent:fs.existsSync(p),
+  nativeSidecarBinaryPresent:fs.existsSync('backend/devices/ebo/vendor/ebo_p2p_native_client'),
+  observerModulePresent:fs.existsSync('backend/devices/ebo/ebo_p2p_observer.js')
+};
+if(fs.existsSync(p)){
+  try {
+    const {getEboP2PReadiness}=await import('./backend/devices/ebo/ebo_p2p_readiness.js');
+    const r=getEboP2PReadiness();
+    report.p2p={
+      ready:r.ready,authenticated:r.authenticated,
+      prerequisites:r.prerequisites,
+      blockers:r.blockers
+    };
+  }catch(e){report.p2pDiagnosticError=e.name;}
+}
+console.log('EBO_GATE_REPORT',JSON.stringify(report));
+NODE
+echo EBO_AUTHENTICATED_RUNTIME_GATES_END
