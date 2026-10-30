@@ -1,0 +1,42 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_AUTHENTICATED_RUNTIME_GATES_START
+node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import os from 'node:os';
+const p='backend/devices/ebo/ebo_p2p_readiness.js';
+const report={
+  runtime:{platform:process.platform,arch:process.arch,release:os.release()},
+  staticEvidence:{source:"user-provided ROLA 2.2.1",actualDeviceAuthVerified:false,actualDeviceReplyVerified:false},
+  requiredSettingsPresence:Object.fromEntries(
+   ['EBO_LICENSE','EBO_UID','EBO_AUTHKEY','EBO_IDENTITY','EBO_TOKEN',
+    'EBO_P2P_NATIVE_LIB_DIR','EBO_P2P_OBSERVER_SOCKET','EBO_P2P_OBSERVER_KEY']
+    .map(name=>[name,Boolean(process.env[name]?.trim())])
+  ),
+  sdkFilesPresent:fs.existsSync('backend/devices/ebo/vendor/lib'),
+  p2pReadinessModulePresent:fs.existsSync(p),
+  nativeSidecarBinaryPresent:fs.existsSync('backend/devices/ebo/vendor/ebo_p2p_native_client'),
+  observerModulePresent:fs.existsSync('backend/devices/ebo/ebo_p2p_observer.js')
+};
+if(fs.existsSync(p)){
+  try {
+    const {getEboP2PReadiness}=await import('./backend/devices/ebo/ebo_p2p_readiness.js');
+    const r=getEboP2PReadiness();
+    report.p2p={
+      ready:r.ready,authenticated:r.authenticated,
+      prerequisites:r.prerequisites,
+      blockers:r.blockers
+    };
+  }catch(e){report.p2pDiagnosticError=e.name;}
+}
+console.log('EBO_GATE_REPORT',JSON.stringify(report));
+NODE
+echo EBO_AUTHENTICATED_RUNTIME_GATES_END
+[streams]
+[stdout] EBO_AUTHENTICATED_RUNTIME_GATES_START
+[stdout] EBO_GATE_REPORT {"runtime":{"platform":"linux","arch":"x64","release":"6.18.59"},"staticEvidence":{"source":"user-provided ROLA 2.2.1","actualDeviceAuthVerified":false,"actualDeviceReplyVerified":false},"requiredSettingsPresence":{"EBO_LICENSE":false,"EBO_UID":false,"EBO_AUTHKEY":false,"EBO_IDENTITY":false,"EBO_TOKEN":false,"EBO_P2P_NATIVE_LIB_DIR":false,"EBO_P2P_OBSERVER_SOCKET":false,"EBO_P2P_OBSERVER_KEY":false},"sdkFilesPresent":false,"p2pReadinessModulePresent":true,"nativeSidecarBinaryPresent":false,"observerModulePresent":false,"p2p":{"ready":false,"authenticated":false,"prerequisites":{"nativeLibraryFilesPresent":false,"nativeElfArchitectureCompatible":false,"nativeLoaderAbiVerified":false,"necessaryEnvironmentConfigured":false,"nativeClientImplemented":false,"airModelProtocolVerified":false},"blockers":["NATIVE_SDK_LIBRARIES_MISSING","REQUIRED_CREDENTIALS_NOT_CONFIGURED","NATIVE_SDK_LOADER_ABI_UNVERIFIED","KALAY_NATIVE_CLIENT_NOT_IMPLEMENTED","ORIGINAL_AIR_PROTOCOL_UNVERIFIED"]}}
+[stdout] EBO_AUTHENTICATED_RUNTIME_GATES_END
+
+[exit code] 0
+Progress: Completed
