@@ -1,0 +1,47 @@
+[command]
+set -u
+printf 'GIT_CACHE_INTEGRITY_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+for name in .gen-sync-cache .migration-sync-cache; do
+  d="/home/runner/workspace/$name"
+  printf 'CACHE=%s\n' "$name"
+  if [ ! -d "$d/.git" ]; then
+    printf 'NO_VALID_GIT_DIR\n'
+    continue
+  fi
+  printf 'HEAD='
+  git -C "$d" rev-parse --short HEAD 2>&1 || true
+  printf 'REMOTE_MAIN='
+  git -C "$d" rev-parse --short refs/remotes/origin/main 2>&1 || true
+  printf 'TRACKED_COUNT='
+  git -C "$d" ls-files | wc -l
+  printf 'MISSING_TRACKED_COUNT='
+  git -C "$d" ls-files --deleted | wc -l
+  printf 'UNSTAGED_MODIFIED_COUNT='
+  git -C "$d" diff --name-only | wc -l
+  printf 'GIT_STATUS_SUMMARY='
+  git -C "$d" status --short --untracked-files=no 2>&1 | awk 'BEGIN{n=0} {n++} END{print n}'
+done
+printf 'GIT_CACHE_INTEGRITY_DONE\n'
+
+[streams]
+[stdout] GIT_CACHE_INTEGRITY_AT=2026-10-30T13:19:50Z
+[stdout] {"status":"running","pid":45255,"workers":{"Gen":{"status":"error","executed":false,"error":"Command failed: git -c credential.helper=!gh auth git-credential clone --quiet --branch main https://github.com/Appsusage/Gen.git /home/runner/workspace/.gen-sync-cache\n","at":"2026-10-30T13:16:54.461Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:16:51.513Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:18:59.716Z"}}}
+[stdout] CACHE=.gen-sync-cache
+[stdout] HEAD=[stdout] 62b341a3
+[stdout] REMOTE_MAIN=[stdout] 62b341a3
+[stdout] TRACKED_COUNT=[stdout] 785
+[stdout] MISSING_TRACKED_COUNT=[stdout] 0
+[stdout] UNSTAGED_MODIFIED_COUNT=[stdout] 0
+[stdout] GIT_STATUS_SUMMARY=[stdout] 16007
+[stdout] CACHE=.migration-sync-cache
+[stdout] HEAD=[stdout] e51d9f49
+[stdout] REMOTE_MAIN=[stdout] e51d9f49
+[stdout] TRACKED_COUNT=[stdout] 15398
+[stdout] MISSING_TRACKED_COUNT=[stdout] 0
+[stdout] UNSTAGED_MODIFIED_COUNT=[stdout] 0
+[stdout] GIT_STATUS_SUMMARY=[stdout] 0
+[stdout] GIT_CACHE_INTEGRITY_DONE
+
+[exit code] 0
+Progress: Completed
