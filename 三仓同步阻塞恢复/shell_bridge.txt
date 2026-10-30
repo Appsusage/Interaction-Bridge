@@ -1,0 +1,14 @@
+set -u
+d="/home/runner/workspace/.gen-sync-cache"
+printf 'GEN_STATUS_DETAIL_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+printf 'CACHE_SIZE='
+du -sh "$d" 2>&1 || true
+printf 'IS_SHALLOW='
+git -C "$d" rev-parse --is-shallow-repository 2>&1 || true
+printf 'STATUS_FIRST_15_LINES\n'
+git -C "$d" status --short --untracked-files=no 2>&1 | head -n 15
+printf 'STATUS_PORCELAIN_FIRST_10\n'
+git -C "$d" -c core.quotePath=true status --porcelain=v1 --untracked-files=no 2>&1 | head -n 10
+printf 'GIT_CACHE_LAST_WARNINGS\n'
+node backend/sync/tri_repo_supervisor.js status
+printf 'END_GEN_STATUS_DETAIL\n'
