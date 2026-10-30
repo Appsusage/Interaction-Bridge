@@ -1,0 +1,48 @@
+[command]
+set -eu
+echo EBO_READONLY_OBSERVER_VERIFY_BEGIN
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+for rel in backend/devices/ebo/ebo_p2p_observer.js test/ebo_p2p_observer.test.mjs; do
+ mkdir -p "$tmp/$(dirname "$rel")"
+ gh api "repos/Appsusage/Gen/contents/$rel" --jq '.content' | base64 -d > "$tmp/$rel"
+ test -s "$tmp/$rel"
+done
+node --check "$tmp/backend/devices/ebo/ebo_p2p_observer.js"
+(cd "$tmp" && node --test test/ebo_p2p_observer.test.mjs)
+node --input-type=module - "$tmp/backend/devices/ebo/ebo_p2p_observer.js" <<'NODE'
+import {pathToFileURL} from 'node:url';
+const mod=await import(pathToFileURL(process.argv[2]));
+const cfg=mod.getEboP2PObserverConfig();
+const report=await mod.probeEboP2PObserver();
+console.log('EBO_NATIVE_OBSERVER_READ_ATTEMPT',JSON.stringify({
+ observerConfigured:cfg.observerConfigured,
+ observerVerified:report.observerVerified,
+ observerState:report.nativeSidecarReportedState||null,
+ readOnlyReplies:report.nativeSidecarReportedReadOnlyReplies||0,
+ robotAuthenticated:report.robotAuthenticated,
+ code:report.code,
+ safeToSend:report.safeToSend
+}));
+NODE
+echo EBO_READONLY_OBSERVER_VERIFY_COMPLETE
+[streams]
+[stdout] EBO_READONLY_OBSERVER_VERIFY_BEGIN
+[stdout] ✔ No configured observer never claims a physical robot session (1.172149ms)
+[stdout] ✔ Valid local signed report is not physical authentication (12.349971ms)
+[stdout] ✔ Response signature, nonce, and status values are validated (5.645827ms)
+[stdout] ✔ Missing observer, malformed output, and oversized output fail closed (4.442699ms)
+[stdout] ✔ Timeout does not authenticate or enable commands (102.558672ms)
+[stdout] ℹ tests 5
+[stdout] ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+[stdout] ℹ duration_ms 268.090088
+[stdout] EBO_NATIVE_OBSERVER_READ_ATTEMPT {"observerConfigured":false,"observerVerified":false,"observerState":null,"readOnlyReplies":0,"robotAuthenticated":false,"code":"OBSERVER_NOT_CONFIGURED","safeToSend":false}
+[stdout] EBO_READONLY_OBSERVER_VERIFY_COMPLETE
+
+[exit code] 0
+Progress: Completed
