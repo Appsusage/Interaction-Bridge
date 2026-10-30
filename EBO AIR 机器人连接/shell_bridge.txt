@@ -1,0 +1,9 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_READINESS_CHECK_START
+node --input-type=module <<'NODE'
+import {getEboP2PReadiness} from './backend/devices/ebo/ebo_p2p_readiness.js';
+const x=getEboP2PReadiness();
+console.log(JSON.stringify({architecture:x.runtime.arch,ready:x.ready,connected:x.connected,authenticated:x.authenticated,prerequisites:x.prerequisites,blockers:x.blockers}));
+NODE
+echo EBO_READINESS_CHECK_END
