@@ -1,0 +1,55 @@
+[command]
+set -u
+printf 'TRI_REPO_DIAG_START_UTC=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+printf 'PWD=%s\n' "$PWD"
+printf 'SUPERVISOR_STATUS_BEGIN\n'
+node backend/sync/tri_repo_supervisor.js status 2>&1 || true
+printf 'SUPERVISOR_STATUS_END\n'
+for name in .gen-sync-cache .migration-sync-cache; do
+  d="/home/runner/workspace/$name"
+  printf 'CACHE=%s\n' "$name"
+  if [ -L "$d" ]; then
+    printf 'CACHE_KIND=symlink\n'
+  elif [ -d "$d" ]; then
+    printf 'CACHE_KIND=directory\n'
+    stat -c 'CACHE_MTIME=%y CACHE_MODE=%a CACHE_OWNER=%U' "$d" 2>&1 || true
+    if [ -d "$d/.git" ]; then
+      printf 'GIT_KIND=directory\n'
+      git -C "$d" status --porcelain=v1 --untracked-files=no 2>&1 | head -n 12
+      git -C "$d" rev-parse --verify HEAD 2>&1 || true
+    elif [ -f "$d/.git" ]; then
+      printf 'GIT_KIND=file\n'
+    else
+      printf 'GIT_KIND=missing\n'
+    fi
+    printf 'IMMEDIATE_ENTRY_COUNT='
+    find "$d" -mindepth 1 -maxdepth 1 -print 2>/dev/null | wc -l
+  elif [ -e "$d" ]; then
+    printf 'CACHE_KIND=non_directory\n'
+    stat -c 'CACHE_MTIME=%y CACHE_MODE=%a CACHE_OWNER=%U' "$d" 2>&1 || true
+  else
+    printf 'CACHE_KIND=absent\n'
+  fi
+done
+printf 'TRI_REPO_DIAG_END\n'
+
+[streams]
+[stdout] TRI_REPO_DIAG_START_UTC=2026-10-30T13:09:37Z
+PWD=/home/runner/workspace/ai-agent
+[stdout] SUPERVISOR_STATUS_BEGIN
+[stdout] {"status":"running","pid":171,"workers":{"Gen":{"status":"error","executed":false,"error":"ENOENT: no such file or directory, lstat '/home/runner/workspace/.gen-sync-cache/.git'","at":"2026-10-30T13:08:49.841Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:09:04.791Z"},"Migration":{"status":"error","executed":false,"error":"Migration cache path is occupied","at":"2026-10-30T12:42:34.714Z"}}}
+[stdout] SUPERVISOR_STATUS_END
+[stdout] CACHE=.gen-sync-cache
+[stdout] CACHE_KIND=directory
+[stdout] CACHE_MTIME=2026-10-28 17:53:36.552942223 +0000 CACHE_MODE=755 CACHE_OWNER=runner
+[stdout] GIT_KIND=missing
+IMMEDIATE_ENTRY_COUNT=[stdout] 52
+[stdout] CACHE=.migration-sync-cache
+[stdout] CACHE_KIND=directory
+[stdout] CACHE_MTIME=2026-10-28 17:53:36.588694151 +0000 CACHE_MODE=755 CACHE_OWNER=runner
+[stdout] GIT_KIND=missing
+IMMEDIATE_ENTRY_COUNT=[stdout] 7
+[stdout] TRI_REPO_DIAG_END
+
+[exit code] 0
+Progress: Completed
