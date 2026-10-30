@@ -1,0 +1,31 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_ROBOT_AUTH_READONLY_CHECK_START
+node --input-type=module <<'NODE'
+import { getEboStatus, connectRobot, moveRobot } from './backend/devices/ebo/ebo_controller.js';
+const before=getEboStatus();
+console.log('EBO_DIAGNOSTIC_BEFORE',JSON.stringify({
+ connected:before.connected,verified:before.verified,bridge:before.bridge?.bridgeOnline??null,
+ bridgeLanReachable:before.bridge?.lanReachable??null,bridgeRobotAuthenticated:before.bridge?.robotAuthenticated??null,
+ p2pReady:before.p2p?.ready??null,p2pAuthenticated:before.p2p?.authenticated??null,
+ p2pBlockers:before.p2p?.blockers??null,
+ phoneTunnelOnline:before.phoneTunnel?.bridgeOnline??null,
+ status:before.status
+}));
+const connection=await connectRobot();
+console.log('EBO_CONNECT_ATTEMPT',JSON.stringify({
+ success:connection.success,code:connection.code,connected:connection.connected,
+ robotAuthenticated:connection.robotAuthenticated??null,bridgeOnline:connection.bridgeOnline??null,
+ lanReachable:connection.lanReachable??null,status:connection.status??null
+}));
+// Only perform negative safety verification; no motor packet must be sent.
+const attempt=await moveRobot('forward');
+console.log('EBO_FORWARD_SAFETY_GUARD',JSON.stringify({
+ success:attempt.success,code:attempt.code,connected:attempt.connected,
+ authenticated:attempt.robotAuthenticated??null
+}));
+if(connection.connected===true||connection.success===true||attempt.success===true)
+ throw Error('Unexpected positive connection/movement signal: review urgently');
+console.log('EBO_REAL_MOTION_NOT_ATTEMPTED_UNAUTHENTICATED');
+NODE
+echo EBO_ROBOT_AUTH_READONLY_CHECK_END
