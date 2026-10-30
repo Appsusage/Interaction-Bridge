@@ -1,0 +1,35 @@
+[command]
+set -u
+printf 'CACHE_CAPACITY_START\n'
+df -h /home/runner/workspace
+du -sh /home/runner/workspace/.gen-sync-cache /home/runner/workspace/.migration-sync-cache 2>&1 || true
+for kind in .gen-sync-cache .migration-sync-cache; do
+  target="/home/runner/workspace/$kind"
+  printf 'CACHE_CHECK=%s\n' "$kind"
+  printf 'TOP_LEVEL_FILES='
+  find "$target" -mindepth 1 -maxdepth 1 -type f -print 2>/dev/null | wc -l
+  printf 'TOP_LEVEL_DIRS='
+  find "$target" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | wc -l
+  printf 'LAST_CHANGED_FILE_UTC='
+  find "$target" -type f -printf '%TY-%Tm-%TdT%TH:%TM:%TSZ\n' 2>/dev/null | sort | tail -n 1
+done
+printf 'CACHE_CAPACITY_END\n'
+
+[streams]
+[stdout] CACHE_CAPACITY_START
+[stdout] Filesystem      Size  Used Avail Use% Mounted on
+/dev/vdb        256G   18G  237G   7% /home/runner/workspace
+[stdout] 2.1G	/home/runner/workspace/.gen-sync-cache
+[stdout] 2.3G	/home/runner/workspace/.migration-sync-cache
+[stdout] CACHE_CHECK=.gen-sync-cache
+TOP_LEVEL_FILES=[stdout] 18
+[stdout] TOP_LEVEL_DIRS=[stdout] 34
+[stdout] LAST_CHANGED_FILE_UTC=[stdout] 2026-10-28T16:59:51.7527331540Z
+[stdout] CACHE_CHECK=.migration-sync-cache
+TOP_LEVEL_FILES=[stdout] 4
+[stdout] TOP_LEVEL_DIRS=[stdout] 3
+[stdout] LAST_CHANGED_FILE_UTC=[stdout] 2026-10-28T15:45:32.8443150570Z
+[stdout] CACHE_CAPACITY_END
+
+[exit code] 0
+Progress: Completed
