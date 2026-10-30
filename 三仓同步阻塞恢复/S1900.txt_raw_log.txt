@@ -1,0 +1,58 @@
+[command]
+set -euo pipefail
+printf 'TRI_REPO_RECOVERY_START=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+project="/home/runner/workspace/ai-agent"
+runtime="/home/runner/workspace/.ai-agent-tri-repo-runtime"
+gen="/home/runner/workspace/.gen-sync-cache"
+migration="/home/runner/workspace/.migration-sync-cache"
+test -d "$project/backend/sync"
+for path in "$gen" "$migration"; do
+  if [ ! -d "$path" ] || [ -L "$path" ] || [ -e "$path/.git" ] || [ -L "$path/.git" ]; then
+    printf 'UNEXPECTED_CACHE_STATE=%s\n' "$path"
+    exit 3
+  fi
+done
+printf 'STOPPING_TRI_REPO_SUPERVISOR\n'
+node "$project/backend/sync/tri_repo_supervisor.js" stop
+stopped=0
+for i in $(seq 1 30); do
+  status="$(node "$project/backend/sync/tri_repo_supervisor.js" status)"
+  if printf '%s' "$status" | grep -q '"status":"stopped"'; then stopped=1; break; fi
+  sleep 1
+done
+if [ "$stopped" -ne 1 ]; then
+  printf 'SUPERVISOR_DID_NOT_STOP\n'
+  exit 4
+fi
+quarantine="$runtime/preserved-invalid-caches-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+if [ -e "$quarantine" ]; then
+  printf 'QUARANTINE_COLLISION\n'
+  exit 5
+fi
+mkdir -m 700 "$quarantine"
+printf 'QUARANTINE_DIR=%s\n' "$quarantine"
+mv -- "$gen" "$quarantine/gen-sync-cache"
+printf 'GEN_CACHE_PRESERVED\n'
+mv -- "$migration" "$quarantine/migration-sync-cache"
+printf 'MIGRATION_CACHE_PRESERVED\n'
+printf 'STARTING_TRI_REPO_SUPERVISOR\n'
+node "$project/backend/sync/tri_repo_supervisor.js" start
+printf 'TRI_REPO_SUPERVISOR_STATUS\n'
+node "$project/backend/sync/tri_repo_supervisor.js" status
+printf 'TRI_REPO_RECOVERY_FINISHED_NO_OLD_CACHE_DELETED\n'
+
+[streams]
+[stdout] TRI_REPO_RECOVERY_START=2026-10-30T13:12:53Z
+[stdout] STOPPING_TRI_REPO_SUPERVISOR
+[stdout] {"status":"stopping","pid":171}
+[stdout] QUARANTINE_DIR=/home/runner/workspace/.ai-agent-tri-repo-runtime/preserved-invalid-caches-20261030T131254Z-45198
+[stdout] GEN_CACHE_PRESERVED
+[stdout] MIGRATION_CACHE_PRESERVED
+STARTING_TRI_REPO_SUPERVISOR
+[stdout] {"status":"started","pid":45255}
+[stdout] TRI_REPO_SUPERVISOR_STATUS
+[stdout] {"status":"running","pid":45255,"workers":{"Gen":{"status":"error","executed":false,"error":"ENOENT: no such file or directory, lstat '/home/runner/workspace/.gen-sync-cache/.git'","at":"2026-10-30T13:12:49.855Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:12:29.268Z"},"Migration":{"status":"error","executed":false,"error":"Migration cache path is occupied","at":"2026-10-30T12:42:34.714Z"}}}
+[stdout] TRI_REPO_RECOVERY_FINISHED_NO_OLD_CACHE_DELETED
+
+[exit code] 0
+Progress: Completed
