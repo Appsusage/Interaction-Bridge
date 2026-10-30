@@ -1,0 +1,13 @@
+set -u
+printf 'TRI_REPO_FINAL_VERIFY_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+printf 'SUPERVISOR_PROCESS\n'
+ps -o pid,ppid,etime,stat,comm -p 45255 2>&1 || true
+printf 'SUPERVISOR_CHILDREN\n'
+ps -eo pid,ppid,etime,stat,comm | awk '$2==45255 { print }' | head -n 25
+printf 'CACHE_HEADS\n'
+for kind in .gen-sync-cache .migration-sync-cache; do
+  dir="/home/runner/workspace/$kind"
+  printf '%s\n' "$kind"
+  git -C "$dir" rev-parse --short HEAD 2>&1 || true
+done
