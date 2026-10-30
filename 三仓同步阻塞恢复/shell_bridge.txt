@@ -1,0 +1,33 @@
+set -u
+printf 'TRI_REPO_DIAG_START_UTC=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+printf 'PWD=%s\n' "$PWD"
+printf 'SUPERVISOR_STATUS_BEGIN\n'
+node backend/sync/tri_repo_supervisor.js status 2>&1 || true
+printf 'SUPERVISOR_STATUS_END\n'
+for name in .gen-sync-cache .migration-sync-cache; do
+  d="/home/runner/workspace/$name"
+  printf 'CACHE=%s\n' "$name"
+  if [ -L "$d" ]; then
+    printf 'CACHE_KIND=symlink\n'
+  elif [ -d "$d" ]; then
+    printf 'CACHE_KIND=directory\n'
+    stat -c 'CACHE_MTIME=%y CACHE_MODE=%a CACHE_OWNER=%U' "$d" 2>&1 || true
+    if [ -d "$d/.git" ]; then
+      printf 'GIT_KIND=directory\n'
+      git -C "$d" status --porcelain=v1 --untracked-files=no 2>&1 | head -n 12
+      git -C "$d" rev-parse --verify HEAD 2>&1 || true
+    elif [ -f "$d/.git" ]; then
+      printf 'GIT_KIND=file\n'
+    else
+      printf 'GIT_KIND=missing\n'
+    fi
+    printf 'IMMEDIATE_ENTRY_COUNT='
+    find "$d" -mindepth 1 -maxdepth 1 -print 2>/dev/null | wc -l
+  elif [ -e "$d" ]; then
+    printf 'CACHE_KIND=non_directory\n'
+    stat -c 'CACHE_MTIME=%y CACHE_MODE=%a CACHE_OWNER=%U' "$d" 2>&1 || true
+  else
+    printf 'CACHE_KIND=absent\n'
+  fi
+done
+printf 'TRI_REPO_DIAG_END\n'
