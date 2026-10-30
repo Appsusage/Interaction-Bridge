@@ -1,0 +1,30 @@
+[command]
+set -u
+printf 'TRI_REPO_FINAL_VERIFY_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+printf 'SUPERVISOR_PROCESS\n'
+ps -o pid,ppid,etime,stat,comm -p 45255 2>&1 || true
+printf 'SUPERVISOR_CHILDREN\n'
+ps -eo pid,ppid,etime,stat,comm | awk '$2==45255 { print }' | head -n 25
+printf 'CACHE_HEADS\n'
+for kind in .gen-sync-cache .migration-sync-cache; do
+  dir="/home/runner/workspace/$kind"
+  printf '%s\n' "$kind"
+  git -C "$dir" rev-parse --short HEAD 2>&1 || true
+done
+
+[streams]
+[stdout] TRI_REPO_FINAL_VERIFY_AT=2026-10-30T13:18:18Z
+[stdout] {"status":"running","pid":45255,"workers":{"Gen":{"status":"error","executed":false,"error":"Command failed: git -c credential.helper=!gh auth git-credential clone --quiet --branch main https://github.com/Appsusage/Gen.git /home/runner/workspace/.gen-sync-cache\n","at":"2026-10-30T13:16:54.461Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-10-30T13:16:51.513Z"},"Migration":{"status":"error","executed":false,"error":"Migration cache path is occupied","at":"2026-10-30T12:42:34.714Z"}}}
+[stdout] SUPERVISOR_PROCESS
+[stdout]     PID    PPID     ELAPSED STAT COMMAND
+  45255       1       05:24 Ssl  MainThread
+[stdout] SUPERVISOR_CHILDREN
+[stdout] CACHE_HEADS
+[stdout] .gen-sync-cache
+[stdout] 62b341a3
+[stdout] .migration-sync-cache
+[stdout] 254a198
+
+[exit code] 0
+Progress: Completed
