@@ -1,0 +1,17 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_READINESS_CHECK_START
+node --input-type=module <<'NODE'
+import {getEboP2PReadiness} from './backend/devices/ebo/ebo_p2p_readiness.js';
+const x=getEboP2PReadiness();
+console.log(JSON.stringify({architecture:x.runtime.arch,ready:x.ready,connected:x.connected,authenticated:x.authenticated,prerequisites:x.prerequisites,blockers:x.blockers}));
+NODE
+echo EBO_READINESS_CHECK_END
+[streams]
+[stdout] EBO_READINESS_CHECK_START
+[stdout] {"architecture":"x64","ready":false,"connected":false,"authenticated":false,"prerequisites":{"nativeLibraryFilesPresent":false,"nativeElfArchitectureCompatible":false,"nativeLoaderAbiVerified":false,"necessaryEnvironmentConfigured":false,"nativeClientImplemented":false,"airModelProtocolVerified":false},"blockers":["NATIVE_SDK_LIBRARIES_MISSING","REQUIRED_CREDENTIALS_NOT_CONFIGURED","NATIVE_SDK_LOADER_ABI_UNVERIFIED","KALAY_NATIVE_CLIENT_NOT_IMPLEMENTED","ORIGINAL_AIR_PROTOCOL_UNVERIFIED"]}
+[stdout] EBO_READINESS_CHECK_END
+
+[exit code] 0
+Progress: Completed
