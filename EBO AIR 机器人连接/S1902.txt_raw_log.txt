@@ -1,0 +1,39 @@
+[command]
+set -eu
+cd /home/runner/workspace/ai-agent
+echo EBO_HUAWEI_NETWORK_PATH_DIAG_BEGIN
+node --input-type=module <<'NODE'
+import {lookup} from 'node:dns/promises';
+import tls from 'node:tls';
+const hosts=['companion-aud-casino-distribution.trycloudflare.com','cloudflare.com'];
+for(const host of hosts){
+ try{
+  const addrs=await Promise.race([lookup(host,{all:true}),new Promise((_,j)=>setTimeout(()=>j(new Error('dns_timeout')),7000))]);
+  console.log('DNS_RESULT',JSON.stringify({host,ok:true,count:addrs.length,families:[...new Set(addrs.map(x=>x.family))]}));
+ }catch(e){console.log('DNS_RESULT',JSON.stringify({host,ok:false,code:e.code||e.message}));continue;}
+ await new Promise(resolve=>{
+  const s=tls.connect({host,port:443,servername:host,timeout:9000,rejectUnauthorized:true});
+  let done=false;
+  const finish=(code)=>{if(done)return;done=true;console.log('TLS_RESULT',JSON.stringify({host,code}));s.destroy();resolve();};
+  s.once('secureConnect',()=>finish('TLS_OK'));
+  s.once('timeout',()=>finish('TLS_TIMEOUT'));
+  s.once('error',e=>finish(e.code||e.message));
+ });
+}
+try{
+ const r=await fetch('https://companion-aud-casino-distribution.trycloudflare.com/status',{redirect:'manual',signal:AbortSignal.timeout(10000)});
+ console.log('FETCH_RESULT',JSON.stringify({status:r.status,contentType:r.headers.get('content-type')}));
+}catch(e){console.log('FETCH_ERROR',JSON.stringify({name:e.name,message:e.message,causeCode:e.cause?.code??null,causeMessage:String(e.cause?.message||'').slice(0,180)}));}
+NODE
+echo EBO_HUAWEI_NETWORK_PATH_DIAG_END
+
+[streams]
+[stdout] EBO_HUAWEI_NETWORK_PATH_DIAG_BEGIN
+[stdout] DNS_RESULT {"host":"companion-aud-casino-distribution.trycloudflare.com","ok":false,"code":"ENOTFOUND"}
+[stdout] DNS_RESULT {"host":"cloudflare.com","ok":true,"count":4,"families":[4,6]}
+[stdout] TLS_RESULT {"host":"cloudflare.com","code":"TLS_OK"}
+[stdout] FETCH_ERROR {"name":"TypeError","message":"fetch failed","causeCode":"ENOTFOUND","causeMessage":"getaddrinfo ENOTFOUND companion-aud-casino-distribution.trycloudflare.com"}
+[stdout] EBO_HUAWEI_NETWORK_PATH_DIAG_END
+
+[exit code] 0
+Progress: Completed
