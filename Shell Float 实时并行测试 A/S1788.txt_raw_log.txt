@@ -1,2 +1,35 @@
-[checkpoint] Prior run was interrupted. Review before retry.
-Pending, to be continued.
+[command]
+set -eu
+printf 'LONG_LIVE_A2_START_MS=%s\n' "$(date +%s%3N)"
+printf 'LONG_LIVE_A2_START_UTC=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')"
+for i in $(seq 1 15); do
+ printf 'LONG_LIVE_A2_STEP=%s/15 UTC=%s\n' "$i" "$(date -u '+%H:%M:%S.%3N')"
+ sleep 5
+done
+printf 'LONG_LIVE_A2_END_MS=%s\n' "$(date +%s%3N)"
+printf 'LONG_LIVE_A2_FINISHED\n'
+
+[streams]
+[stdout] LONG_LIVE_A2_START_MS=1793085252230
+[stdout] LONG_LIVE_A2_START_UTC=2026-10-27T07:14:12.233Z
+[stdout] LONG_LIVE_A2_STEP=1/15 UTC=07:14:12.249
+[stdout] LONG_LIVE_A2_STEP=2/15 UTC=07:14:17.254
+[stdout] LONG_LIVE_A2_STEP=3/15 UTC=07:14:22.261
+[stdout] LONG_LIVE_A2_STEP=4/15 UTC=07:14:27.267
+[stdout] LONG_LIVE_A2_STEP=5/15 UTC=07:14:32.273
+[stdout] LONG_LIVE_A2_STEP=6/15 UTC=07:14:37.280
+[stdout] LONG_LIVE_A2_STEP=7/15 UTC=07:14:42.287
+[stdout] LONG_LIVE_A2_STEP=8/15 UTC=07:14:47.293
+[stdout] LONG_LIVE_A2_STEP=9/15 UTC=07:14:52.300
+[stdout] LONG_LIVE_A2_STEP=10/15 UTC=07:14:57.305
+[stdout] LONG_LIVE_A2_STEP=11/15 UTC=07:15:02.312
+[stdout] LONG_LIVE_A2_STEP=12/15 UTC=07:15:07.318
+[stdout] LONG_LIVE_A2_STEP=13/15 UTC=07:15:12.323
+[stdout] LONG_LIVE_A2_STEP=14/15 UTC=07:15:17.329
+[stdout] LONG_LIVE_A2_STEP=15/15 UTC=07:15:22.335
+[stdout] LONG_LIVE_A2_END_MS=1793085327345
+LONG_LIVE_A2_FINISHED
+
+[exit code] 0
+Progress: Completed
+
