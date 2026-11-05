@@ -1,0 +1,30 @@
+[command]
+set -u
+cd /home/runner/workspace/ai-agent || exit 11
+printf 'GEN_POST_REPAIR_AUDIT_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+printf 'ACTIVE_GIT_PROCESSES\n'
+ps -eo pid,ppid,etime,stat,comm | awk 'NR==1 || $5=="git" || $5=="git-lfs"'
+d="/home/runner/workspace/.gen-sync-cache"
+if [ -f "$d/.git/index.lock" ]; then stat -c 'INDEX_LOCK_MTIME=%y SIZE=%s' "$d/.git/index.lock"; else printf 'INDEX_LOCK=absent\n'; fi
+printf 'INDEX_COUNT='
+git -C "$d" ls-files | wc -l
+printf 'HEAD_COUNT='
+git -C "$d" ls-tree -r --name-only HEAD | wc -l
+printf 'GEN_POST_REPAIR_AUDIT_DONE\n'
+[streams]
+[stdout] GEN_POST_REPAIR_AUDIT_AT=2026-11-05T13:09:22Z
+[stdout] {"status":"running","pid":71304,"workers":{"Gen":{"status":"error","executed":false,"error":"Command failed: git restore --source=HEAD --staged --worktree -- .chatgpt-profile/Default/Cache/Cache_Data/b57f9976e13923c7_0\nfatal: Unable to create '/home/runner/workspace/.gen-sync-cache/.git/index.lock': File exists.\n\nAnother git process seems to","at":"2026-11-05T13:06:46.870Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-11-05T13:07:50.628Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-11-05T12:21:35.901Z"}}}
+[stdout] ACTIVE_GIT_PROCESSES
+[stdout]     PID    PPID     ELAPSED STAT COMMAND
+ 113649   71304       00:00 S    git
+ 113661  113660       00:00 S    git
+ 113662  113661       00:00 Sl   git-lfs
+ 113684  113662       00:00 R    git
+[stdout] INDEX_LOCK=absent
+INDEX_COUNT=[stdout] 3398
+[stdout] HEAD_COUNT=[stdout] 16792
+[stdout] GEN_POST_REPAIR_AUDIT_DONE
+
+[exit code] 0
+Progress: Completed
