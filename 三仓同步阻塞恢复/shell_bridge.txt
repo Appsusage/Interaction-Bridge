@@ -1,0 +1,13 @@
+set -u
+cd /home/runner/workspace/ai-agent || exit 11
+printf 'GEN_POST_REPAIR_AUDIT_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+printf 'ACTIVE_GIT_PROCESSES\n'
+ps -eo pid,ppid,etime,stat,comm | awk 'NR==1 || $5=="git" || $5=="git-lfs"'
+d="/home/runner/workspace/.gen-sync-cache"
+if [ -f "$d/.git/index.lock" ]; then stat -c 'INDEX_LOCK_MTIME=%y SIZE=%s' "$d/.git/index.lock"; else printf 'INDEX_LOCK=absent\n'; fi
+printf 'INDEX_COUNT='
+git -C "$d" ls-files | wc -l
+printf 'HEAD_COUNT='
+git -C "$d" ls-tree -r --name-only HEAD | wc -l
+printf 'GEN_POST_REPAIR_AUDIT_DONE\n'
