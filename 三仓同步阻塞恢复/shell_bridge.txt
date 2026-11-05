@@ -1,0 +1,40 @@
+set -eu
+cd /home/runner/workspace/ai-agent
+s="backend/sync/tri_repo_supervisor.js"
+d="/home/runner/workspace/.gen-sync-cache"
+printf 'GEN_STALE_LOCK_REPAIR_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+restarted=0
+ensure_restart() {
+  if [ "$restarted" -eq 0 ]; then
+    printf 'RESTORE_SUPERVISOR\n'
+    node "$s" start || true
+    restarted=1
+  fi
+}
+trap ensure_restart EXIT
+printf 'STOP_SUPERVISOR\n'
+node "$s" stop
+stopped=0
+for i in $(seq 1 90); do
+  if node "$s" status | grep -q '"status":"stopped"'; then stopped=1; break; fi
+  sleep 1
+done
+if [ "$stopped" -ne 1 ]; then printf 'STOP_TIMEOUT_NO_LOCK_CHANGE\n'; exit 12; fi
+if ps -eo comm= | grep -qx 'git'; then printf 'ACTIVE_GIT_FOUND_NO_LOCK_CHANGE\n'; exit 13; fi
+if [ ! -d "$d/.git" ]; then printf 'INVALID_GIT_DIR_NO_LOCK_CHANGE\n'; exit 14; fi
+head="$(git -C "$d" rev-parse HEAD)"
+remote="$(git -C "$d" rev-parse origin/main)"
+printf 'GEN_HEAD=%s ORIGIN=%s\n' "$head" "$remote"
+if [ "$head" != "$remote" ]; then printf 'UNPUSHED_COMMIT_NO_LOCK_CHANGE\n'; exit 15; fi
+lock="$d/.git/index.lock"
+if [ -f "$lock" ]; then
+  if [ -z "$(find "$lock" -mmin +10 -print)" ]; then printf 'LOCK_TOO_RECENT_NO_LOCK_CHANGE\n'; exit 16; fi
+  backup="/home/runner/workspace/.ai-agent-tri-repo-runtime/preserved-gen-lock-$(date -u '+%Y%m%dT%H%M%SZ')"
+  mkdir -p "$backup"
+  mv "$lock" "$backup/index.lock"
+  printf 'LOCK_PRESERVED_AT=%s\n' "$backup/index.lock"
+else printf 'LOCK_ALREADY_ABSENT\n'; fi
+printf 'REPAIR_SAFE_POINT_COMPLETED\n'
+ensure_restart
+node "$s" status
+printf 'GEN_STALE_LOCK_REPAIR_DONE\n'
