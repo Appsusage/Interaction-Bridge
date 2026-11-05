@@ -1,0 +1,39 @@
+[command]
+set -u
+cd /home/runner/workspace/ai-agent || exit 11
+printf 'TRI_REPO_DIAG_AT=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+node backend/sync/tri_repo_supervisor.js status
+printf 'ACTIVE_GIT_PROCESSES\n'
+ps -eo pid,ppid,etime,stat,comm | awk 'NR==1 || $5=="git" || $5=="git-lfs"'
+for name in gen migration; do
+  d="/home/runner/workspace/.$name-sync-cache"
+  printf '%s_CACHE\n' "$name"
+  if [ -d "$d/.git" ]; then
+    printf 'GIT_DIR_VALID=yes\n'
+    if [ -f "$d/.git/index.lock" ]; then stat -c 'INDEX_LOCK=%y SIZE=%s' "$d/.git/index.lock"; else printf 'INDEX_LOCK=no\n'; fi
+    printf 'HEAD='
+    git -C "$d" rev-parse --short HEAD || true
+    printf 'INDEX_COUNT='
+    git -C "$d" ls-files | wc -l
+  else printf 'GIT_DIR_VALID=no\n'; fi
+done
+printf 'TRI_REPO_DIAG_DONE\n'
+[streams]
+[stdout] TRI_REPO_DIAG_AT=2026-11-05T13:05:14Z
+[stdout] {"status":"running","pid":173,"workers":{"Gen":{"status":"error","executed":false,"error":"Command failed: git restore --source=HEAD --staged --worktree -- .chatgpt-profile/Default/Cache/Cache_Data/b57f9976e13923c7_0\nfatal: Unable to create '/home/runner/workspace/.gen-sync-cache/.git/index.lock': File exists.\n\nAnother git process seems to","at":"2026-11-05T13:04:46.282Z"},"Project-Delivery":{"status":"in_sync","executed":false,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-11-05T13:05:10.168Z"},"Migration":{"status":"encrypted_snapshot_uploaded","executed":true,"file":null,"pendingCount":null,"blockedCount":null,"failedCount":null,"processedCount":null,"deferredCount":null,"at":"2026-11-05T12:21:35.901Z"}}}
+[stdout] ACTIVE_GIT_PROCESSES
+[stdout]     PID    PPID     ELAPSED STAT COMMAND
+[stdout] gen_CACHE
+[stdout] GIT_DIR_VALID=yes
+[stdout] INDEX_LOCK=2026-10-30 13:25:30.158336392 +0000 SIZE=345096
+[stdout] HEAD=[stdout] 62b341a3
+[stdout] INDEX_COUNT=[stdout] 2695
+[stdout] migration_CACHE
+[stdout] GIT_DIR_VALID=yes
+[stdout] INDEX_LOCK=no
+HEAD=[stdout] 9dd79bfe
+[stdout] INDEX_COUNT=[stdout] 15935
+[stdout] TRI_REPO_DIAG_DONE
+
+[exit code] 0
+Progress: Completed
